@@ -1,166 +1,108 @@
-# Agent 对话内 HTML 生成与端侧呈现
+# 对话内 HTML 渲染方案
 
-> 系统方案说明（与 `agent_html_preview_proposal.pptx` 同内容）
-
----
-
-## 01 先把问题说完整
-
-**用户真正要的**
-
-- 在对话里看到可点可交互的页面，而不是只能复制的源码
-- 可刷新、可回看，最好可分享
-- 体验对标：Claude Artifacts / OpenClaw Widget
-
-**容易误判的点**
-
-| 误判 | 正解 |
-|------|------|
-| 需要 `generate_html` 神器 | 生成是 LLM 文本能力 |
-| 云空间「不支持」= 存不了 | 多半是预览/白名单/端能力问题 |
-| 有 `write` 就等于能预览 | 还缺识别 + 渲染容器 |
-| 流式下发 = 必须上存储 | 流式与存储是两条可选路径 |
-
-**本次要讲清**
-
-1. 能力分层：生成 → 落盘 → 同步 → 识别 → 渲染 → 安全 → 分享  
-2. 竞品四类范式与可抄点  
-3. 我们已有链路与缺口  
-4. 双路径：完整下载 vs 流式  
-5. 安全边界与落地节奏  
+> 与 `agent_html_preview_proposal.pptx` 同大纲（7 页）
 
 ---
 
-## 02 能力分层：支持 HTML 到底需要什么
+## 01 问题定义
 
-| 层 | 含义 | 我们状态 |
-|----|------|----------|
-| 1. 生成 | LLM 产出 HTML/CSS/JS 文本 | 已有 |
-| 2. 落盘 | `write` / `edit` 写入 workspace | 已有 |
-| 3. 同步 | workspace → 华为云空间 | 已有 |
-| 4. 识别 | MIME / 扩展名 / preview hint | 待补齐 |
-| 5. 渲染 | iframe（Web）/ WebView（原生） | **缺口** |
-| 6. 安全 | sandbox / CSP / 独立源 | **缺口** |
-| 7. 分享 | 稳定 URL / TTL / 历史回放 | 可选增强 |
+**需要：** 在端侧对话中直接渲染并展示模型生成的 HTML 内容。
 
-**结论：** 不是从 0 做「生成 HTML」。产品断点在「识别 + 端侧安全渲染」。分享与流式是体验增强，不是第一期阻塞项。
+### 典型场景：个人健康分析报告
 
----
+用户：「帮我生成最近的个人健康分析报告」
 
-## 03 竞品范式
+1. Agent 调用「运动健康数据」Skill 拉取指标  
+2. 模型结合数据，用图表/卡片等图形化方式生成 HTML  
+3. 在对话中直接展示可交互报告（而不是源码或附件）
 
-### A. Artifact / Widget（Claude · OpenClaw）
+**成功标准：** 会话内可见、可交互；无需下载后另开应用。
 
-单文件自包含页面 → 会话侧栏 sandbox 预览；独立源 + 严 CSP；可 Publish / pin。  
-**可抄：** `show_widget` 语义 + 沙箱 iframe。
-
-### B. IDE Agent（Cursor · Claude Code）
-
-HTML 即普通文件；FS + 终端 + 浏览器；交付物是仓库/PR。  
-**可抄：** 复用 `write`，不强造 `generate_html`。
-
-### C. App Builder（Manus · Lovable · Bolt · v0）
-
-生成工程 + 托管预览 / WebContainer；发布是一等能力。  
-**可抄：** 后期的 publish / TTL 预览域。
-
-### D. Doc Canvas（ChatGPT Canvas）
-
-侧栏协作改文档/代码，不是 HTML runtime。  
-**启示：** 别把「编辑面」当成「渲染面」。我们应对标 A，必要时向 C 演进。
+**本质诉求：** 不是「模型会不会写 HTML」，而是对话产品能否完成「取数 → 可视化生成 → 端内安全渲染」。
 
 ---
 
-## 04 现状与目标架构
+## 02 实现能力路径
 
-### 现状（已通）
+| 环节 | 含义 | 状态 |
+|------|------|------|
+| 生成 | LLM + Skill 取数，产出可视化 HTML | 已有 |
+| 落盘 | `write` 写入 workspace | 已有 |
+| 同步 | workspace → 华为云空间 | 已有 |
+| 渲染 | iframe / WebView 会话内展示 | **缺口** |
+| 安全 | sandbox / CSP / 不可信隔离 | **缺口** |
+| 分享 | 链接 / 回放 / 转发 | 可选增强 |
+
+**结论：** 生成 / 落盘 / 同步已通；断点在渲染 + 安全。
+
+场景映射：Skill 取数 ⊂ 生成层；图形化 HTML ⊂ 生成层；对话内看见 ⊂ 渲染层；防脚本越权 ⊂ 安全层。
+
+---
+
+## 03 竞品对比
+
+| 维度 | OpenClaw | Cursor | Claude | Gemini | ChatGPT | Manus |
+|------|----------|--------|--------|--------|---------|-------|
+| 对话内实时预览 | 强（show_widget） | 弱*（偏 IDE） | 强（Artifacts） | 中～强（Canvas 预览） | 中（Canvas/部分预览） | 强（托管预览） |
+| 呈现形态 | Widget/Canvas | 工作区文件 | 侧栏 Artifact | Canvas 工作区 | Canvas + 代码解释器 | 站点/App 预览 |
+| 数据/工具 | Skill/工具调用 | FS/终端/浏览器 | 工具 + MCP | 工具 + Workspace | GPTs / ADA 取数画图 | Agent 全流程 |
+| 安全隔离 | 双层 iframe 沙箱 | 工作区隔离 | 独立域 + 严 CSP | 平台沙箱 | 平台沙箱 | 托管隔离 |
+| 分享 | pin/渠道 | Git/PR | Publish 链接 | 分享/导出 Docs | 分享链接（偏账号） | 一键 publish |
+| 对我们启示 | widget 语义+沙箱 | 复用 write，不强造工具 | 单文件预览体验 | Canvas+预览可参考 | 取数可视化可参考 ADA | 后期分享可参考 |
+
+\* Cursor 强在仓库内工程能力，对话内「小工具预览」不是主路径。
+
+**对标优先级：** Claude Artifacts / OpenClaw Widget → Gemini/ChatGPT Canvas → 分享演进参考 Manus。
+
+---
+
+## 04 现状与目标架构 Gap
+
+### 现状
 
 ```text
-Agent → write(path, content)
-     → workspace 落盘
-     → 同步华为云空间（KooDrive）
-     → 端 REST 按 file_id 下载
+Skill 取数 → 模型生成 HTML → write → 云空间同步 → 端 REST 可下载
 ```
 
-断点：下载后当附件/源码，没有「这是网页，请画出来」的产品路径。
+用户感知：多为附件或源码，「报告」没有在对话里长出来。
 
-### 目标闭环（要补）
-
-- `write` 返回：`file_id` + `mime` + `sync_status`
-- 运行时标记：`previewable=html`
-- 端：REST 取文本 → iframe/WebView 渲染
-- 安全：`sandbox=allow-scripts`（默不加 `allow-same-origin`）
-- 可选：`show_widget` 薄封装；流式粗预览，最终仍以完整版为准
-
-### 端到端目标流
+### 目标
 
 ```text
-用户要交互页
-  → 模型生成 HTML
-  → write 到 artifacts/*.html
-  → 云空间同步就绪
-  → 工具结果带 file_id/mime
-  → 端下载
-  → sandbox iframe/WebView 呈现
-  → 用户可交互
-  →（可选）再次 write 覆盖并刷新
-  →（可选）云空间 URL/签名链分享
+…… → 识别为 HTML 预览 → sandbox iframe/WebView → 会话内可见可交互 →（可选）分享
 ```
 
----
+### Gap（按优先级）
 
-## 05 两条渲染路径
-
-### 路径 A · 下载后完整渲染（推荐默认）
-
-**时机：** sync 完成 → REST 拉全文 → 一次加载  
-
-**优点：** 标签完整、脚本只执行一次、可刷新/多端/回放、与云空间零阻抗  
-
-**代价：** 需等生成+同步结束才出画面  
-
-**适用：** 几乎所有一期场景  
-
-### 路径 B · 流式边传边渲染（体验增强）
-
-**时机：** token/delta 推送 → buffer → 节流刷新  
-
-**优点：** 首屏更早，体感像流式 Markdown  
-
-**挑战：** 未闭合标签破坏 DOM；`srcdoc` 重设导致脚本重复跑；需要独立推送通道  
-
-**建议：** 结构可增量，脚本等 done；最终仍 write 定稿  
+| 优先级 | Gap |
+|--------|-----|
+| P0 | 端侧无 HTML 预览容器（iframe / WebView） |
+| P0 | 缺 preview 元数据（mime、preview.kind、sync_status、file_id） |
+| P0 | 缺安全默认（sandbox=allow-scripts，慎开 allow-same-origin） |
+| P1 | 同步就绪信号、刷新/降级 |
+| P2 | 流式通道、混合预览、对外分享 |
 
 ---
 
-## 06 关键概念与安全默认
+## 05 实现方案对比（三列）
 
-### MIME（Content-Type）
-
-给字节贴类型标签：`text/html` 当网页，`octet-stream` 常当附件。  
-实践：同步带 `mime=text/html`；若云侧一律 `octet-stream`，端按 `.html` 自行处理。
-
-### iframe / WebView
-
-同一类能力：Web 控制台用 iframe，原生 App 用 WebView。  
-喂法：`srcdoc`/`loadData`（下载文本）或 `src`/`loadUrl`（URL）。  
-没有它们：只能下载或看源码。
-
-### 安全默认
-
-模型 HTML = 不可信内容。  
-`sandbox=allow-scripts`，默认不加 `allow-same-origin`。  
-限制外链、预览域与主站 cookie 隔离、体积上限；需要时用 postMessage 桥。
+| | 方案 A：下载后推送到端渲染 | 方案 B：模型输出流式到端实时渲染 | 方案 C（混合）：流式粗预览 + 完成后落盘定稿 |
+|--|---------------------------|----------------------------------|-----------------------------------------------|
+| 流程 | write→同步→REST 下载全文→一次加载 | token/delta→端 buffer→边收边刷新 | 流式先出粗画面→同时/完成后 write 同步→完整版替换 |
+| 优势 | 稳、完整、易刷新/回放、贴合云空间 | 首屏快、体感像流式 MD | 体验接近 B，正确性兜底靠 A，适合报告类长 HTML |
+| 劣势 | 需等生成+同步才出首屏 | 未闭合标签易花屏、脚本易重复、要推送通道 | 状态机更复杂，需明确粗预览/定稿切换 |
+| 依赖 | write+云空间+端预览容器 | 流式协议+端节流策略 | A+B 能力叠加 |
+| 建议 | **一期默认** | 二期体验增强 | **报告场景推荐演进** |
 
 ---
 
-## 07 建议契约与实现示例
+## 06 实现示例
 
-### write / 同步完成后的建议返回
+### 工具返回约定
 
 ```json
 {
-  "path": "artifacts/demo/index.html",
+  "path": "artifacts/health-report.html",
   "cloud_file_id": "f_xxx",
   "mime": "text/html",
   "sync_status": "synced",
@@ -168,46 +110,39 @@ Agent → write(path, content)
 }
 ```
 
-### 路径 A
+### 方案 A
 
 ```javascript
 const html = await downloadText(fileId);
 iframe.sandbox = "allow-scripts";
-iframe.srcdoc = html;
+iframe.srcdoc = html; // 默不加 allow-same-origin
 ```
 
-### 路径 B
+### 方案 C
 
 ```javascript
-onDelta(t => { buf += t; schedulePaint(); });
-onDone(() => { iframe.srcdoc = buf; });
+onDelta(t => { buf += t; schedulePaint(buf); });
+onDone(async () => {
+  await writeAndSync(finalHtml);
+  iframe.srcdoc = await downloadText(id);
+});
 ```
 
-### 端侧最小产品行为
+### 健康报告串接
 
-1. 识别 `preview.kind===html` 或 `.html` → 预览卡片，而非纯附件  
-2. 未 synced 显示加载态；就绪后再 REST 拉正文  
-3. Web 用 sandbox iframe；原生用 WebView；失败降级下载/外开  
-4. 可选 `show_widget`：对模型暴露「请展示」语义，内部仍走 write+同步  
-
----
-
-## 08 落地路径
-
-| 阶段 | 目标 | 事项 |
-|------|------|------|
-| Phase 0 | 对齐与验通 | 确认可写 `.html`；手工同步下载；MIME/扩展名策略 |
-| Phase 1 | 完整下载渲染 | 返回 mime/file_id/hint；预览卡片；sandbox 默认策略 |
-| Phase 2 | 体验与稳定 | 同步就绪推送；刷新/降级；单文件内联约定 |
-| Phase 3 | 流式 + 分享 | delta 通道；脚本延后执行；签名 URL / TTL |
+1. Skill 获取运动健康数据  
+2. 模型生成含图表的单文件 HTML（CSS/JS 尽量内联）  
+3. write → 云空间同步就绪  
+4. 端 REST 下载 → sandbox 预览  
+5. 用户在会话内查看/交互  
 
 ---
 
-## 09 结论与建议
+## 07 结论与建议
 
-1. **定位**：对标 Artifact/Widget，而不是一上来做全栈 App Builder。  
-2. **真相**：生成靠模型；write+云空间已解决分发；缺口在端侧安全渲染。  
-3. **默认方案**：路径 A——同步完成后下载全文，sandbox 一次渲染。  
-4. **增强方案**：路径 B——流式粗预览提升体感，定稿仍落盘；勿替代 A。  
-5. **安全底线**：模型 HTML 当不可信；`allow-scripts`，慎开 `allow-same-origin`。  
-6. **下一步**：Phase 0 验通 → Phase 1 预览卡片上线 → 再评估是否做流式。
+1. **问题本质：** 对话内安全渲染可视化 HTML，不是再造存储。  
+2. **能力优先级：** 先补渲染 + 安全；分享与流式后置。  
+3. **竞品对标：** Claude Artifacts / OpenClaw Widget；Canvas 作参考；分享看 Manus。  
+4. **方案选择：** 一期默认 A；报告等待较长时演进 C；纯 B 不作唯一路径。  
+5. **安全底线：** 模型 HTML=不可信；`allow-scripts`；慎开 `allow-same-origin`。  
+6. **下一步：** 元数据约定 + 端预览卡片 + sandbox；用「健康分析报告」做验收场景。
