@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""单独两页：逻辑架构图 + 运行视图（方案4主路径草稿）"""
+"""独立 PPT：逻辑架构图 + 运行视图（按已确认口径）"""
 
 from pptx import Presentation
 from pptx.util import Inches, Pt
@@ -21,10 +21,9 @@ WHITE = RGBColor(255, 255, 255)
 MUTED = RGBColor(100, 116, 139)
 LINE = RGBColor(203, 213, 225)
 SOFT = RGBColor(240, 253, 250)
-AMBER_BG = RGBColor(255, 251, 235)
 BLUE_BG = RGBColor(239, 246, 255)
-PURPLE_BG = RGBColor(245, 243, 255)  # only for optional lane, muted
 OK_BG = RGBColor(236, 253, 245)
+AMBER_BG = RGBColor(255, 251, 235)
 GAP = RGBColor(180, 83, 9)
 
 
@@ -91,8 +90,8 @@ def card(slide, l, t, w, h, title, lines, fill_c=WHITE, line_c=TEAL, title_c=TEA
     run(p, title, Pt(12), True, title_c)
     for line in lines:
         p2 = tf.add_paragraph()
-        run(p2, line, Pt(10), False, SLATE)
-        p2.space_before = Pt(2)
+        run(p2, line, Pt(11), False, SLATE)
+        p2.space_before = Pt(3)
     return sh
 
 
@@ -107,161 +106,69 @@ def lane(slide, l, t, w, h, label, fill_c):
     return sh
 
 
-def arrow(slide, l, t, w=Inches(0.32), h=Inches(0.18), color=TEAL):
-    sh = slide.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, l, t, w, h)
-    fill(sh, color)
-    return sh
+# ───────── Cover notes slide optional? Keep 3 slides: cover brief + logic + runtime ─────────
+# User asked for architecture pages; 2 content slides + 1 decision note is helpful.
 
-
-def down_arrow(slide, l, t, w=Inches(0.2), h=Inches(0.28), color=TEAL):
-    sh = slide.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, l, t, w, h)
-    fill(sh, color)
-    return sh
-
-
-# ───────── Slide 1: Logical Architecture ─────────
 s = blank()
 bg(s)
-header(s, "逻辑架构图（草稿）", "方案 4 主路径：云预览服务出链接 · WebView 直接渲染 | 灰色/虚线为可选增强")
+header(s, "架构视图（独立稿）", "不并入主 PPT · 已按评审口径收敛：独立预览服务 / 直发预览 / 单文件 / WebView")
 
-# Layer 1 Client
-lane(s, Inches(0.35), Inches(1.05), Inches(12.6), Inches(1.45), "端侧 Client", BLUE_BG)
-card(s, Inches(0.55), Inches(1.4), Inches(3.8), Inches(0.95), "对话 UI", ["消息流 / 预览卡片入口"], WHITE, RGBColor(59, 130, 246))
-card(s, Inches(4.55), Inches(1.4), Inches(4.0), Inches(0.95), "WebView / iframe", ["loadUrl(preview_url)", "sandbox 隔离策略"], WHITE, TEAL)
-card(s, Inches(8.75), Inches(1.4), Inches(3.9), Inches(0.95), "降级：方案 A", ["REST 拉正文 → srcdoc", "（可选兜底）"], AMBER_BG, GAP, GAP)
-
-# Layer 2 Agent
-lane(s, Inches(0.35), Inches(2.65), Inches(12.6), Inches(1.7), "Agent 运行时", SOFT)
-card(s, Inches(0.55), Inches(3.0), Inches(2.9), Inches(1.15), "LLM", ["生成可视化 HTML"], WHITE, TEAL)
-card(s, Inches(3.6), Inches(3.0), Inches(2.9), Inches(1.15), "Skills", ["运动健康数据 Skill", "其它取数 Skill…"], WHITE, TEAL)
-card(s, Inches(6.65), Inches(3.0), Inches(2.9), Inches(1.15), "Tools", ["write", "publish_preview ★"], WHITE, TEAL_D)
-card(s, Inches(9.7), Inches(3.0), Inches(2.95), Inches(1.15), "会话/编排", ["工具结果回传端侧", "含 preview_url"], WHITE, TEAL)
-
-# Layer 3 Data & Preview
-lane(s, Inches(0.35), Inches(4.5), Inches(6.05), Inches(2.6), "文件与同步", OK_BG)
-card(s, Inches(0.55), Inches(4.9), Inches(2.7), Inches(1.9), "Workspace", ["Agent 工作区落盘", "artifacts/*.html"], WHITE, OK_BG and TEAL)
-card(s, Inches(3.4), Inches(4.9), Inches(2.75), Inches(1.9), "华为云空间", ["源文件仓 KooDrive", "REST 下载/元数据", "与预览域可解耦"], WHITE, TEAL)
-
-lane(s, Inches(6.55), Inches(4.5), Inches(6.4), Inches(2.6), "Web 渲染中台（方案 4）★", SOFT)
-card(s, Inches(6.75), Inches(4.9), Inches(5.95), Inches(1.9), "Preview Web Service", [
-    "publish → 返回可访问 URL",
-    "托管 HTML / 多文件静态资源",
-    "Content-Type / CSP / TTL / 鉴权",
-    "统一支撑报告、小工具等 Web 预览",
-], WHITE, TEAL_D)
-
-note = tbox(s, Inches(0.45), Inches(7.1), Inches(12.4), Inches(0.3))
-p = note.paragraphs[0]
-run(p, "关系：云空间存「源」· 预览服务出「可渲染链接」· 端只负责打开 URL（流式通道未画入主路径，属 B/C 增强）", Pt(10), False, MUTED)
-
-# ───────── Slide 2: Runtime View ─────────
-s = blank()
-bg(s)
-header(s, "运行视图（草稿）", "健康报告场景时序：Skill 取数 → 生成 HTML → 发布预览链接 → WebView 渲染")
-
-# swimlanes labels
-lanes = [
-    (Inches(0.3), "用户/端"),
-    (Inches(2.7), "Agent"),
-    (Inches(5.1), "Skill"),
-    (Inches(7.5), "云空间"),
-    (Inches(9.9), "预览服务"),
+decisions = [
+    ("预览服务", "独立新服务（Preview Web Service）"),
+    ("发布路径", "HTML 直发预览服务；云空间仅备份"),
+    ("一期范围", "只做单文件 HTML（CSS/JS 内联）"),
+    ("端侧呈现", "WebView 组件直接打开 preview_url"),
+    ("鉴权（待定）", "优先评估复用端云 AK/SK；WebView 打开链建议另议短签"),
+    ("不进本图", "流式方案 B/C（见备注，非本期主架构）"),
 ]
-for x, name in lanes:
-    sh = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, Inches(1.05), Inches(2.2), Inches(0.4))
-    fill(sh, NAVY)
-    sh.adjustments[0] = 0.2
-    tf = sh.text_frame
-    tf.paragraphs[0].alignment = PP_ALIGN.CENTER
-    run(tf.paragraphs[0], name, Pt(12), True, WHITE)
-    # life line
-    line = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, x + Inches(1.05), Inches(1.5), Inches(0.04), Inches(5.5))
-    fill(line, LINE)
+for i, (k, v) in enumerate(decisions):
+    r, c = divmod(i, 3)
+    x = Inches(0.4) + Inches(c * 4.25)
+    y = Inches(1.3) + Inches(r * 2.7)
+    card(s, x, y, Inches(4.05), Inches(2.4), k, [v], SOFT if i < 4 else AMBER_BG, TEAL if i < 4 else GAP, TEAL_D if i < 4 else GAP)
 
-# steps as horizontal message bars
-steps = [
-    (1.55, 0, 1, "① 发起：生成健康分析报告", TEAL),
-    (2.2, 1, 2, "② 调用运动健康数据 Skill", TEAL),
-    (2.85, 2, 1, "③ 返回指标数据", MUTED),
-    (3.5, 1, 1, "④ LLM 生成图表化 HTML", TEAL),
-    (4.15, 1, 3, "⑤ write 同步源文件（可选但推荐）", MUTED),
-    (4.8, 1, 4, "⑥ publish_preview 发布页面", TEAL_D),
-    (5.45, 4, 1, "⑦ 返回 preview_url (+ TTL)", TEAL_D),
-    (6.1, 1, 0, "⑧ 工具结果带回端侧（含 URL）", TEAL),
-    (6.75, 0, 4, "⑨ WebView.loadUrl(preview_url)", TEAL),
-    (7.4, 4, 0, "⑩ 返回 text/html 页面完成渲染", TEAL),
-]
-
-# map lane index to x center
-cx = [Inches(1.4), Inches(3.8), Inches(6.2), Inches(8.6), Inches(11.0)]
-
-for y, src, dst, text, color in steps:
-    y = Inches(y)
-    x1, x2 = cx[src], cx[dst]
-    left = min(x1, x2)
-    width = abs(x2 - x1)
-    if width < Inches(0.4):
-        width = Inches(0.4)
-    # message bar
-    bar = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, y, width, Inches(0.42))
-    fill(bar, color)
-    bar.adjustments[0] = 0.25
-    # label to the side if short, else on bar
-    tf = tbox(s, Inches(0.35), y - Inches(0.02), Inches(12.6), Inches(0.38))
-    # put text near destination for readability - actually overlay on full width caption left of bars is crowded
-    # Use caption at left margin area spanning
-    pass
-
-# Cleaner: numbered list on left + simplified flow on right
-# Redraw slide 2 more readably
-# Remove previous messy approach by making a new clean slide instead.
-# Actually the bars without text are useless. Rebuild slide 2 properly.
-
-# Delete all shapes on slide 2 except we can't easily. Better recreate presentation slide.
-# Simplest: create a fresh second slide content by not using the messy bars.
-# I'll rebuild the whole presentation more cleanly in a second write.
-
-prs = Presentation()
-prs.slide_width = W
-prs.slide_height = H
-
-# ===== Logical =====
+# ───────── Logical ─────────
 s = blank()
 bg(s)
-header(s, "逻辑架构图（草稿 · 请审）", "主路径=方案4；云空间=源文件仓；预览服务=可渲染 URL 入口")
+header(s, "逻辑架构图", "方案4主路径：Agent 直发独立预览服务 → 返回 URL → 端 WebView 渲染；云空间仅备份")
 
-# Client row
-lane(s, Inches(0.3), Inches(1.05), Inches(12.7), Inches(1.55), "① 端侧", BLUE_BG)
-card(s, Inches(0.5), Inches(1.4), Inches(4.0), Inches(1.0), "对话 UI", ["触发任务 / 展示预览卡片"], WHITE, RGBColor(37, 99, 235), RGBColor(37, 99, 235))
-card(s, Inches(4.7), Inches(1.4), Inches(4.1), Inches(1.0), "WebView / iframe ★", ["直接打开 preview_url", "会话内渲染 HTML"], WHITE, TEAL)
-card(s, Inches(9.0), Inches(1.4), Inches(3.7), Inches(1.0), "可选兜底 A", ["REST 下载 → srcdoc", "预览服务不可用时"], AMBER_BG, GAP, GAP)
+# Client
+lane(s, Inches(0.3), Inches(1.05), Inches(12.7), Inches(1.45), "① 端侧", BLUE_BG)
+card(s, Inches(0.55), Inches(1.4), Inches(5.9), Inches(0.9), "对话 UI", ["发起任务；展示预览入口"], WHITE, RGBColor(37, 99, 235), RGBColor(37, 99, 235))
+card(s, Inches(6.7), Inches(1.4), Inches(5.95), Inches(0.9), "WebView 组件 ★", ["loadUrl(preview_url) 会话内渲染"], WHITE, TEAL)
 
-# Agent row
-lane(s, Inches(0.3), Inches(2.75), Inches(12.7), Inches(1.7), "② Agent 运行时", SOFT)
-card(s, Inches(0.5), Inches(3.15), Inches(2.95), Inches(1.1), "编排 / Session", ["对话上下文", "工具调用编排"], WHITE, TEAL)
-card(s, Inches(3.6), Inches(3.15), Inches(2.95), Inches(1.1), "LLM", ["生成图形化 HTML", "报告文案与结构"], WHITE, TEAL)
-card(s, Inches(6.7), Inches(3.15), Inches(2.95), Inches(1.1), "Skills", ["运动健康数据", "其它业务取数"], WHITE, TEAL)
-card(s, Inches(9.8), Inches(3.15), Inches(2.9), Inches(1.1), "Tools", ["write", "publish_preview ★"], WHITE, TEAL_D)
+# Agent
+lane(s, Inches(0.3), Inches(2.65), Inches(12.7), Inches(1.7), "② Agent 运行时", SOFT)
+card(s, Inches(0.55), Inches(3.05), Inches(2.95), Inches(1.1), "编排 / Session", ["对话上下文", "工具调用编排"], WHITE, TEAL)
+card(s, Inches(3.65), Inches(3.05), Inches(2.95), Inches(1.1), "LLM", ["生成单文件 HTML", "图表/文案内联"], WHITE, TEAL)
+card(s, Inches(6.75), Inches(3.05), Inches(2.95), Inches(1.1), "Skills", ["运动健康数据 Skill", "其它取数…"], WHITE, TEAL)
+card(s, Inches(9.85), Inches(3.05), Inches(2.85), Inches(1.1), "Tools", ["publish_preview ★", "write（备份云空间）"], WHITE, TEAL_D)
 
-# Storage + Preview
-lane(s, Inches(0.3), Inches(4.6), Inches(6.15), Inches(2.45), "③ 文件域", OK_BG)
-card(s, Inches(0.5), Inches(5.0), Inches(2.85), Inches(1.8), "Workspace", ["本地/运行时工作区", "artifacts/ 产物"], WHITE, TEAL)
-card(s, Inches(3.5), Inches(5.0), Inches(2.7), Inches(1.8), "华为云空间", ["源文件持久化", "REST 元数据/下载", "非必须当网站主机"], WHITE, TEAL)
-
-lane(s, Inches(6.6), Inches(4.6), Inches(6.4), Inches(2.45), "④ Web 渲染中台（方案4）★", SOFT)
-card(s, Inches(6.8), Inches(5.0), Inches(5.95), Inches(1.8), "Preview Web Service", [
-    "输入：HTML 或 file_id / 目录",
+# Preview primary + backup secondary
+lane(s, Inches(0.3), Inches(4.5), Inches(7.4), Inches(2.55), "③ Web 渲染中台（独立新服务）★", SOFT)
+card(s, Inches(0.5), Inches(4.95), Inches(6.95), Inches(1.85), "Preview Web Service（独立部署）", [
+    "接收：Agent 直发的单文件 HTML",
     "输出：可访问 preview_url",
-    "职责：托管、MIME、CSP、TTL、多文件",
+    "职责：托管、text/html、CSP、TTL、访问控制",
 ], WHITE, TEAL_D)
 
-# ===== Runtime =====
+lane(s, Inches(7.9), Inches(4.5), Inches(5.1), Inches(2.55), "④ 备份（非渲染入口）", OK_BG)
+card(s, Inches(8.1), Inches(4.95), Inches(4.7), Inches(1.85), "华为云空间", [
+    "write 同步仅作备份/审计",
+    "不承担 WebView 渲染入口",
+    "需要时可 REST 取源文件",
+], WHITE, TEAL)
+
+tf = tbox(s, Inches(0.4), Inches(7.15), Inches(12.5), Inches(0.25))
+p = tf.paragraphs[0]
+run(p, "鉴权注记：Agent→预览服务 可复用端云 AK/SK；WebView 打开 URL 更适合短时签名/一次性 token（见说明页）", Pt(11), False, MUTED)
+
+# ───────── Runtime ─────────
 s = blank()
 bg(s)
-header(s, "运行视图（草稿 · 请审）", "健康报告端到端时序（方案4主路径；⑤ 云空间同步为推荐保留）")
+header(s, "运行视图 · 健康报告", "直发预览服务为主；云空间备份并行/事后；端仅 WebView 打开链接")
 
-# five columns
-cols = ["用户 / 端侧", "Agent 运行时", "Skill", "华为云空间", "预览 Web 服务"]
+cols = ["用户 / 端侧", "Agent 运行时", "Skill", "预览 Web 服务", "云空间(备份)"]
 col_x = [Inches(0.35), Inches(2.9), Inches(5.45), Inches(8.0), Inches(10.55)]
 for i, name in enumerate(cols):
     sh = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, col_x[i], Inches(1.05), Inches(2.35), Inches(0.45))
@@ -270,22 +177,20 @@ for i, name in enumerate(cols):
     tf = sh.text_frame
     tf.paragraphs[0].alignment = PP_ALIGN.CENTER
     run(tf.paragraphs[0], name, Pt(11), True, WHITE)
-    spine = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, col_x[i] + Inches(1.12), Inches(1.55), Inches(0.035), Inches(5.55))
+    spine = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, col_x[i] + Inches(1.12), Inches(1.55), Inches(0.035), Inches(5.45))
     fill(spine, LINE)
 
-# event cards near actor columns
 events = [
-    # y, col_index, text, color
     (1.7, 0, "1. 请求健康报告", TEAL),
     (2.25, 1, "2. 编排任务", TEAL),
     (2.8, 2, "3. 取运动健康数据", TEAL),
-    (3.35, 1, "4. LLM 生成 HTML", TEAL),
-    (3.9, 3, "5. write 同步源文件", MUTED),
-    (4.45, 4, "6. publish 页面", TEAL_D),
-    (5.0, 4, "7. 签发 preview_url", TEAL_D),
+    (3.35, 1, "4. LLM 生成单文件 HTML", TEAL),
+    (3.9, 3, "5. publish_preview 直发", TEAL_D),
+    (4.45, 3, "6. 返回 preview_url", TEAL_D),
+    (5.0, 4, "7. write 备份源文件", MUTED),
     (5.55, 1, "8. 回传 URL 给端", TEAL),
     (6.1, 0, "9. WebView 打开链接", TEAL),
-    (6.65, 4, "10. 返回 HTML 完成渲染", TEAL),
+    (6.65, 3, "10. 返回 HTML 完成渲染", TEAL),
 ]
 for y, col, text, color in events:
     x = col_x[col]
@@ -297,10 +202,64 @@ for y, col, text, color in events:
     tf.paragraphs[0].alignment = PP_ALIGN.CENTER
     run(tf.paragraphs[0], text, Pt(10), True, WHITE)
 
-# legend
 leg = tbox(s, Inches(0.35), Inches(7.15), Inches(12.6), Inches(0.25))
 p = leg.paragraphs[0]
-run(p, "实心步骤=主路径　　灰色步骤=推荐保留的源文件同步　　箭头语义：从上到下为时间顺序，卡片所在列为执行方", Pt(10), False, MUTED)
+run(p, "青色=主路径　　灰色=备份路径（可与 5/6 并行，不阻塞预览）　　WebView 访问预览 URL 的鉴权方式见说明页待定项", Pt(10), False, MUTED)
+
+# ───────── Auth note slide ─────────
+s = blank()
+bg(s)
+header(s, "说明：鉴权怎么选 · 单文件为何够用 · 流式 B/C 是什么", "供对齐，不并入主 PPT")
+
+card(s, Inches(0.35), Inches(1.2), Inches(4.15), Inches(5.8), "鉴权建议（待你拍板）", [
+    "两条链路要分开看：",
+    "",
+    "A. Agent → 预览服务（服务间）",
+    "  可复用现有端云 AK/SK",
+    "  或内部服务凭证",
+    "",
+    "B. WebView → 打开 preview_url",
+    "  不太适合直接塞 AK/SK",
+    "  （密钥会进 WebView/日志）",
+    "",
+    "更常见：",
+    "  publish 时用 AK/SK 鉴权",
+    "  返回短时签名 URL / 一次性 token",
+    "  WebView 只拿这个链接打开",
+], SOFT, TEAL)
+
+card(s, Inches(4.65), Inches(1.2), Inches(4.15), Inches(5.8), "静态目录资源有啥用？", [
+    "指一个页面拆成：",
+    "  index.html + app.css + chart.js",
+    "  + 图片等多个文件",
+    "",
+    "预览服务若支持「目录托管」，",
+    "相对路径才能一起打开。",
+    "",
+    "一期单文件：",
+    "  CSS/JS 都写进同一个 HTML",
+    "  → 不需要目录能力",
+    "",
+    "所以一期不做静态目录完全合理；",
+    "以后报告变复杂再加即可。",
+], WHITE, TEAL)
+
+card(s, Inches(8.95), Inches(1.2), Inches(4.0), Inches(5.8), "流式 B/C 是什么？", [
+    "这是主 PPT 里另外两条",
+    "「端内喂 HTML」的备选，",
+    "不是方案4的一部分：",
+    "",
+    "B：模型边生成，边把 HTML",
+    "   片段推到端上刷新",
+    "",
+    "C：先流式粗看，完成后再",
+    "   落盘/定稿替换",
+    "",
+    "你们定主路径=预览服务出链接后，",
+    "B/C 可先不进架构图。",
+    "",
+    "本独立 PPT 已按此省略。",
+], AMBER_BG, GAP, GAP)
 
 out = "/workspace/docs/agent_html_arch_views.pptx"
 prs.save(out)
