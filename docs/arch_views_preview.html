@@ -109,13 +109,12 @@
     <section class="answer">
       <h2>对你三个问题的直接回答</h2>
 
-      <h3>2. 鉴权：复用 AK/SK，还是单独签名？</h3>
-      <p><b>建议拆成两条链路：</b></p>
+      <h3>2. 鉴权口径（已定：不引入 AK/SK）</h3>
       <ul>
-        <li><b>Agent → 预览服务（发布）</b>：可以复用现有端云 <b>AK/SK</b>（或内部服务凭证）。</li>
-        <li><b>WebView → 打开 preview_url（浏览）</b>：不建议把 AK/SK 放进 WebView；更稳妥是 publish 成功后签发 <b>短时签名 URL / 一次性 token</b>，WebView 只打开这个链接。</li>
+        <li><b>Agent → 预览服务</b>：走现有服务间可信通道（内网/会话态等），不落 AK/SK。</li>
+        <li><b>WebView → 打开链接</b>：只打开返回的短时 <code>preview_url</code>；密钥不进 WebView、不进 HTML。</li>
       </ul>
-      <p>一句话：<b>发布鉴权复用 AK/SK；打开链接用短签。</b> 若你们 WebView 已有统一网关 Cookie/Token 且能安全带到预览域，也可以登录态访问，但仍不如短签简单。</p>
+      <p>一句话：<b>不带 AK/SK；WebView 只拿短时 preview_url。</b></p>
 
       <h3>4. 静态目录资源有啥用？</h3>
       <p>就是一个页面拆成 <code>index.html + css + js + 图片</code> 多个文件时，预览服务按目录一起托管。一期单文件（CSS/JS 内联）<b>不需要</b>这个能力，完全可以以后再加。</p>

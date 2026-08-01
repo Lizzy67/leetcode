@@ -118,7 +118,7 @@ decisions = [
     ("发布路径", "HTML 直发预览服务；云空间仅备份"),
     ("一期范围", "只做单文件 HTML（CSS/JS 内联）"),
     ("端侧呈现", "WebView 组件直接打开 preview_url"),
-    ("鉴权（待定）", "优先评估复用端云 AK/SK；WebView 打开链建议另议短签"),
+    ("鉴权", "不引入 AK/SK；publish 后签发短时可访问 preview_url"),
     ("不进本图", "流式方案 B/C（见备注，非本期主架构）"),
 ]
 for i, (k, v) in enumerate(decisions):
@@ -161,7 +161,7 @@ card(s, Inches(8.1), Inches(4.95), Inches(4.7), Inches(1.85), "华为云空间",
 
 tf = tbox(s, Inches(0.4), Inches(7.15), Inches(12.5), Inches(0.25))
 p = tf.paragraphs[0]
-run(p, "鉴权注记：Agent→预览服务 可复用端云 AK/SK；WebView 打开 URL 更适合短时签名/一次性 token（见说明页）", Pt(11), False, MUTED)
+run(p, "鉴权注记：不引入 AK/SK；预览服务签发短时 preview_url，WebView 仅打开该链接", Pt(11), False, MUTED)
 
 # ───────── Runtime ─────────
 s = blank()
@@ -204,28 +204,27 @@ for y, col, text, color in events:
 
 leg = tbox(s, Inches(0.35), Inches(7.15), Inches(12.6), Inches(0.25))
 p = leg.paragraphs[0]
-run(p, "青色=主路径　　灰色=备份路径（可与 5/6 并行，不阻塞预览）　　WebView 访问预览 URL 的鉴权方式见说明页待定项", Pt(10), False, MUTED)
+run(p, "青色=主路径　　灰色=备份路径（可与发布并行，不阻塞预览）　　WebView 仅打开短时 preview_url，不携带 AK/SK", Pt(10), False, MUTED)
 
 # ───────── Auth note slide ─────────
 s = blank()
 bg(s)
-header(s, "说明：鉴权怎么选 · 单文件为何够用 · 流式 B/C 是什么", "供对齐，不并入主 PPT")
+header(s, "说明：鉴权口径 · 单文件为何够用 · 流式 B/C 是什么", "供对齐，不并入主 PPT")
 
-card(s, Inches(0.35), Inches(1.2), Inches(4.15), Inches(5.8), "鉴权建议（待你拍板）", [
-    "两条链路要分开看：",
+card(s, Inches(0.35), Inches(1.2), Inches(4.15), Inches(5.8), "鉴权口径（已定）", [
+    "不引入 AK/SK。",
     "",
-    "A. Agent → 预览服务（服务间）",
-    "  可复用现有端云 AK/SK",
-    "  或内部服务凭证",
+    "Agent 调用预览服务：",
+    "  走现有服务间可信通道",
+    "  （内网 / 会话态等，不落 AKSK）",
     "",
-    "B. WebView → 打开 preview_url",
-    "  不太适合直接塞 AK/SK",
-    "  （密钥会进 WebView/日志）",
+    "端侧 WebView：",
+    "  只打开返回的 preview_url",
+    "  URL 自身短时有效即可",
     "",
-    "更常见：",
-    "  publish 时用 AK/SK 鉴权",
-    "  返回短时签名 URL / 一次性 token",
-    "  WebView 只拿这个链接打开",
+    "原则：",
+    "  密钥不进 WebView",
+    "  不进 HTML，不进客户端本地",
 ], SOFT, TEAL)
 
 card(s, Inches(4.65), Inches(1.2), Inches(4.15), Inches(5.8), "静态目录资源有啥用？", [
