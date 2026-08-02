@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>架构视图（独立稿）</title>
+  <style>
+    :root {
+      --navy: #0f172a; --teal: #0d9488; --teal-d: #0f766e;
+      --slate: #334155; --muted: #64748b; --line: #cbd5e1;
+      --bg: #f8fafc; --soft: #f0fdfa; --blue: #eff6ff;
+      --ok: #ecfdf5; --amber: #fffbeb; --gap: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--slate); }
+    header.page-head { background: var(--navy); color: #fff; padding: 18px 28px; border-bottom: 4px solid var(--teal); }
+    header.page-head h1 { margin: 0; font-size: 22px; }
+    header.page-head p { margin: 6px 0 0; color: #94a3b8; font-size: 13px; }
+    main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+    section { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 22px; }
+    h2 { margin: 0 0 6px; font-size: 18px; color: var(--navy); }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+    .lane { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+    .lane.client { background: var(--blue); }
+    .lane.agent { background: var(--soft); }
+    .lane.preview { background: var(--soft); }
+    .lane.backup { background: var(--ok); }
+    .lane-title { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 10px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .grid2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; }
+    @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+    .card { background: #fff; border: 1.5px solid var(--teal); border-radius: 10px; padding: 10px 12px; flex: 1; min-width: 140px; }
+    .card.primary { border-color: var(--teal-d); border-width: 2px; }
+    .card h3 { margin: 0 0 6px; font-size: 14px; color: var(--teal-d); }
+    .card ul { margin: 0; padding-left: 16px; font-size: 12px; }
+    .runtime { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .col-h { background: var(--navy); color: #fff; border-radius: 999px; padding: 8px 6px; font-size: 12px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+    .spine { width: 3px; background: var(--line); margin: 0 auto; min-height: 520px; position: relative; border-radius: 2px; }
+    .evt { position: absolute; left: 50%; transform: translateX(-50%); width: calc(100% - 8px); background: var(--teal); color: #fff; border-radius: 8px; padding: 7px 6px; font-size: 11px; font-weight: 650; text-align: center; }
+    .evt.muted { background: var(--muted); }
+    .evt.accent { background: var(--teal-d); }
+    .answer { background: #fff7ed; border-color: #fdba74; }
+    .answer h3 { margin: 12px 0 6px; font-size: 14px; color: var(--gap); }
+    .answer p, .answer li { font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header class="page-head">
+    <h1>架构视图（独立稿 · 不并入主 PPT）</h1>
+    <p>独立预览服务 · HTML 直发 · 云空间仅备份 · 一期单文件 · 端侧 WebView</p>
+  </header>
+  <main>
+    <section>
+      <h2>逻辑架构图</h2>
+      <p class="sub">主路径：Agent 直发独立 Preview Web Service → preview_url → WebView；云空间只备份。</p>
+      <div class="lane client">
+        <div class="lane-title">① 端侧</div>
+        <div class="row">
+          <div class="card"><h3>对话 UI</h3><ul><li>发起任务；展示预览入口</li></ul></div>
+          <div class="card primary"><h3>WebView 组件 ★</h3><ul><li>loadUrl(preview_url)</li><li>会话内渲染 HTML</li></ul></div>
+        </div>
+      </div>
+      <div class="lane agent">
+        <div class="lane-title">② Agent 运行时</div>
+        <div class="row">
+          <div class="card"><h3>编排 / Session</h3><ul><li>对话上下文</li><li>工具调用编排</li></ul></div>
+          <div class="card"><h3>LLM</h3><ul><li>生成单文件 HTML</li><li>图表/文案内联</li></ul></div>
+          <div class="card"><h3>Skills</h3><ul><li>运动健康数据 Skill</li></ul></div>
+          <div class="card primary"><h3>Tools</h3><ul><li>publish_preview ★</li><li>write（备份云空间）</li></ul></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="lane preview">
+          <div class="lane-title">③ Web 渲染中台（独立新服务）★</div>
+          <div class="card primary">
+            <h3>Preview Web Service</h3>
+            <ul>
+              <li>接收：Agent 直发的单文件 HTML</li>
+              <li>输出：可访问 preview_url</li>
+              <li>职责：托管、text/html、CSP、TTL、访问控制</li>
+            </ul>
+          </div>
+        </div>
+        <div class="lane backup">
+          <div class="lane-title">④ 备份（非渲染入口）</div>
+          <div class="card">
+            <h3>华为云空间</h3>
+            <ul>
+              <li>write 同步仅作备份/审计</li>
+              <li>不承担 WebView 渲染入口</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>运行视图 · 健康报告</h2>
+      <p class="sub">青色主路径；灰色为备份（可与发布并行，不阻塞预览）。</p>
+      <div class="runtime">
+        <div><div class="col-h">用户 / 端侧</div><div class="spine" data-col="0"></div></div>
+        <div><div class="col-h">Agent 运行时</div><div class="spine" data-col="1"></div></div>
+        <div><div class="col-h">Skill</div><div class="spine" data-col="2"></div></div>
+        <div><div class="col-h">预览 Web 服务</div><div class="spine" data-col="3"></div></div>
+        <div><div class="col-h">云空间(备份)</div><div class="spine" data-col="4"></div></div>
+      </div>
+    </section>
+
+    <section class="answer">
+      <h2>对你三个问题的直接回答</h2>
+
+      <h3>2. 鉴权口径（已定：不引入 AK/SK）</h3>
+      <ul>
+        <li><b>Agent → 预览服务</b>：走现有服务间可信通道（内网/会话态等），不落 AK/SK。</li>
+        <li><b>WebView → 打开链接</b>：只打开返回的短时 <code>preview_url</code>；密钥不进 WebView、不进 HTML。</li>
+      </ul>
+      <p>一句话：<b>不带 AK/SK；WebView 只拿短时 preview_url。</b></p>
+
+      <h3>4. 静态目录资源有啥用？</h3>
+      <p>就是一个页面拆成 <code>index.html + css + js + 图片</code> 多个文件时，预览服务按目录一起托管。一期单文件（CSS/JS 内联）<b>不需要</b>这个能力，完全可以以后再加。</p>
+
+      <h3>6. 流式 B/C 是什么？</h3>
+      <p>这是主 PPT 里另外两条「不经过预览服务、直接把 HTML 文本推到端上渲染」的备选：</p>
+      <ul>
+        <li><b>B</b>：模型边生成边往端上推，端边收边刷新。</li>
+        <li><b>C</b>：先流式粗看，完成后再定稿替换。</li>
+      </ul>
+      <p>你们已定主路径是「预览服务出链接」，所以 <b>B/C 先不进这张架构图</b>。</p>
+    </section>
+  </main>
+  <script>
+    const events = [
+      { col: 0, top: 8, text: "1. 请求健康报告", cls: "" },
+      { col: 1, top: 58, text: "2. 编排任务", cls: "" },
+      { col: 2, top: 108, text: "3. 取运动健康数据", cls: "" },
+      { col: 1, top: 158, text: "4. 生成单文件 HTML", cls: "" },
+      { col: 3, top: 208, text: "5. publish 直发", cls: "accent" },
+      { col: 3, top: 258, text: "6. 返回 preview_url", cls: "accent" },
+      { col: 4, top: 308, text: "7. write 备份", cls: "muted" },
+      { col: 1, top: 358, text: "8. 回传 URL 给端", cls: "" },
+      { col: 0, top: 408, text: "9. WebView 打开链接", cls: "" },
+      { col: 3, top: 458, text: "10. 返回 HTML 渲染完成", cls: "" },
+    ];
+    document.querySelectorAll(".spine").forEach((spine) => {
+      const col = Number(spine.dataset.col);
+      events.filter((e) => e.col === col).forEach((e) => {
+        const el = document.createElement("div");
+        el.className = "evt " + e.cls;
+        el.style.top = e.top + "px";
+        el.textContent = e.text;
+        spine.appendChild(el);
+      });
+    });
+  </script>
+</body>
+</html>
