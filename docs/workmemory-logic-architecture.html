@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>逻辑架构图 · workmemory 引用填参</title>
+  <style>
+    :root {
+      --navy: #0f172a;
+      --ink: #1e293b;
+      --teal: #0d9488;
+      --teal-d: #0f766e;
+      --slate: #334155;
+      --muted: #64748b;
+      --line: #cbd5e1;
+      --bg: #f1f5f9;
+      --paper: #ffffff;
+      --blue: #eff6ff;
+      --soft: #f0fdfa;
+      --ok: #ecfdf5;
+      --amber: #fffbeb;
+      --blue-b: #93c5fd;
+      --soft-b: #5eead4;
+      --ok-b: #6ee7b7;
+      --amber-b: #fbbf24;
+      --orange: #b45309;
+      --blue-t: #1d4ed8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 0%, #ccfbf1 0%, transparent 55%),
+        radial-gradient(ellipse 70% 40% at 90% 10%, #dbeafe 0%, transparent 50%),
+        var(--bg);
+      color: var(--slate);
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, var(--navy) 0%, #134e4a 100%);
+      color: #fff;
+      padding: 28px 32px 24px;
+      border-bottom: 4px solid var(--teal);
+    }
+    header h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
+    header p { margin: 10px 0 0; color: #99f6e4; font-size: 14px; max-width: 720px; }
+    main { max-width: 1120px; margin: 0 auto; padding: 28px 20px 48px; }
+
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px 18px;
+      margin-bottom: 22px; font-size: 12px; color: var(--muted);
+    }
+    .legend span::before {
+      content: "";
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: -1px;
+    }
+    .legend .l1::before { background: #3b82f6; }
+    .legend .l2::before { background: var(--teal); }
+    .legend .l3::before { background: #10b981; }
+    .legend .l4::before { background: #f59e0b; }
+
+    .lane {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+    }
+    .lane.session { background: linear-gradient(180deg, var(--blue), #fff); border-color: var(--blue-b); }
+    .lane.dm { background: linear-gradient(180deg, var(--soft), #fff); border-color: var(--soft-b); }
+    .lane.mem { background: linear-gradient(180deg, var(--ok), #fff); border-color: var(--ok-b); }
+    .lane.skill { background: linear-gradient(180deg, var(--amber), #fff); border-color: var(--amber-b); }
+    .lane-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 800px) {
+      .grid2 { grid-template-columns: 1fr; }
+      header h1 { font-size: 22px; }
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1.5px solid var(--teal);
+      border-radius: 12px;
+      padding: 14px 16px;
+      flex: 1;
+      min-width: 200px;
+    }
+    .card.primary { border-color: var(--teal-d); border-width: 2px; }
+    .card.blue { border-color: var(--blue-t); }
+    .card.orange { border-color: #d97706; }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      color: var(--teal-d);
+    }
+    .card.blue h3 { color: var(--blue-t); }
+    .card.orange h3 { color: var(--orange); }
+    .card ul {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 13px;
+    }
+    .card li { margin: 4px 0; }
+
+    .arrow-down {
+      text-align: center;
+      color: var(--teal-d);
+      font-size: 20px;
+      margin: -6px 0 10px;
+      font-weight: 700;
+    }
+
+    .flow-box {
+      margin-top: 8px;
+      padding: 18px 20px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      font-size: 13px;
+    }
+    .flow-box h2 {
+      margin: 0 0 12px;
+      font-size: 15px;
+      color: var(--ink);
+    }
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 900px) {
+      .flow-steps { grid-template-columns: 1fr 1fr; }
+    }
+    .step {
+      background: var(--soft);
+      border: 1px solid var(--soft-b);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      position: relative;
+    }
+    .step b {
+      display: block;
+      color: var(--teal-d);
+      margin-bottom: 4px;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
+    .flow-box strong { color: var(--teal-d); }
+    code {
+      background: #f1f5f9;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    }
+    .note { color: var(--muted); font-size: 12px; margin-top: 12px; }
+    .tag {
+      display: inline-block;
+      background: #ccfbf1;
+      color: var(--teal-d);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 6px;
+      vertical-align: 2px;
+    }
+    footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    footer a { color: var(--teal-d); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>逻辑架构图 · workmemory 引用填参</h1>
+    <p>工具结果默认入记忆 · Skill 显式 <code style="background:#134e4a;color:#ccfbf1;padding:1px 6px;border-radius:4px">${resultId:param}</code> 引用 · DM 在 invoke 前解析填参</p>
+  </header>
+  <main>
+    <div class="legend">
+      <span class="l1">① 会话层</span>
+      <span class="l2">② DM / Runtime</span>
+      <span class="l3">③ workmemory</span>
+      <span class="l4">④ Skill / 工具</span>
+    </div>
+
+    <section class="lane session">
+      <div class="lane-title">① 会话层</div>
+      <div class="row">
+        <div class="card blue">
+          <h3>模型 / LLM</h3>
+          <ul>
+            <li>plan / 发起工具调用</li>
+            <li>只见短摘要 + <code>resultId</code></li>
+            <li>下游入参可写 <code>${resultId:param}</code></li>
+          </ul>
+        </div>
+        <div class="card blue">
+          <h3>端侧（可选）</h3>
+          <ul>
+            <li>从 <code>dataForTool</code> 取长 URI 等</li>
+            <li>打开 / 展示给用户</li>
+            <li>大字段不必回灌模型</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="arrow-down">↓</div>
+
+    <section class="lane dm">
+      <div class="lane-title">② DM / Runtime（平台能力）<span class="tag">核心</span></div>
+      <div class="row">
+        <div class="card primary">
+          <h3>写入 workmemory</h3>
+          <ul>
+            <li>工具执行结束后默认缓存</li>
+            <li><code>resultId → resultData</code></li>
+            <li>可选 <code>dataForTool</code></li>
+          </ul>
+        </div>
+        <div class="card primary">
+          <h3>回灌控制</h3>
+          <ul>
+            <li>只把短摘要 + <code>resultId</code> 回给模型</li>
+            <li>大字段不进 prompt</li>
+            <li>降低 input token / TTFT</li>
+          </ul>
+        </div>
+        <div class="card primary">
+          <h3>引用解析</h3>
+          <ul>
+            <li>仅 <code>x-ref: true</code> 参数</li>
+            <li>格式 <code>${resultId:param}</code></li>
+            <li>先 resultData，再 dataForTool</li>
+          </ul>
+        </div>
+        <div class="card primary">
+          <h3>invoke / exec</h3>
+          <ul>
+            <li>替换入参后再调 Skill/工具</li>
+            <li>解析失败则明确报错</li>
+            <li>工具侧无感</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="arrow-down">↓ 读写</div>
+
+    <div class="grid2">
+      <section class="lane mem">
+        <div class="lane-title">③ workmemory（会话级）</div>
+        <div class="card primary" style="margin-bottom:12px">
+          <h3>resultDataList / resultData <span class="tag">主源</span></h3>
+          <ul>
+            <li>工具业务返回结果（JSON 可寻址）</li>
+            <li>引用解析主数据源</li>
+            <li>按 <code>resultId</code> 索引</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>dataForTool（可选）</h3>
+          <ul>
+            <li>附加数据（如长 authorize_url）</li>
+            <li>主源未命中时再查</li>
+            <li>可给端侧直接消费</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="lane skill">
+        <div class="lane-title">④ Skill / 工具</div>
+        <div class="card orange" style="margin-bottom:12px">
+          <h3>Skill Schema</h3>
+          <ul>
+            <li>特定参数声明 <code>x-ref: true</code></li>
+            <li>允许入参写 <code>${resultId:param}</code></li>
+            <li>未声明参数不解析引用</li>
+          </ul>
+        </div>
+        <div class="card orange">
+          <h3>业务工具实现</h3>
+          <ul>
+            <li>无感：不负责解析 $ 引用</li>
+            <li>只消费 DM 替换后的真实入参</li>
+            <li>结果默认回写 workmemory</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <div class="flow-box">
+      <h2>数据流（端到端）</h2>
+      <div class="flow-steps">
+        <div class="step"><b>STEP 1</b>执行工具 A，生成 <code>resultId_A</code></div>
+        <div class="step"><b>STEP 2</b>DM 写入 workmemory（resultData + dataForTool）</div>
+        <div class="step"><b>STEP 3</b>回灌模型：摘要 + <code>resultId_A</code></div>
+        <div class="step"><b>STEP 4</b>模型调工具 B，入参 <code>${resultId_A:param}</code></div>
+        <div class="step"><b>STEP 5</b>DM 解析填参 → invoke 工具 B</div>
+      </div>
+      <strong>一句话：</strong>
+      工具结果 → workmemory →（模型只见摘要）→ 下游 <code>${resultId:param}</code> → DM 解析填参 → 再调工具
+      <div class="note">
+        resultId：字母数字（如去横线 UUID） · 引用格式：<code>${resultId:param}</code> ·
+        建议正则：<code>^\$\{([A-Za-z0-9]+):([A-Za-z0-9_]+)\}$</code>
+      </div>
+    </div>
+
+    <footer>
+      方案说明：<a href="./workmemory-ref-scheme.md">workmemory-ref-scheme.md</a>
+      · 运行时序图：<a href="./assets/workmemory-runtime-view.png">workmemory-runtime-view.png</a>
+    </footer>
+  </main>
+</body>
+</html>
