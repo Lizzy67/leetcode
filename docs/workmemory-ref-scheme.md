@@ -8,7 +8,6 @@
 
 非目标：
 
-- 不涉及密钥/脱敏专项设计（假定工具不返回密钥）。
 - 不引入 `save_as_variable` 类显式存变量工具（默认写入 workmemory 即可）。
 
 ---
@@ -17,9 +16,9 @@
 
 | 名称 | 说明 |
 |------|------|
-| `resultId` | 一次工具调用结果的唯一 ID。建议直接使用 `tool_call_id`，字符集：`[A-Za-z0-9_-]+`。 |
+| `resultId` | 一次工具调用结果的唯一 ID。端使用 `tool_call_id`，字符集：`[A-Za-z0-9_-]+`。 |
 | `workmemory` | 会话级工作记忆，按 `resultId` 索引存放工具执行结果。 |
-| `resultData` / `resultDataList` | 工具返回的业务结果（业务自定义 JSON）。**引用解析的主数据源**。 |
+| `resultDataList` | 工具返回的业务结果（业务自定义 JSON）。**引用解析的主数据源**。 |
 | `dataForTool` | 工具执行附加数据（如给端侧打开的长 URI、展示字段等）。**次级查找源**。 |
 | `$` 引用 | Skill 入参中对历史结果的 jsonpath 引用。 |
 
@@ -35,14 +34,14 @@
 ```text
 模型发起工具调用（可含 plan / 多工具）
     ↓
-执行工具 A
+执行工具 A（uid随机生成取后8位==>resultId_A）
     ↓
-DM 将结果写入 workmemory[resultId=A]
-    （resultData 必写；dataForTool 可选）
+DM 将结果写入 workmemory[resultId=resultId_A]
+    （resultDataList + dataForTool ）
     ↓
-回灌模型：modelSummary + resultId
+回灌模型：resultDataList + resultId
     ↓
-模型再调工具 B，入参中带 ${A:$.x}
+模型再调工具 B，入参中带 ${resultId_A:param_x}
     ↓
 DM 在 invoke 前解析引用 → 查 workmemory → 替换入参
     ↓
@@ -64,7 +63,7 @@ DM 在 invoke 前解析引用 → 查 workmemory → 替换入参
   "resultId": "call_01",
   "toolName": "get_health_summary",
   "status": "success",
-  "resultData": { },
+  "resultDataList": { },
   "dataForTool": { },
   "modelSummary": "近7日步数汇总已生成"
 }
@@ -74,14 +73,14 @@ DM 在 invoke 前解析引用 → 查 workmemory → 替换入参
 
 | 字段 | 要求 |
 |------|------|
-| `resultData` | 业务结果，须为 JSON 可寻址结构，便于 jsonpath。 |
+| `resultDataList` | 业务结果，须为 JSON 可寻址结构，便于 jsonpath。 |
 | `dataForTool` | 可选；端侧或执行层附加数据，同样建议 JSON 可寻址。 |
 | `modelSummary` | 可选；专门用于回灌模型的短文本。 |
 
 **会话隔离**：按 session 分区。  
 **容量**：建议限制条数与总字节；超限按 LRU/最旧淘汰，并允许返回 `resultId` 失效类错误。
 
-**对 `resultData` 的建议约束（业务可裁剪）：**
+**对 `resultDataList` 的建议约束（业务可裁剪）：**
 
 - 优先结构化对象，避免整包无结构巨型字符串。
 - 超大字段（如整页 HTML）可单独成字段，引用时按 path 精确取用。
@@ -90,7 +89,7 @@ DM 在 invoke 前解析引用 → 查 workmemory → 替换入参
 **对 `dataForTool` 的建议约束：**
 
 - 仅放「执行/端侧需要」的附加字段（例如长 `authorize_url`）。
-- 字段含义在工具文档中写清，避免与 `resultData` 职责混淆。
+- 字段含义在工具文档中写清，避免与 `resultDataList` 职责混淆。
 
 ### 4.2 Skill：参数显式声明支持引用
 
@@ -126,7 +125,7 @@ DM 在 invoke 前解析引用 → 查 workmemory → 替换入参
 
 | 值 | 含义 |
 |----|------|
-| `resultData` | 只从 `resultData` 解析（默认可设为此，更严） |
+| `resultDataList` | 只从 `resultDataList` 解析（默认可设为此，更严） |
 | `dataForTool` | 只从 `dataForTool` 解析 |
 | `both` | 先 `resultData`，找不到再 `dataForTool`（默认也可设为此，更灵活） |
 
@@ -146,16 +145,16 @@ ${resultId:jsonpath}
 示例：
 
 ```text
-${call_01:$.summary}
-${call_01:$.data.items[0].name}
-${call_auth:$.authorize_url}
+${call_01:summary}
+${call_01:data.items[0].name}
+${call_auth:authorize_url}
 ```
 
 规则：
 
-1. `resultId` 仅允许 `[A-Za-z0-9_-]+`。
+1. `resultId` 仅允许 `[A-Za-z0-9]+`。
 2. 以 **第一个 `:`** 为分隔符；其后整段为 jsonpath。
-3. jsonpath 建议限制为只读子集，例如：`$.a.b[0].c`。
+3. jsonpath 建议限制为只读子集，例如：`a.b[0].c`。
 4. 不建议使用 `${id.path.path}` 并用「第一个点」切开——jsonpath 本身含多级 `.`，易歧义。
 
 ### 4.4 DM：在 invoke/exec 入参阶段解析
@@ -178,7 +177,7 @@ ${call_auth:$.authorize_url}
 查找顺序（当 `x-ref-source = both` 或未声明时）：
 
 ```text
-resultData（resultDataList）→ 若 path 不存在 → dataForTool → 仍无则失败
+resultDataList→ 若 path 不存在 → dataForTool → 仍无则失败
 ```
 
 类型处理：
@@ -195,11 +194,11 @@ resultData（resultDataList）→ 若 path 不存在 → dataForTool → 仍无�
   "resultId": "call_01",
   "status": "success",
   "summary": "近7日步数汇总已生成",
-  "hint": "下游可通过 ${call_01:$.summary} 引用"
+  "hint": "下游可通过 ${call_01:summary} 引用"
 }
 ```
 
-完整 `resultData` / `dataForTool` **默认不进入**模型上下文。
+完整  `dataForTool` **默认不进入**模型上下文。
 
 ---
 
@@ -237,14 +236,14 @@ resultData（resultDataList）→ 若 path 不存在 → dataForTool → 仍无�
 ```text
 ① request_auth
    resultId = call_auth
-   resultData = { "status": "pending", "auth_session_id": "as_1" }
+   resultDataList = { "status": "pending", "auth_session_id": "as_1" }
    dataForTool = { "authorize_url": "https://...很长..." }
 
    端：从 dataForTool.authorize_url 打开授权页
    模型：只看 status + auth_session_id
 
 ② 若某工具参数确实需要 URL，且声明 x-ref + 允许 dataForTool：
-   args.url = "${call_auth:$.authorize_url}"
+   args.url = "${call_auth:authorize_url}"
    DM 在 resultData 未命中后，从 dataForTool 取出
 ```
 
