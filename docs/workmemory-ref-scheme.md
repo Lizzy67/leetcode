@@ -48,6 +48,7 @@ DM 在 invoke 前解析引用 → 查 workmemory → 替换入参
 执行工具 B
 ```
 
+逻辑架构图见：`docs/assets/workmemory-logic-architecture.png`。  
 运行视图见：`docs/assets/workmemory-runtime-view.png`。
 
 ---
