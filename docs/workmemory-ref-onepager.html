@@ -6,191 +6,79 @@
 <title>Workmemory 引用方案 · 一页纸</title>
 <style>
   :root {
-    --ink: #14201c;
-    --muted: #5a6b64;
-    --line: #d5e0da;
-    --bg: #f3f7f4;
-    --paper: #ffffff;
-    --teal: #0f6b5c;
-    --teal-soft: #e6f4f0;
-    --amber: #9a6700;
-    --amber-soft: #fff6e0;
-    --blue: #1a5f9e;
-    --blue-soft: #e8f1fa;
-    --rose: #8b3a4a;
-    --rose-soft: #fceef1;
+    --ink: #14201c; --muted: #5a6b64; --line: #d5e0da; --bg: #f3f7f4;
+    --paper: #fff; --teal: #0f6b5c; --teal-soft: #e6f4f0;
+    --amber: #9a6700; --amber-soft: #fff6e0;
+    --blue: #1a5f9e; --blue-soft: #e8f1fa;
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0;
-    color: var(--ink);
-    background:
-      radial-gradient(900px 420px at 8% -10%, #dff0ea 0%, transparent 55%),
-      radial-gradient(700px 380px at 100% 0%, #e8eef8 0%, transparent 50%),
-      var(--bg);
-    font: 13px/1.45 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    margin: 0; color: var(--ink); background: var(--bg);
+    font: 12.5px/1.4 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   }
   .page {
-    max-width: 1100px;
-    margin: 18px auto 28px;
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 22px 24px 18px;
-    box-shadow: 0 10px 28px rgba(20, 32, 28, 0.06);
+    max-width: 980px; margin: 16px auto; background: var(--paper);
+    border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 14px;
   }
   header {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    align-items: flex-end;
-    border-bottom: 2px solid var(--teal);
-    padding-bottom: 10px;
-    margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 2px solid var(--teal); padding-bottom: 8px; margin-bottom: 12px;
   }
-  h1 {
-    margin: 0;
-    font-size: 22px;
-    letter-spacing: 0.02em;
-    color: var(--teal);
-  }
-  .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
-  .meta {
-    text-align: right;
-    color: var(--muted);
-    font-size: 11px;
-    white-space: nowrap;
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: 1.05fr 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .card {
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px 12px;
-    background: #fbfdfc;
-  }
-  .card h2 {
-    margin: 0 0 6px;
-    font-size: 13px;
-    color: var(--teal);
-    letter-spacing: 0.04em;
-  }
-  .card p, .card li { margin: 0 0 4px; color: var(--ink); }
-  .card ul { margin: 0; padding-left: 16px; }
-  .pill {
-    display: inline-block;
-    border-radius: 999px;
-    padding: 1px 8px;
-    font-size: 11px;
-    font-weight: 600;
-    margin-right: 4px;
-  }
-  .pill.t { background: var(--teal-soft); color: var(--teal); }
-  .pill.a { background: var(--amber-soft); color: var(--amber); }
-  .pill.b { background: var(--blue-soft); color: var(--blue); }
-  .pill.r { background: var(--rose-soft); color: var(--rose); }
+  h1 { margin: 0; font-size: 20px; color: var(--teal); }
+  .meta { color: var(--muted); font-size: 11px; }
   .code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    background: #eef4f1;
-    border: 1px solid #d7e4de;
-    border-radius: 4px;
-    padding: 0 5px;
-    font-size: 11.5px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    background: #eef4f1; border: 1px solid #d7e4de; border-radius: 3px;
+    padding: 0 4px; font-size: 11px;
   }
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .card {
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fbfdfc;
+  }
+  .card h2 { margin: 0 0 4px; font-size: 12.5px; color: var(--teal); }
+  .card ul { margin: 0; padding-left: 15px; }
+  .card li { margin: 0 0 2px; }
   .flow {
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin-bottom: 10px;
-    background: linear-gradient(180deg, #f7fbf9, #fff);
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+    margin-bottom: 8px; background: #f7fbf9;
   }
-  .flow h2 { margin: 0 0 8px; font-size: 13px; color: var(--teal); }
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 6px;
-  }
+  .flow h2 { margin: 0 0 6px; font-size: 12.5px; color: var(--teal); }
+  .steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
   .step {
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 7px 8px;
-    background: #fff;
-    min-height: 84px;
-    position: relative;
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 7px;
+    background: #fff; position: relative; min-height: 58px;
   }
   .step::after {
-    content: "→";
-    position: absolute;
-    right: -9px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--teal);
-    font-weight: 700;
-    z-index: 1;
+    content: "→"; position: absolute; right: -8px; top: 50%;
+    transform: translateY(-50%); color: var(--teal); font-weight: 700;
   }
   .step:last-child::after { content: ""; }
-  .step b { display: block; font-size: 11px; color: var(--teal); margin-bottom: 3px; }
-  .step span { font-size: 11px; color: var(--muted); }
-  .two {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .scenario {
-    border-radius: 10px;
-    border: 1px solid var(--line);
-    padding: 10px 12px;
-  }
-  .scenario.s1 { background: var(--blue-soft); border-color: #c5daf0; }
-  .scenario.s2 { background: var(--amber-soft); border-color: #f0dfad; }
-  .scenario h3 { margin: 0 0 6px; font-size: 13px; }
-  .scenario.s1 h3 { color: var(--blue); }
-  .scenario.s2 h3 { color: var(--amber); }
-  .scenario .rule {
-    margin: 6px 0;
-    padding: 6px 8px;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.72);
-    border: 1px dashed rgba(0,0,0,0.12);
-    font-size: 12px;
-  }
-  .bottom {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr 1fr;
-    gap: 10px;
-  }
-  .life ol { margin: 0; padding-left: 18px; }
-  .life li, .gain li { margin-bottom: 3px; }
+  .step b { display: block; font-size: 11px; color: var(--teal); margin-bottom: 2px; }
+  .step span { font-size: 10.5px; color: var(--muted); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .scenario { border-radius: 8px; border: 1px solid var(--line); padding: 8px 10px; }
+  .s1 { background: var(--blue-soft); border-color: #c5daf0; }
+  .s2 { background: var(--amber-soft); border-color: #f0dfad; }
+  .scenario h3 { margin: 0 0 4px; font-size: 12.5px; }
+  .s1 h3 { color: var(--blue); }
+  .s2 h3 { color: var(--amber); }
+  .scenario ul { margin: 0; padding-left: 15px; }
   .ex {
-    font-size: 11.5px;
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 6px 8px;
-    margin-top: 6px;
+    margin-top: 5px; padding: 5px 7px; background: #fff; border-radius: 5px;
+    border: 1px solid var(--line); font-size: 11px;
   }
-  .ex .row { margin: 2px 0; }
-  .label { color: var(--muted); display: inline-block; min-width: 52px; }
+  .bottom { display: grid; grid-template-columns: 1.1fr 1fr 0.9fr; gap: 8px; }
+  .bottom ol, .bottom ul { margin: 0; padding-left: 16px; }
+  .bottom li { margin: 0 0 2px; }
   footer {
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 11px;
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
+    margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 11px;
   }
   @media print {
     body { background: #fff; }
-    .page { margin: 0; box-shadow: none; border: none; max-width: none; }
+    .page { margin: 0; border: none; max-width: none; }
   }
-  @media (max-width: 900px) {
+  @media (max-width: 860px) {
     .grid, .two, .bottom, .steps { grid-template-columns: 1fr; }
     .step::after { content: ""; }
   }
@@ -199,147 +87,99 @@
 <body>
   <article class="page">
     <header>
-      <div>
-        <h1>Workmemory 引用方案 · 一页纸</h1>
-        <div class="sub">用引用代替复述大结果：降 Input Token、提传参遵从性；真值由 Runtime/DM 回填</div>
-      </div>
-      <div class="meta">
-        语法：<span class="code">${resultId.jsonpath}</span><br />
-        resultId：仅字母数字（不含 <span class="code">.</span>）· 首个 <span class="code">.</span> 后为 jsonpath
-      </div>
+      <h1>Workmemory 引用方案 · 一页纸</h1>
+      <div class="meta">语法 <span class="code">${resultId.jsonpath}</span> · resultId 仅字母数字（无 <span class="code">.</span>）</div>
     </header>
 
     <section class="grid">
       <div class="card">
         <h2>1. 背景</h2>
         <ul>
-          <li>多轮工具链里，上一步常返回 URI、大段正文等。若整段回灌并要求模型「原样抄回」下一工具入参，<b>遵从性差</b>（截断、改写、漏字符），且 <b>Input Token</b> 膨胀、时延上升。</li>
-          <li>不少字段（如 URI）只是下游工具的输入指针，<b>模型不必理解其内容</b>，只需感知「存在这个可引用变量」。</li>
-          <li>因此：结果默认入 workmemory；Runtime/DM 可在送模型前，按工具配置把对应值 <b>mask 成</b> <span class="code">${resultId.jsonpath}</span>；模型后续只输出该引用，由 Runtime/DM 在调用前展开真值。</li>
+          <li>大结果让模型原样抄回下一工具 → <b>遵从性差</b>、Input Token 高。</li>
+          <li>URI 等只需当下游入参，模型不必理解内容，感知变量即可。</li>
+          <li>送模前 Runtime/DM 可按工具配置把值 <b>mask</b> 成 <span class="code">${resultId.jsonpath}</span>。</li>
         </ul>
       </div>
       <div class="card">
         <h2>2. 方案原则</h2>
         <ul>
-          <li><span class="pill t">默认入库</span>工具返回结果默认写入 workmemory（分配 resultId）。</li>
-          <li><span class="pill a">入参回填</span>Runtime/DM 在 invoke/exec 前，根据模型输出的引用解析并回填变量真值。</li>
-          <li><span class="pill b">查找顺序</span>兼容优先：先查 <span class="code">resultDataList</span>（全量工具返回），再查 <span class="code">dataForTool</span>（部分工具已适配面）。</li>
-          <li><span class="pill r">短引用</span>模型侧只持有/输出 <span class="code">${resultId.jsonpath}</span>，不复述长 value。</li>
+          <li>工具返回 <b>默认写入</b> workmemory。</li>
+          <li>invoke/exec 前按模型引用 <b>解析回填</b> 真值。</li>
+          <li>查找：先 <span class="code">resultDataList</span>（全量），再 <span class="code">dataForTool</span>（已适配）。</li>
         </ul>
       </div>
       <div class="card">
         <h2>3. 关键点</h2>
         <ul>
-          <li><b>遵从性</b>：输出短引用远比抄长串稳；mask 后可选空间更小。</li>
-          <li><b>可见性分场景</b>：不需理解的值可 mask；需推理的值可暴露，但仍用引用传参（Skill 约束）。</li>
-          <li><b>解析无歧义</b>：resultId 不含 <span class="code">.</span>，用第一个 <span class="code">.</span> 切开 id 与 jsonpath。</li>
-          <li><b>兼容两套存储</b>：resultDataList 兜底全工具；dataForTool 承接已适配工具。</li>
-          <li><b>失败可感知</b>：引用非法/未命中返回明确错误，避免把字面量 <span class="code">${...}</span> 误传下游。</li>
+          <li>短引用替代抄长串 → 更稳、更省 token。</li>
+          <li>resultId 无 <span class="code">.</span>，首个 <span class="code">.</span> 切 jsonpath。</li>
+          <li>引用未命中明确报错，勿原样传下游。</li>
         </ul>
       </div>
     </section>
 
     <section class="flow">
-      <h2>4. 逻辑架构 · 完整流程</h2>
+      <h2>4. 流程</h2>
       <div class="steps">
-        <div class="step">
-          <b>① 工具返回</b>
-          <span>工具执行完成，产出结果（可含 URI / 大字段）</span>
-        </div>
-        <div class="step">
-          <b>② 写入记忆</b>
-          <span>默认写入 workmemory，生成 resultId；落入 resultDataList，必要时同步 dataForTool</span>
-        </div>
-        <div class="step">
-          <b>③ 送模前处理</b>
-          <span>按工具配置：需屏蔽的字段用 <span class="code">${id.path}</span> mask；需理解的字段保留/摘要</span>
-        </div>
-        <div class="step">
-          <b>④ 模型出参</b>
-          <span>下一工具入参填写 <span class="code">${resultId.jsonpath}</span>，不抄长值</span>
-        </div>
-        <div class="step">
-          <b>⑤ 解析回填</b>
-          <span>invoke/exec 前：校验 → 查 resultDataList → 再查 dataForTool → 替换真值</span>
-        </div>
-        <div class="step">
-          <b>⑥ 真正调用</b>
-          <span>用展开后的 args 执行工具；成功则再次入库，形成闭环</span>
-        </div>
+        <div class="step"><b>① 返回</b><span>工具产出结果</span></div>
+        <div class="step"><b>② 入库</b><span>写入 workmemory，生成 resultId</span></div>
+        <div class="step"><b>③ 送模</b><span>按配置 mask 或不 mask</span></div>
+        <div class="step"><b>④ 出参</b><span>模型写 <span class="code">${id.path}</span></span></div>
+        <div class="step"><b>⑤ 回填</b><span>resultDataList → dataForTool</span></div>
+        <div class="step"><b>⑥ 调用</b><span>真值调工具，再入库</span></div>
       </div>
-      <p style="margin:8px 0 0;font-size:11.5px;color:var(--muted);">
-        边界：Model 只产引用 · Runtime/DM 负责入库、mask、解析回填 · Workmemory 按 resultId 存结果 · Tool Runtime 只消费真值。
-      </p>
     </section>
 
     <section class="two">
       <div class="scenario s1">
-        <h3>场景① 模型不需要看 value</h3>
-        <div class="rule"><b>做法：</b>Runtime/DM 在送模型前，按工具配置把字段值直接 mask 为 <span class="code">${resultId.jsonpath}</span>。模型只需感知变量存在，后续原样引用即可。</div>
+        <h3>场景① 不看 value</h3>
         <ul>
-          <li>典型：fileUri、objectId、authorizeUrl 等「指针型」字段。</li>
-          <li>遵从：几乎只能输出该引用串，抄错长 URI 的路径被关掉。</li>
-          <li>Token：回灌接近常量，省得最多。</li>
+          <li>送模前 mask 为引用；模型只需感知变量。</li>
+          <li>适用：URI、objectId 等指针字段。</li>
         </ul>
-        <div class="ex">
-          <div class="row"><span class="label">真值</span><span class="code">fileUri = "https://…/very/long/path?…"</span></div>
-          <div class="row"><span class="label">送模</span><span class="code">fileUri = "${a1b2c3d4.fileUri}"</span>（已 mask）</div>
-          <div class="row"><span class="label">模型</span><span class="code">analyze({ fileUri: "${a1b2c3d4.fileUri}" })</span></div>
-          <div class="row"><span class="label">DM</span>resultDataList → 命中 → 回填真实 URI → 调用</div>
-        </div>
+        <div class="ex">送模 <span class="code">${a1b2.fileUri}</span> → 模型原样引用 → DM 回填真 URI</div>
       </div>
       <div class="scenario s2">
-        <h3>场景② 模型需要看 value</h3>
-        <div class="rule"><b>做法：</b>把 value（或摘要）交给模型做推理；同时用 <b>Skill</b> 约束：对应入参必须填 <span class="code">${resultId.jsonpath}</span>，禁止把长 value 再贴回工具参数。</div>
+        <h3>场景② 要看 value</h3>
         <ul>
-          <li>典型：要读正文/结构化字段才能决定下一步，但下游仍要原值。</li>
-          <li>遵从：「看」与「传」分离——推理用真值，传参用引用。</li>
-          <li>Token：回灌有内容成本；传参链路仍避免二次复制长串。</li>
+          <li>value/摘要给模型推理；Skill 仍约束入参必须写引用。</li>
+          <li>「看」与「传」分离。</li>
         </ul>
-        <div class="ex">
-          <div class="row"><span class="label">送模</span><span class="code">text="血糖偏高…" · 可引用 ${e5f6a7b8.text}</span></div>
-          <div class="row"><span class="label">Skill</span>入参 content 声明必须使用引用</div>
-          <div class="row"><span class="label">模型</span><span class="code">report({ content: "${e5f6a7b8.text}" })</span></div>
-          <div class="row"><span class="label">DM</span>解析回填 text 真值后调用 report</div>
-        </div>
+        <div class="ex">可见 text → 入参仍写 <span class="code">${e5f6.text}</span> → DM 回填</div>
       </div>
     </section>
 
     <section class="bottom">
-      <div class="card life">
+      <div class="card">
         <h2>5. 生命周期</h2>
         <ol>
-          <li><b>创建</b>：工具返回成功 → 分配 resultId → 写入 workmemory（resultDataList；按需 dataForTool）。</li>
-          <li><b>暴露</b>：场景① mask 为引用串；场景② 可见/摘要 + 告知可引用路径。</li>
-          <li><b>引用</b>：模型输出 <span class="code">${resultId.jsonpath}</span>。</li>
-          <li><b>回填</b>：invoke/exec 前解析；先 resultDataList，再 dataForTool。</li>
-          <li><b>失效</b>：会话结束 / TTL / 显式清理；未命中则明确报错回模型。</li>
+          <li>创建：返回成功 → 分配 resultId → 入库</li>
+          <li>暴露：mask 或可见 + 可引用路径</li>
+          <li>引用 / 回填：模型输出 → invoke 前展开</li>
+          <li>失效：会话结束 / TTL / 清理；未命中报错</li>
         </ol>
       </div>
-      <div class="card gain">
+      <div class="card">
         <h2>6. 收益</h2>
         <ul>
-          <li><b>时延</b>：Input Token 下降，串行工具链更快。</li>
-          <li><b>遵从</b>：短引用 + 可选 mask，减少抄写错误。</li>
-          <li><b>正确</b>：真值由 Runtime/DM 注入，避免截断/篡改。</li>
-          <li><b>兼容</b>：resultDataList 覆盖全工具；dataForTool 承接存量适配。</li>
-          <li><b>演进</b>：jsonpath 可从简单字段名逐步放开；与批/并行调用共用同一缓存。</li>
+          <li>降 Input Token → 降时延</li>
+          <li>短引用 → 传参更遵从</li>
+          <li>真值由 DM 注入 → 少截断/篡改</li>
+          <li>两套存储兼容存量适配</li>
         </ul>
       </div>
       <div class="card">
         <h2>7. 边界</h2>
         <ul>
-          <li>只在工具 <b>入参</b> 侧解析引用；工具输出侧不展开引用。</li>
-          <li>resultId 仅字母数字；用首个 <span class="code">.</span> 分隔 jsonpath。</li>
-          <li>一期可先支持简单字段名，再扩展受限 jsonpath。</li>
-          <li>与 HTML Preview 等渲染能力正交，可独立落地。</li>
+          <li>只解析工具入参</li>
+          <li>一期可先简单字段名</li>
+          <li>与 Preview 等能力正交</li>
         </ul>
       </div>
     </section>
 
     <footer>
-      <div>一句话：<b>结果默认入 workmemory；不需理解则 mask 成引用；模型只输出 ${resultId.jsonpath}；Runtime/DM 在 invoke 前按 resultDataList → dataForTool 回填真值。</b></div>
-      <div>配套：workmemory-ref-scheme.md · assets/workmemory-*.png</div>
+      结果入 workmemory → 按需 mask → 模型只输出 <span class="code">${resultId.jsonpath}</span> → invoke 前按 resultDataList → dataForTool 回填。
     </footer>
   </article>
 </body>
