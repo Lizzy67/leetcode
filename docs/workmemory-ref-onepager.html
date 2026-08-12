@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Workmemory 引用方案 · 一页纸</title>
+<style>
+  :root {
+    --ink: #14201c;
+    --muted: #5a6b64;
+    --line: #d5e0da;
+    --bg: #f3f7f4;
+    --paper: #ffffff;
+    --teal: #0f6b5c;
+    --teal-soft: #e6f4f0;
+    --amber: #9a6700;
+    --amber-soft: #fff6e0;
+    --blue: #1a5f9e;
+    --blue-soft: #e8f1fa;
+    --rose: #8b3a4a;
+    --rose-soft: #fceef1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(900px 420px at 8% -10%, #dff0ea 0%, transparent 55%),
+      radial-gradient(700px 380px at 100% 0%, #e8eef8 0%, transparent 50%),
+      var(--bg);
+    font: 13px/1.45 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .page {
+    max-width: 1100px;
+    margin: 18px auto 28px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 24px 18px;
+    box-shadow: 0 10px 28px rgba(20, 32, 28, 0.06);
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-end;
+    border-bottom: 2px solid var(--teal);
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: 0.02em;
+    color: var(--teal);
+  }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .meta {
+    text-align: right;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #fbfdfc;
+  }
+  .card h2 {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: var(--teal);
+    letter-spacing: 0.04em;
+  }
+  .card p, .card li { margin: 0 0 4px; color: var(--ink); }
+  .card ul { margin: 0; padding-left: 16px; }
+  .pill {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .pill.t { background: var(--teal-soft); color: var(--teal); }
+  .pill.a { background: var(--amber-soft); color: var(--amber); }
+  .pill.b { background: var(--blue-soft); color: var(--blue); }
+  .pill.r { background: var(--rose-soft); color: var(--rose); }
+  .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: #eef4f1;
+    border: 1px solid #d7e4de;
+    border-radius: 4px;
+    padding: 0 5px;
+    font-size: 11.5px;
+  }
+  .flow {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    background: linear-gradient(180deg, #f7fbf9, #fff);
+  }
+  .flow h2 { margin: 0 0 8px; font-size: 13px; color: var(--teal); }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+  .step {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 8px;
+    background: #fff;
+    min-height: 78px;
+    position: relative;
+  }
+  .step::after {
+    content: "→";
+    position: absolute;
+    right: -9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--teal);
+    font-weight: 700;
+    z-index: 1;
+  }
+  .step:last-child::after { content: ""; }
+  .step b { display: block; font-size: 11px; color: var(--teal); margin-bottom: 3px; }
+  .step span { font-size: 11px; color: var(--muted); }
+  .two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .scenario {
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+  }
+  .scenario.s1 { background: var(--blue-soft); border-color: #c5daf0; }
+  .scenario.s2 { background: var(--amber-soft); border-color: #f0dfad; }
+  .scenario h3 {
+    margin: 0 0 6px;
+    font-size: 13px;
+  }
+  .scenario.s1 h3 { color: var(--blue); }
+  .scenario.s2 h3 { color: var(--amber); }
+  .scenario .rule {
+    margin: 6px 0;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.72);
+    border: 1px dashed rgba(0,0,0,0.12);
+    font-size: 12px;
+  }
+  .bottom {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 10px;
+  }
+  .life ol {
+    margin: 0;
+    padding-left: 18px;
+  }
+  .life li { margin-bottom: 3px; }
+  .gain li { margin-bottom: 3px; }
+  .ex {
+    font-size: 11.5px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-top: 6px;
+  }
+  .ex .row { margin: 2px 0; }
+  .label { color: var(--muted); display: inline-block; min-width: 52px; }
+  footer {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  @media print {
+    body { background: #fff; }
+    .page { margin: 0; box-shadow: none; border: none; max-width: none; }
+  }
+  @media (max-width: 900px) {
+    .grid, .two, .bottom, .steps { grid-template-columns: 1fr; }
+    .step::after { content: ""; }
+  }
+</style>
+</head>
+<body>
+  <article class="page">
+    <header>
+      <div>
+        <h1>Workmemory 引用方案 · 一页纸</h1>
+        <div class="sub">目标：降低多轮工具调用的 Input Token，同时提升模型对「传参」的遵从性</div>
+      </div>
+      <div class="meta">
+        语法：<span class="code">${resultId:param}</span><br />
+        resultId = 字母数字 · param = 简单字段名
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <h2>1. 背景</h2>
+        <ul>
+          <li>串行工具链中，上一步结果（尤其 URI/大字段）若整段回灌模型，<b>Input Token 膨胀</b> → 时延上升。</li>
+          <li>要求模型「原样抄长字符串」时，易出现截断、改写、漏字符，<b>遵从性差</b>。</li>
+          <li>需要：结果默认缓存 + 引用传参；模型只说「用哪条结果的哪个字段」，由 DM 展开真值。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>2. 方案原则</h2>
+        <ul>
+          <li><span class="pill t">默认缓存</span>工具成功结果写入 workmemory，无需额外 save 工具。</li>
+          <li><span class="pill a">引用只在入参</span>DM 在 invoke/exec 前解析；输出不做引用展开。</li>
+          <li><span class="pill b">查表顺序</span>先 <span class="code">resultData</span>，再 <span class="code">dataForTool</span>。</li>
+          <li><span class="pill r">短引用优先</span>模型输出短 token，比复述长 value 更稳、更省。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>3. 关键点（遵从性）</h2>
+        <ul>
+          <li><b>降低抄写负担</b>：模型只需输出 <span class="code">${id:field}</span>，不必复述长 URI/正文。</li>
+          <li><b>Skill 声明可引用</b>：参数标 <span class="code">x-ref</span>，把「该写引用」写进契约，而不是口头希望。</li>
+          <li><b>两种可见性</b>：不看 value → 直接 mask；要看 value → Skill 仍约束「工具入参必须用引用」。</li>
+          <li><b>校验失败可重试</b>：引用非法/未命中时返回明确错误，引导改写引用而非瞎猜字符串。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="flow">
+      <h2>4. 逻辑架构 · 完整流程</h2>
+      <div class="steps">
+        <div class="step">
+          <b>① 工具执行</b>
+          <span>Tool 跑完返回结果（含 URI/大字段等）</span>
+        </div>
+        <div class="step">
+          <b>② DM 入库</b>
+          <span>按默认策略写入 workmemory：resultData / dataForTool，生成 resultId</span>
+        </div>
+        <div class="step">
+          <b>③ 回灌模型</b>
+          <span>按场景：mask 或带 preview；附带「可引用字段」提示</span>
+        </div>
+        <div class="step">
+          <b>④ 模型出参</b>
+          <span>下一工具参数写 <span class="code">${resultId:param}</span>，不抄长值</span>
+        </div>
+        <div class="step">
+          <b>⑤ DM 解析</b>
+          <span>校验语法 → 查 resultData → 回退 dataForTool → 替换真值</span>
+        </div>
+        <div class="step">
+          <b>⑥ 真正调用</b>
+          <span>用展开后的 args 调工具；成功则再入库，闭环</span>
+        </div>
+      </div>
+      <p style="margin:8px 0 0;font-size:11.5px;color:var(--muted);">
+        组件边界：Model（只产引用）→ DM（缓存 + 解析 + 编排）→ Workmemory（按 resultId 存两面）→ Tool Runtime（只收真值）。
+        Client 面可选只暴露摘要；Runtime 面可服务端私有。
+      </p>
+    </section>
+
+    <section class="two">
+      <div class="scenario s1">
+        <h3>场景① 模型不需要看 value</h3>
+        <div class="rule"><b>策略：</b>对变量值做 mask / 省略；模型上下文里只保留 resultId、字段名、类型与长度提示。</div>
+        <ul>
+          <li>适用：下一步工具只要「指针」（如 fileUri、objectId），模型无需理解内容。</li>
+          <li>遵从性：可选空间极小——几乎只能输出 <span class="code">${resultId:param}</span>。</li>
+          <li>Token：回灌几乎为常量级，省得最多。</li>
+        </ul>
+        <div class="ex">
+          <div class="row"><span class="label">回灌</span><span class="code">resultId=a1b2… · fields=[fileUri] · fileUri=&lt;masked len=180&gt;</span></div>
+          <div class="row"><span class="label">模型</span><span class="code">analyze(fileUri="${a1b2c3d4:fileUri}")</span></div>
+          <div class="row"><span class="label">DM</span>展开为真实 URI 后调用 analyze</div>
+        </div>
+      </div>
+      <div class="scenario s2">
+        <h3>场景② 模型需要看 value</h3>
+        <div class="rule"><b>策略：</b>把 value（或摘要）给模型做推理；但通过 <b>Skill 约束</b>：标了 x-ref 的入参必须填引用，禁止把长 value 再贴回工具参数。</div>
+        <ul>
+          <li>适用：要读正文/结构化字段才能决定下一步，但仍要用原值调下游工具。</li>
+          <li>遵从性：推理用真值；传参用引用——「看」与「传」分离。</li>
+          <li>Token：回灌有内容成本；传参链路仍避免二次复制长串。</li>
+        </ul>
+        <div class="ex">
+          <div class="row"><span class="label">回灌</span><span class="code">text="血糖偏高…" · resultId=e5f6… · refFields=[text]</span></div>
+          <div class="row"><span class="label">Skill</span><span class="code">report.content: { "x-ref": true }</span> → 必须引用</div>
+          <div class="row"><span class="label">模型</span><span class="code">report(content="${e5f6a7b8:text}")</span> ← 即使已看过 text</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bottom">
+      <div class="card life">
+        <h2>5. 生命周期</h2>
+        <ol>
+          <li><b>创建</b>：工具成功返回 → DM 分配 resultId → 写入 resultData（必要）/ dataForTool（按需）。</li>
+          <li><b>暴露</b>：场景① mask；场景② 可见/摘要 + 声明可引用字段。</li>
+          <li><b>引用</b>：模型输出 <span class="code">${resultId:param}</span>；DM 解析替换。</li>
+          <li><b>失效</b>：会话结束、TTL、显式清理、或同 id 被策略覆盖。</li>
+          <li><b>失败</b>：语法错 / 未命中 / 字段不存在 → 明确错误回模型，不静默吞掉。</li>
+        </ol>
+      </div>
+      <div class="card gain">
+        <h2>6. 收益</h2>
+        <ul>
+          <li><b>时延</b>：Input Token 下降 → 串行工具链更快。</li>
+          <li><b>遵从</b>：短引用比抄长串更稳；Skill 把规则固化。</li>
+          <li><b>正确性</b>：真值由 DM 注入，减少截断/篡改。</li>
+          <li><b>成本</b>：少传重复大字段，账单与上下文窗口双省。</li>
+          <li><b>演进</b>：字段名可平滑升到受限 jsonpath；并行/批调用可复用同一缓存。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>7. 非目标 / 边界</h2>
+        <ul>
+          <li>不做 <span class="code">save_as_variable</span> 类额外工具。</li>
+          <li>输出侧不解析引用；只处理工具入参。</li>
+          <li>一期 param 为简单字段名，不做任意 jsonpath。</li>
+          <li>本方案默认工具结果无 Secret；若未来有敏感字段，再叠加脱敏策略。</li>
+          <li>与 HTML Preview 等渲染能力正交，可独立落地。</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      <div>一句话：<b>缓存结果、引用传参；不看则 mask，要看也仍用引用——用 Skill 锁遵从，用 DM 保真值。</b></div>
+      <div>配套：workmemory-ref-scheme.md · assets/workmemory-*.png</div>
+    </footer>
+  </article>
+</body>
+</html>
