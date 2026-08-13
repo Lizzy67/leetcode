@@ -113,7 +113,8 @@
         <ul>
           <li>短引用替代抄长串 → 更稳、更省 token。</li>
           <li>resultId 无 <span class="code">.</span>，首个 <span class="code">.</span> 切 jsonpath。</li>
-          <li>引用未命中明确报错，勿原样传下游。</li>
+          <li><b>SystemPrompt</b>：工具入参若照抄变量且值 token&gt;12 → 必须输出引用（<span class="code">${8位.id}</span> 已 ≥12，抄长值无收益）。</li>
+          <li>约束优先级：mask &gt; Skill &gt; SystemPrompt；未命中明确报错。</li>
         </ul>
       </div>
     </section>
@@ -142,10 +143,10 @@
       <div class="scenario s2">
         <h3>场景② 要看 value</h3>
         <ul>
-          <li>value/摘要给模型推理；Skill 仍约束入参必须写引用。</li>
+          <li>value/摘要给模型推理；传参仍用引用（Skill + SystemPrompt：token&gt;12 禁照抄）。</li>
           <li>「看」与「传」分离。</li>
         </ul>
-        <div class="ex">可见 text → 入参仍写 <span class="code">${e5f6.text}</span> → DM 回填</div>
+        <div class="ex">可见 text → 入参仍写 <span class="code">${e5f6a7b8.text}</span> → DM 回填</div>
       </div>
     </section>
 
@@ -171,15 +172,15 @@
       <div class="card">
         <h2>7. 边界</h2>
         <ul>
-          <li>只解析工具入参</li>
-          <li>一期可先简单字段名</li>
-          <li>与 Preview 等能力正交</li>
+          <li>只解析工具入参；阈值仅约束「传参照抄」，不禁推理引用原文</li>
+          <li>token&gt;12 以 Runtime 计数为准；Prompt 为软约束</li>
+          <li>一期可先简单字段名；与 Preview 正交</li>
         </ul>
       </div>
     </section>
 
     <footer>
-      结果入 workmemory → 按需 mask → 模型只输出 <span class="code">${resultId.jsonpath}</span> → invoke 前按 resultDataList → dataForTool 回填。
+      结果入 workmemory → 按需 mask → 模型输出引用（Prompt：token&gt;12 禁照抄）→ invoke 前 resultDataList → dataForTool 回填。
     </footer>
   </article>
 </body>
