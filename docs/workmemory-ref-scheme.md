@@ -28,6 +28,9 @@
 
 - `resultId` 统一按上表算法生成。
 - 引用场景分为 **值可见** / **值不可见** 两种。
+- **进模型前**：按默认/工具 policy（+ 正则）加 mask；Runtime 缓存 `resultDataList`。
+- **Skill / SystemPrompt**：约束模型输出引用；加 mask 后只能出引用，禁止照抄原值。
+- **Runtime 解析**：递归遍历入参，整体/值内引用 → 查缓存还原真值；未命中 fail closed。
 
 ### 场景：值可见 / 不可见
 
@@ -48,11 +51,21 @@
 
 ## 3. 总体流程
 
-### 3.1 逻辑架构（三步）
+### 3.1 逻辑架构
 
-1. **进模型前**：按默认 policy（约束 uri、fileId 等默认拦截）或工具 policy 标明拦截变量加 mask；支持配置正则约束某类变量值要加 mask；同时 Runtime 缓存工具返回的 `resultDataList`。
-2. **Skill / SystemPrompt**：约束模型输出引用变量（加 mask 后只能输出引用）。
-3. **Runtime**：解析引用变量为真实值（递归遍历入参 JSON：整体引用 + 值内引用）。
+```text
+工具 A 返回
+    ↓
+Runtime 改写（mask）并存 workmemory
+    ↓
+模型推理，输出引用
+    ↓
+Runtime 改回（引用 → 真值）
+    ↓
+调用工具 B
+```
+
+逻辑架构图：`docs/workmemory-logic-architecture.html`
 
 ### 3.2 快慢系统结合后
 
@@ -70,7 +83,6 @@ DM 调用 MCP 工具
 Runtime 解析引用为真值 → 交 DM 执行
 ```
 
-逻辑架构图：`docs/workmemory-logic-architecture.html`  
 跨端对齐简报：`docs/issue-2520-ref-design.html`
 
 ---

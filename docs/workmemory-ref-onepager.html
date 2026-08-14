@@ -51,6 +51,7 @@
   }
   .flow h2 { margin: 0 0 6px; font-size: 12.5px; color: var(--teal); }
   .steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+  .steps5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
   .step {
     border: 1px solid var(--line); border-radius: 6px; padding: 6px 7px;
     background: #fff; position: relative; min-height: 58px;
@@ -104,7 +105,7 @@
     .page { margin: 0; border: none; max-width: none; }
   }
   @media (max-width: 900px) {
-    .grid2, .two, .mid, .steps, .arch { grid-template-columns: 1fr; }
+    .grid2, .two, .mid, .steps, .steps5, .arch { grid-template-columns: 1fr; }
     .step::after { content: ""; }
     header { flex-direction: column; align-items: flex-start; }
     .meta { text-align: left; }
@@ -156,6 +157,9 @@
         <ul>
           <li><b>resultId</b>：统一 <span class="code">UUID.randomUUID().toString().substring(0, 8)</span>（取 32 位 UUID 字符串前 8 位）。</li>
           <li>引用场景分为 <b>值可见</b> / <b>值不可见</b> 两种（见上）。</li>
+          <li><b>进模型前</b>：按默认/工具 policy（+ 正则）加 mask；Runtime 缓存 <span class="code">resultDataList</span>。</li>
+          <li><b>Skill / SystemPrompt</b>：约束模型输出引用；加 mask 后只能出引用，禁止照抄原值。</li>
+          <li><b>Runtime 解析</b>：递归遍历入参，整体/值内引用 → 查缓存还原真值；未命中 fail closed。</li>
         </ul>
       </div>
       <div class="card">
@@ -171,32 +175,13 @@
     </section>
 
     <section class="flow">
-      <h2>4. 逻辑架构（进模型 → 出引用 → 还原）</h2>
-      <div class="arch">
-        <div class="box">
-          <b>① 进模型前</b>
-          <ul>
-            <li>默认 policy 拦截 uri、fileId 等；或工具 policy 标明拦截变量。</li>
-            <li>可配正则约束某类变量值加 mask。</li>
-            <li>Runtime 缓存工具返回的 <span class="code">resultDataList</span>。</li>
-          </ul>
-        </div>
-        <div class="box">
-          <b>② Skill / SystemPrompt</b>
-          <ul>
-            <li>约束模型输出引用变量。</li>
-            <li>加 mask 后：只能输出引用，禁止照抄原值。</li>
-            <li>值可见时：可看原文，传参仍只出引用。</li>
-          </ul>
-        </div>
-        <div class="box">
-          <b>③ Runtime 解析</b>
-          <ul>
-            <li>递归遍历工具入参 JSON。</li>
-            <li>整体引用 / 值内引用 → 查缓存还原真值。</li>
-            <li>未命中 fail closed。</li>
-          </ul>
-        </div>
+      <h2>4. 逻辑架构</h2>
+      <div class="steps5">
+        <div class="step"><b>① 工具 A 返回</b><span>产出精确结果</span></div>
+        <div class="step"><b>② Runtime 改写</b><span>mask 并存 workmemory</span></div>
+        <div class="step"><b>③ 模型推理</b><span>输出引用变量</span></div>
+        <div class="step"><b>④ Runtime 改回</b><span>引用 → 真值</span></div>
+        <div class="step"><b>⑤ 调用工具 B</b><span>使用真实入参执行</span></div>
       </div>
     </section>
 
@@ -257,7 +242,7 @@
 
     <footer>
       resultId = UUID 前 8 位 · 不可见加 mask / 可见原样进模但只出引用 ·
-      进模前 policy(+正则) mask 并缓存 resultDataList · Skill/Prompt 约束出引用 · Runtime 还原。
+      工具A → Runtime改写入库 → 模型出引用 → Runtime改回 → 工具B。
     </footer>
   </article>
 </body>
