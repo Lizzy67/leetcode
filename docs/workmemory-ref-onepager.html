@@ -31,7 +31,14 @@
     background: #eef4f1; border: 1px solid #d7e4de; border-radius: 3px;
     padding: 0 4px; font-size: 11px;
   }
-  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .bg {
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+    background: #fbfdfc; margin-bottom: 8px;
+  }
+  .bg h2 { margin: 0 0 4px; font-size: 12.5px; color: var(--teal); }
+  .bg ul { margin: 0; padding-left: 15px; }
+  .bg li { margin: 0 0 2px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
   .card {
     border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fbfdfc;
   }
@@ -97,7 +104,7 @@
     .page { margin: 0; border: none; max-width: none; }
   }
   @media (max-width: 900px) {
-    .grid, .two, .mid, .steps, .arch { grid-template-columns: 1fr; }
+    .grid2, .two, .mid, .steps, .arch { grid-template-columns: 1fr; }
     .step::after { content: ""; }
     header { flex-direction: column; align-items: flex-start; }
     .meta { text-align: left; }
@@ -114,30 +121,51 @@
       </div>
     </header>
 
-    <section class="grid">
-      <div class="card">
-        <h2>1. 背景</h2>
+    <section class="bg">
+      <h2>1. 背景</h2>
+      <ul>
+        <li>精确值（URI / fileId / 大段文本）经模型多次搬运易抄错。</li>
+        <li>模型输出非自然语言长值无意义且时延长。</li>
+      </ul>
+    </section>
+
+    <section class="two">
+      <div class="scenario s1">
+        <h3>原则 · 值不可见 = 加 mask</h3>
         <ul>
-          <li>精确值（URI / fileId / 大段文本）经模型多次搬运易抄错。</li>
-          <li>模型只需感知短引用；执行前由 Runtime 回填真值。</li>
+          <li>进模型前替换为 <span class="code">${a1b2c3d4.fileUri}</span>。</li>
+          <li>模型只感知变量名，不看真值。</li>
+          <li>精确值留在 Runtime 缓存，执行时还原。</li>
         </ul>
+        <div class="ex">典型：fileUri、fileId、长 URL</div>
       </div>
+      <div class="scenario s2">
+        <h3>原则 · 值可见 = 原样进模型</h3>
+        <ul>
+          <li>原文原样输入给模型（供推理）。</li>
+          <li>输出时仍按 SystemPrompt / Skill <b>只输出引用</b>。</li>
+          <li>由 Runtime 替换为真实值后再调下游工具。</li>
+        </ul>
+        <div class="ex">例：先生成 Java 代码（可见）→ 再转 Python，入参用 <span class="code">${e5f6a7b8.text}</span></div>
+      </div>
+    </section>
+
+    <section class="grid2">
       <div class="card">
         <h2>2. 定稿原则</h2>
         <ul>
-          <li><b>resultId</b>：统一 <span class="code">UUID…substring(0,8)</span>（取 32 位 UUID 字符串前 8 位）。</li>
-          <li><b>值不可见</b>：进模型前加 mask，换成 <span class="code">${id.path}</span>。</li>
-          <li><b>值可见</b>：原样送给模型；模型按 SystemPrompt / Skill 只输出引用，Runtime 再替换真值。</li>
-          <li>Mask policy <b>绑定 Runtime</b>：一套 Runtime ↔ 一套 policy。</li>
+          <li><b>resultId</b>：统一 <span class="code">UUID.randomUUID().toString().substring(0, 8)</span>（取 32 位 UUID 字符串前 8 位）。</li>
+          <li>引用场景分为 <b>值可见</b> / <b>值不可见</b> 两种（见上）。</li>
         </ul>
       </div>
       <div class="card">
-        <h2>3. Mask / Policy</h2>
+        <h2>3. Runtime</h2>
         <ul>
+          <li>Mask policy <b>绑定 Runtime</b>：一套 Runtime ↔ 一套 policy。</li>
           <li><b>默认 policy</b>：拦截 fileUri / fileId / objectId / *Url 等字段。</li>
           <li><b>工具 policy</b>：可标明额外拦截变量；优先级：工具 &gt; 默认。</li>
           <li>支持配置 <b>正则</b>：某类变量值命中则加 mask。</li>
-          <li>Runtime 同时缓存工具返回的 <span class="code">resultDataList</span>。</li>
+          <li>缓存工具返回的 <span class="code">resultDataList</span>，执行前解析引用为真值。</li>
         </ul>
       </div>
     </section>
@@ -179,27 +207,6 @@
             <li>未命中 fail closed。</li>
           </ul>
         </div>
-      </div>
-    </section>
-
-    <section class="two">
-      <div class="scenario s1">
-        <h3>原则① 值不可见 = 加 mask</h3>
-        <ul>
-          <li>进模型前替换为 <span class="code">${a1b2c3d4.fileUri}</span>。</li>
-          <li>模型只感知变量名，不看真值。</li>
-          <li>精确值留在 Runtime 缓存，执行时还原。</li>
-        </ul>
-        <div class="ex">典型：fileUri、fileId、长 URL</div>
-      </div>
-      <div class="scenario s2">
-        <h3>原则② 值可见 = 原样进模型</h3>
-        <ul>
-          <li>原文原样输入给模型（供推理）。</li>
-          <li>输出时仍按 SystemPrompt / Skill <b>只输出引用</b>。</li>
-          <li>由 Runtime 替换为真实值后再调下游工具。</li>
-        </ul>
-        <div class="ex">例：先生成 Java 代码（可见）→ 再转 Python，入参用 <span class="code">${e5f6a7b8.text}</span></div>
       </div>
     </section>
 
