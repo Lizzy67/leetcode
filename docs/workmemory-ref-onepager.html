@@ -131,7 +131,7 @@
 
     <section class="two">
       <div class="scenario s1">
-        <h3>原则 · 值不可见 = 加 mask</h3>
+        <h3>场景① 值不可见 = 加 mask</h3>
         <ul>
           <li>进模型前替换为 <span class="code">${a1b2c3d4.fileUri}</span>。</li>
           <li>模型只感知变量名，不看真值。</li>
@@ -140,7 +140,7 @@
         <div class="ex">典型：fileUri、fileId、长 URL</div>
       </div>
       <div class="scenario s2">
-        <h3>原则 · 值可见 = 原样进模型</h3>
+        <h3>场景② 值可见 = 原样进模型</h3>
         <ul>
           <li>原文原样输入给模型（供推理）。</li>
           <li>输出时仍按 SystemPrompt / Skill <b>只输出引用</b>。</li>
@@ -171,17 +171,7 @@
     </section>
 
     <section class="flow">
-      <h2>4. 慢系统 Loop（DM ↔ 太初）</h2>
-      <div class="steps">
-        <div class="step"><b>① MCP 返回</b><span>DM 调工具拿结果</span></div>
-        <div class="step"><b>② 缓存 WM</b><span>写入 workmemory / resultDataList</span></div>
-        <div class="step"><b>③ 太初 mask</b><span>按默认/工具 policy（+正则）</span></div>
-        <div class="step"><b>④ 模型推理</b><span>不可见见引用；可见见原文</span></div>
-        <div class="step"><b>⑤ 太初还原</b><span>出参引用 → 真值</span></div>
-        <div class="step"><b>⑥ DM 执行</b><span>无引用则无需再还原</span></div>
-      </div>
-
-      <h2 style="margin-top:10px">逻辑架构（进模型 → 出引用 → 还原）</h2>
+      <h2>4. 逻辑架构（进模型 → 出引用 → 还原）</h2>
       <div class="arch">
         <div class="box">
           <b>① 进模型前</b>
@@ -210,9 +200,21 @@
       </div>
     </section>
 
+    <section class="flow">
+      <h2>5. 快慢系统结合后</h2>
+      <div class="steps">
+        <div class="step"><b>① MCP 返回</b><span>DM 调工具拿结果</span></div>
+        <div class="step"><b>② 缓存 WM</b><span>写入 workmemory / resultDataList</span></div>
+        <div class="step"><b>③ 太初 mask</b><span>按默认/工具 policy（+正则）</span></div>
+        <div class="step"><b>④ 模型推理</b><span>不可见见引用；可见见原文</span></div>
+        <div class="step"><b>⑤ 太初还原</b><span>出参引用 → 真值</span></div>
+        <div class="step"><b>⑥ DM 执行</b><span>无引用则无需再还原</span></div>
+      </div>
+    </section>
+
     <section class="mid">
       <div class="card">
-        <h2>5. resultId 与入参替换</h2>
+        <h2>6. resultId 与入参替换</h2>
         <ul>
           <li>生成算法统一：<span class="code">UUID.randomUUID().toString().substring(0, 8)</span>。</li>
           <li>工具入参 JSON <b>递归遍历</b>：整体变量引用 + 值内引用，再替换。</li>
@@ -220,7 +222,7 @@
         </ul>
       </div>
       <div class="card">
-        <h2>6. SubAgent 特殊规则</h2>
+        <h2>7. SubAgent 特殊规则</h2>
         <ul>
           <li>输出阶段对 URI 等加 mask。</li>
           <li>hook 抽出自然语言中的 <span class="code">${...}</span>，随 <span class="code">memoryList</span> 返回。</li>
@@ -230,7 +232,7 @@
     </section>
 
     <section class="prompt">
-      <h2>7. SystemPrompt 建议文案（可直接嵌入）</h2>
+      <h2>8. SystemPrompt 建议文案（可直接嵌入）</h2>
       <div class="hint">作用范围：工具入参「照抄上一步结果」；用户原话 / 可独立确定的字面量仍直接填。</div>
       <pre># 工具结果引用约定
 

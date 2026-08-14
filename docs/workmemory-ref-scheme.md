@@ -29,9 +29,9 @@
 - `resultId` 统一按上表算法生成。
 - 引用场景分为 **值可见** / **值不可见** 两种。
 
-### 原则：值可见 / 不可见
+### 场景：值可见 / 不可见
 
-| 原则 | 进模型 | 模型输出 | 执行前 |
+| 场景 | 进模型 | 模型输出 | 执行前 |
 |------|--------|----------|--------|
 | **值不可见** | 加 mask，换成 `${id.path}` | 只能输出引用 | Runtime 还原真值 |
 | **值可见** | **原样**输入给模型 | 仍按 SystemPrompt / Skill **只输出引用** | Runtime 还原真值 |
@@ -48,7 +48,13 @@
 
 ## 3. 总体流程
 
-### 3.1 慢系统 Loop（DM ↔ 太初）
+### 3.1 逻辑架构（三步）
+
+1. **进模型前**：按默认 policy（约束 uri、fileId 等默认拦截）或工具 policy 标明拦截变量加 mask；支持配置正则约束某类变量值要加 mask；同时 Runtime 缓存工具返回的 `resultDataList`。
+2. **Skill / SystemPrompt**：约束模型输出引用变量（加 mask 后只能输出引用）。
+3. **Runtime**：解析引用变量为真实值（递归遍历入参 JSON：整体引用 + 值内引用）。
+
+### 3.2 快慢系统结合后
 
 ```text
 DM 调用 MCP 工具
@@ -64,11 +70,8 @@ DM 调用 MCP 工具
 Runtime 解析引用为真值 → 交 DM 执行
 ```
 
-### 3.2 逻辑架构（三步）
-
-1. **进模型前**：按默认 policy（约束 uri、fileId 等默认拦截）或工具 policy 标明拦截变量加 mask；支持配置正则约束某类变量值要加 mask；同时 Runtime 缓存工具返回的 `resultDataList`。
-2. **Skill / SystemPrompt**：约束模型输出引用变量（加 mask 后只能输出引用）。
-3. **Runtime**：解析引用变量为真实值（递归遍历入参 JSON：整体引用 + 值内引用）。
+逻辑架构图：`docs/workmemory-logic-architecture.html`  
+跨端对齐简报：`docs/issue-2520-ref-design.html`
 
 ---
 
