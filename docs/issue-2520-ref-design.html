@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>#2520 跨端 Reference · 设计对齐简报</title>
+<style>
+  :root {
+    --ink: #1a2220; --muted: #5c6b65; --line: #d7e0db; --bg: #eef3f0;
+    --paper: #fff; --teal: #0d5c50; --teal-soft: #e7f4f0;
+    --navy: #1e3a5f; --navy-soft: #e8eef6; --warn: #7a4d00; --warn-soft: #fff4d9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink); background:
+      radial-gradient(1200px 500px at 10% -10%, #d9ebe5 0%, transparent 55%),
+      radial-gradient(900px 400px at 100% 0%, #dce6f2 0%, transparent 50%),
+      var(--bg);
+    font: 13px/1.45 "Source Sans 3", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { max-width: 1080px; margin: 20px auto 40px; padding: 0 14px; }
+  .hero {
+    background: linear-gradient(135deg, #0d5c50 0%, #1e4a5f 100%);
+    color: #f4fffb; border-radius: 14px; padding: 22px 24px; margin-bottom: 14px;
+    box-shadow: 0 10px 30px rgba(13, 92, 80, 0.18);
+  }
+  .hero h1 { margin: 0 0 6px; font-size: 24px; letter-spacing: 0.2px; }
+  .hero p { margin: 0; opacity: 0.92; max-width: 70ch; }
+  .badge {
+    display: inline-block; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.04em;
+    border: 1px solid rgba(255,255,255,0.35); border-radius: 999px; padding: 2px 10px;
+  }
+  .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 12px; margin-bottom: 12px; }
+  .card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .card h2 { margin: 0 0 8px; font-size: 15px; color: var(--teal); }
+  .card h3 { margin: 10px 0 4px; font-size: 13px; color: var(--navy); }
+  ul, ol { margin: 0; padding-left: 18px; }
+  li { margin: 0 0 4px; }
+  .code {
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px;
+    background: #eef4f1; border: 1px solid #d5e2dc; border-radius: 3px; padding: 0 4px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--teal-soft); color: var(--teal); }
+  .flow {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px;
+  }
+  .step {
+    background: var(--navy-soft); border: 1px solid #c9d7e8; border-radius: 8px;
+    padding: 8px; min-height: 74px;
+  }
+  .step b { display: block; color: var(--navy); font-size: 12px; margin-bottom: 3px; }
+  .step span { color: var(--muted); font-size: 11.5px; }
+  .warn {
+    background: var(--warn-soft); border: 1px solid #efd59a; border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 12px;
+  }
+  .warn h2 { margin: 0 0 6px; color: var(--warn); font-size: 15px; }
+  .full { margin-bottom: 12px; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  @media (max-width: 900px) {
+    .grid, .flow { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="badge">TaiChu Issue #2520 · Design Alignment</div>
+      <h1>跨端 Reference Bundle：PC 导出 → Relay 透传 → 手机侧本地化</h1>
+      <p>
+        将 #2520 V0 设计、Review concern、持久化增强评论，与 Lizzy67 定稿的 8 条决策对齐为可执行简报。
+        详细一页纸见 <span class="code">docs/workmemory-ref-onepager.html</span>。
+      </p>
+    </header>
+
+    <section class="warn">
+      <h2>相对旧一页纸的关键变更</h2>
+      <ul>
+        <li><b>resultId</b>：由 8 位 hex(FNV) → <b>Runtime 生成 UUID / 128-bit opaque ID</b>（回应 #2520 comment：身份与 toolCallId/session hash 解耦）。</li>
+        <li><b>持久化</b>：不可见精确值写入 Message <span class="code">extendData.toolResultReferences</span>；可见值仅内存 WM，不落盘。</li>
+        <li><b>入参</b>：递归遍历 JSON，支持整体引用与值内引用替换（DM 侧）。</li>
+        <li><b>SubAgent</b>：出入 mask 均不还原；裁 <span class="code">memoryList</span> 交回。</li>
+        <li><b>Policy</b>：与 Runtime 绑定，一套 Runtime 一套 mask policy。</li>
+      </ul>
+    </section>
+
+    <section class="card full">
+      <h2>V0 五阶段（部署视角）</h2>
+      <div class="flow">
+        <div class="step"><b>1. 捕获</b><span>PC 注入 CapturePolicy；Runtime 选字段写 Store / extendData</span></div>
+        <div class="step"><b>2. PC 内流转</b><span>模型只见 UUID ref；执行副本还原真值</span></div>
+        <div class="step"><b>3. 跨端导出</b><span>summary 保留完整 ref；按需打 referenceBundle</span></div>
+        <div class="step"><b>4. Source 本地化</b><span>service 校验导入并 remap 为本地 UUID ref</span></div>
+        <div class="step"><b>5. 最终消费</b><span>主 Agent 交 sink；execution-only resolve</span></div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Lizzy67 定稿 8 条 → 实现映射</h2>
+        <table>
+          <thead><tr><th>#</th><th>决策</th><th>落点</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>入参递归遍历；整体/值内引用替换</td><td>DM / Runtime resolver</td></tr>
+            <tr><td>2</td><td>快慢系统引用内部闭环；边界外暂不传</td><td>UAT：当前无指代；后续边界恢复</td></tr>
+            <tr><td>3</td><td>慢系统：DM 缓存 WM → 太初 mask → 模型 → 太初还原</td><td>DM 无引用则跳过二次还原</td></tr>
+            <tr><td>4</td><td>不可见 mask；可见结果落工作区 + Prompt/Skill 出引用</td><td>CapturePolicy + workspace</td></tr>
+            <tr><td>5</td><td>resultId = UUID</td><td>弃用 session+toolCallId 截断 hash</td></tr>
+            <tr><td>6</td><td>可见不持久化；不可见进 sessionStore.extendData</td><td>对齐 toolResultReferences 增强</td></tr>
+            <tr><td>7</td><td>SubAgent 输出 mask + hook 抽 <span class="code">${}</span> + memoryList</td><td>subagent delivery hook</td></tr>
+            <tr><td>8</td><td>mask policy 绑定 Runtime</td><td><span class="code">toolResultReferencePolicyJson</span></td></tr>
+          </tbody>
+        </table>
+        <h3>SubAgent 注</h3>
+        <p style="margin:4px 0 0;color:var(--muted);font-size:12.5px;">
+          输入 mask 不还原，输出 mask 也不还原；需要裁剪
+          <span class="code">memoryList{引用变量名:变量值}</span> 返回父会话。
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>协议要点速查</h2>
+        <h3>CapturePolicy（PC → Runtime）</h3>
+        <ul>
+          <li>不可变快照；非法配置创建 fail fast。</li>
+          <li>精确 tool key + JSON Pointer；已有非空 <span class="code">dataForTool</span> 时原生契约优先。</li>
+        </ul>
+        <h3>referenceBundle（PC → service）</h3>
+        <ul>
+          <li>terminal private 字段 / extendData；<b>不改 Relay 公共协议</b>。</li>
+          <li><span class="code">items.sourceReference</span> 集合 = summary 唯一完整 ref 集合。</li>
+          <li>payload = Base64(JSON value)；校验 size / sha256 / kind。</li>
+        </ul>
+        <h3>融合回复指代</h3>
+        <ul>
+          <li>合法：<span class="code">下面是脑图 ${uuid.fileLink}</span> 中的完整 token 由交付层保留。</li>
+          <li>禁止把 ref 截断、插值进 URL、或把内部 ref 直接给用户。</li>
+        </ul>
+        <h3>身份模型（替代旧 32-bit）</h3>
+        <ul>
+          <li><span class="code">artifactId / resultId</span>：UUID</li>
+          <li><span class="code">sessionId</span>：隔离 / TTL</li>
+          <li><span class="code">sourceToolCallId</span>：追踪 / 可选幂等索引</li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="card full">
+      <h2>仍需完成（来自 #2520 §4.2）</h2>
+      <ol>
+        <li>PC：真实工具名单、规范化结果样本、生产 CapturePolicy 与开关。</li>
+        <li>Runtime：SubAgent summary 完整 ref 通用保留规则；UUID 身份落地；Message.extendData 持久化增量。</li>
+        <li>taichu-service：release 分支 consumer + 真实 sink E2E。</li>
+        <li>联合 smoke：PC 权威值 / bundle / source Store / sink 参数 SHA-256 一致。</li>
+        <li>负向：缺项/多项/digest 错误/跨 session → 全部 fail closed，禁止降级长文本搬运。</li>
+      </ol>
+    </section>
+
+    <section class="card full">
+      <h2>验收标准</h2>
+      <ul>
+        <li>两端模型上下文均不出现完整长 URL / 载荷；用户结果不泄漏内部 ref。</li>
+        <li>bundle 只含 summary 实际使用项；Relay 保持 opaque 透传。</li>
+        <li>不可见引用可随 Session 历史恢复；可见引用会话结束即消失。</li>
+        <li>用户最终能下载文件或看到脑图。</li>
+      </ul>
+    </section>
+
+    <footer>
+      来源：Gitea SystemAgentDev/TaiChu#2520（含 comment 153234 / 153560 / 161230 / Lizzy67 165327）·
+      本地文档：workmemory-ref-onepager.html / workmemory-ref-scheme.md
+    </footer>
+  </div>
+</body>
+</html>

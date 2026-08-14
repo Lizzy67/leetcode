@@ -1,14 +1,20 @@
 # workmemory 工具结果引用方案
 
+> 对齐 TaiChu [#2520](https://taichu.fun/gitea/SystemAgentDev/TaiChu/issues/2520) V0 与 Lizzy67 定稿要点。  
+> 一页纸：`docs/workmemory-ref-onepager.html` · 跨端对齐简报：`docs/issue-2520-ref-design.html`
+
 ## 1. 目标
 
 - 降低串行/链式调工具时，大段工具结果反复进入模型上下文带来的 **input token** 与时延。
-- 支持下游工具入参引用上游工具结果，由 **DM/Runtime 统一解析填参**。
-- 业务工具无感；引用能力由 Skill 参数显式声明。
+- 避免 URI / `fileId` / 大段 JSON 等精确值被模型多次搬运抄错。
+- 支持下游工具入参引用上游工具结果，由 **太初 Runtime / DM** 在执行前解析填参。
+- 跨端（PC → taichu-service）只传递 summary 实际使用的引用（`referenceBundle`），不改 Relay 公共协议。
 
 非目标：
 
-- 不引入 `save_as_variable` 类显式存变量工具（默认写入 workmemory 即可）。
+- 不引入 `save_as_variable` 类显式存变量工具。
+- V0 不做快慢系统之间的引用透传（出边界恢复为后续能力）。
+- V0 不建设共享 Artifact Service / 跨实例长期恢复。
 
 ---
 
@@ -16,269 +22,181 @@
 
 | 名称 | 说明 |
 |------|------|
-| `resultId` | 一次工具调用结果的唯一 ID。端使用 `tool_call_id`，字符集：`[A-Za-z0-9_-]+`。 |
-| `workmemory` | 会话级工作记忆，按 `resultId` 索引存放工具执行结果。 |
-| `resultDataList` | 工具返回的业务结果（业务自定义 JSON）。**引用解析的主数据源**。 |
-| `dataForTool` | 工具执行附加数据（如给端侧打开的长 URI、展示字段等）。**次级查找源**。 |
-| `$` 引用 | Skill 入参中对历史结果的 jsonpath 引用。 |
+| `resultId` | **Runtime 生成的 UUID**（opaque 128-bit）。公开引用身份，不再由 `toolCallId` 截断 hash 派生。 |
+| `toolCallId` | Provider/框架签发的调用关联键，仅用于来源追踪或内部幂等索引，不进入 `${...}` 身份。 |
+| `workmemory` | 会话级工作记忆。**可见值**：仅内存临时保存；**不可见精确值**：持久化到 sessionStore Message.`extendData`。 |
+| `resultDataList` | 工具返回的业务结果（JSON 可寻址）。引用解析主数据源之一。 |
+| `dataForTool` | 执行/端侧附加数据。次级查找源；已有非空 `dataForTool` 时 #1919 原生契约优先。 |
+| `${resultId.jsonpath}` | 模型可见的短引用控制面。 |
+| CapturePolicy | 与 **Runtime 绑定** 的 mask/捕获策略；一套 Runtime ↔ 一套 policy。 |
+| `referenceBundle` | 跨端按需导出的精确值包；与公共 `SubagentRunResult` 平级私有字段 / extendData。 |
 
 原则：
 
-- **回灌模型**：短摘要 + `resultId`（及必要的小字段）。
-- **链式填参**：DM 从 workmemory 取值注入下游 args，**不必把大字段展开进 prompt**。
+- **引用控制面**（模型可见）：短 token `${uuid.selector}`。
+- **精确值数据面**（模型不可见）：WM / Reference Map / `extendData.toolResultReferences` / bundle。
+- **执行时才还原**：原始 ToolCall/history 保留 ref；只在执行副本中恢复真值。
 
 ---
 
 ## 3. 总体流程
 
+### 3.1 慢系统 Loop（DM ↔ 太初）
+
 ```text
-模型发起工具调用（可含 plan / 多工具）
+DM 调用 MCP 工具
     ↓
-执行工具 A（uid随机生成取后8位==>resultId_A）
+DM 将结果缓存到 workmemory
     ↓
-DM 将结果写入 workmemory[resultId=resultId_A]
-    （resultDataList + dataForTool ）
+太初按 Runtime policy 对结果加 mask（不可见字段 → ${uuid.path}）
     ↓
-回灌模型：resultDataList + resultId
+送模型推理（模型输出带引用）
     ↓
-模型再调工具 B，入参中带 ${resultId_A:param_x}
+太初还原引用为真值
     ↓
-DM 在 invoke 前解析引用 → 查 workmemory → 替换入参
-    ↓
-执行工具 B
+交 DM 执行；若 DM 侧已无引用 token，则无需再次还原
 ```
 
-逻辑架构图（HTML，推荐浏览器打开）：`docs/workmemory-logic-architecture.html`。  
-逻辑架构图（PNG）：`docs/assets/workmemory-logic-architecture.png`。  
-运行视图见：`docs/assets/workmemory-runtime-view.png`。
+### 3.2 跨端（#2520 五阶段）
+
+```text
+捕获 → PC 内流转 → summary 按需导出 bundle → service 导入/remap → sink execution-only resolve
+```
+
+逻辑架构图：`docs/workmemory-logic-architecture.html`  
+跨端对齐简报：`docs/issue-2520-ref-design.html`
 
 ---
 
 ## 4. 详细设计
 
-### 4.1 工具执行后：默认写入 workmemory
+### 4.1 resultId = UUID
 
-每次工具调用结束（含 Skill 的 `invoke` / `exec`），DM **默认**写入：
+| 项 | 定稿 |
+|----|------|
+| 生成方 | Runtime（统一生成，禁止各系统 `UUID[:8]` 或各自 hash） |
+| 形式 | 标准 UUID / 128-bit opaque，parser **不**固化为 8 位 hex |
+| 与 toolCallId | 解耦；需要幂等时用内部 `invocationId → resultId` 索引 |
+| 冲突 | 相同 resultId + 相同 value → 幂等；相同 ID + 不同 value → fail closed |
 
-```json
-{
-  "resultId": "call_01",
-  "toolName": "get_health_summary",
-  "status": "success",
-  "resultDataList": { },
-  "dataForTool": { },
-  "modelSummary": "近7日步数汇总已生成"
-}
-```
+背景：#2520 Review concern 指出旧方案把 Artifact 身份、ToolCall 幂等键、Session 命名空间压进 32-bit `resultId`，跨端协议一旦固化迁移成本高。
 
-说明：
+### 4.2 可见 vs 不可见
 
-| 字段 | 要求 |
-|------|------|
-| `resultDataList` | 业务结果，须为 JSON 可寻址结构，便于 jsonpath。 |
-| `dataForTool` | 可选；端侧或执行层附加数据，同样建议 JSON 可寻址。 |
-| `modelSummary` | 可选；专门用于回灌模型的短文本。 |
+| 场景 | 模型侧 | 存储 |
+|------|--------|------|
+| 值不可见（URI / fileId…） | policy 替换为 `${uuid.path}` | **持久化**到 sessionStore，挂在 ToolResult message 的 `extendData.toolResultReferences` |
+| 值可见（需读正文再加工） | 结果根目录缓存到工作区；Prompt/Skill 要求输出引用 | workmemory **仅内存**，不持久化 |
 
-**会话隔离**：按 session 分区。  
-**容量**：建议限制条数与总字节；超限按 LRU/最旧淘汰，并允许返回 `resultId` 失效类错误。
-
-**对 `resultDataList` 的建议约束（业务可裁剪）：**
-
-- 优先结构化对象，避免整包无结构巨型字符串。
-- 超大字段（如整页 HTML）可单独成字段，引用时按 path 精确取用。
-- 列表类结果可约定上限，或同时提供聚合字段供引用。
-
-**对 `dataForTool` 的建议约束：**
-
-- 仅放「执行/端侧需要」的附加字段（例如长 `authorize_url`）。
-- 字段含义在工具文档中写清，避免与 `resultDataList` 职责混淆。
-
-### 4.2 Skill：参数显式声明支持引用
-
-仅在 schema 中声明了可引用的参数，才允许出现 `$` 引用。
-
-示例：
+`extendData` 逻辑结构示例：
 
 ```json
 {
-  "type": "object",
-  "properties": {
-    "html": {
-      "type": "string",
-      "x-ref": true
-    },
-    "title": {
-      "type": "string"
-    }
+  "toolCallId": "call-001",
+  "toolName": "invoke.DocTranslate",
+  "toolIsError": false,
+  "toolResultReferences": {
+    "version": 1,
+    "artifacts": [
+      {
+        "referenceId": "019f0000-0000-7000-8000-0000000000a12",
+        "sourceToolCallId": "call-001",
+        "values": {
+          "fileLink": "https://download.example/very-long-signed-url",
+          "fileId": "file-7f31..."
+        }
+      }
+    ]
   }
 }
 ```
 
-可选扩展：
+约束：原值不得进入普通日志、UI 投影或 Provider request。Session reopen 时从完整历史聚合 Reference Map，再安装模型上下文。
 
-```json
-{
-  "x-ref": true,
-  "x-ref-source": "both"
-}
-```
+### 4.3 Mask policy（绑定 Runtime）
 
-`x-ref-source` 取值建议：
+- 通用默认：字段名命中 `fileUri` / `fileId` / `objectId` / `*Url` 等指针型 → 默认 mask。
+- 工具覆盖：单工具可增删 mask 字段；优先级 **工具配置 > Runtime 默认**。
+- 修改 policy 需重建 Runtime（与 #2520 CapturePolicy 不可变快照一致）。
+- 约束序：**mask > Skill > SystemPrompt**（Prompt 为软兜底，建议 token>12 禁照抄）。
 
-| 值 | 含义 |
-|----|------|
-| `resultDataList` | 只从 `resultDataList` 解析（默认可设为此，更严） |
-| `dataForTool` | 只从 `dataForTool` 解析 |
-| `both` | 先 `resultData`，找不到再 `dataForTool`（默认也可设为此，更灵活） |
+### 4.4 工具入参替换（递归）
 
-**未声明 `x-ref` 的参数：**
+对工具入参 JSON **递归遍历所有字段**：
 
-- **推荐**：若值匹配引用语法，直接校验失败（防止误解析/注入）。
-- 备选：当作普通字面量（兼容性更好，安全性较弱）。
+1. **整体变量引用**：字段值整段等于 `${resultId.jsonpath}` → 整体替换为解析值。
+2. **值内引用**：字符串内部嵌有完整 `${...}` token → 就地替换 token。
+3. 未命中 / 类型不匹配 / 跨 session → fail closed，禁止把未解析 `${...}` 交给下游工具。
 
-### 4.3 引用语法
+查找顺序建议：`resultDataList` → `dataForTool` / Reference Map values。
 
-推荐格式：
+> 说明：#2520 对 **sink / summary 交付** 仍要求「完整 token 独占 string、禁止拼接 URL」。DM 入参侧按本条支持递归与值内替换；跨端 summary 扫描仍只认完整独立 token。
 
-```text
-${resultId:jsonpath}
-```
+### 4.5 SubAgent 特殊规则
 
-示例：
+- 输出阶段即对 URI 等加 mask。
+- 特殊工具 / hook：从返回自然语言中抽取 `${...}`，连同 `memoryList` 返回。
+- **输入中的 mask 不还原；输出中的 mask 也不还原。**
+- 需裁剪 `memoryList{引用变量名: 变量值}` 交回父侧，由父 Runtime 导入/remap。
 
-```text
-${call_01:summary}
-${call_01:data.items[0].name}
-${call_auth:authorize_url}
-```
+### 4.6 快慢系统边界
 
-规则：
+- UAT：DM 传快系统的上下文中当前 **不会** 出现指代。
+- 引用逻辑需在慢系统 / 单 Runtime 内闭环。
+- 引用不在快慢系统之间传递；出边界恢复为后续能力。
 
-1. `resultId` 仅允许 `[A-Za-z0-9]+`。
-2. 以 **第一个 `:`** 为分隔符；其后整段为 jsonpath。
-3. jsonpath 建议限制为只读子集，例如：`a.b[0].c`。
-4. 不建议使用 `${id.path.path}` 并用「第一个点」切开——jsonpath 本身含多级 `.`，易歧义。
+### 4.7 跨端 referenceBundle（摘要）
 
-### 4.4 DM：在 invoke/exec 入参阶段解析
-
-**时机：** 真正调用工具之前。  
-**对象：** 仅处理声明了 `x-ref` 的参数。  
-**不做：** 不对工具「输出」做引用解析（输出只负责写入 workmemory）。
-
-解析流程：
-
-```text
-1. 检测参数值是否为 ${resultId:jsonpath}
-2. 校验 resultId、jsonpath 合法性
-3. 按 resultId 查找 workmemory
-4. 按 x-ref-source 规则在 resultData / dataForTool 上执行 jsonpath
-5. 用解析值替换原参数
-6. 再执行 invoke/exec
-```
-
-查找顺序（当 `x-ref-source = both` 或未声明时）：
-
-```text
-resultDataList→ 若 path 不存在 → dataForTool → 仍无则失败
-```
-
-类型处理：
-
-- jsonpath 结果类型应与参数 schema 兼容。
-- 若参数要求 `string` 却取到 object/array：**推荐报错**，不默默 `JSON.stringify`（除非该参数明确声明接受序列化）。
-
-### 4.5 回灌模型的内容
-
-每次工具结束后回给模型的内容建议最小化，例如：
-
-```json
-{
-  "resultId": "call_01",
-  "status": "success",
-  "summary": "近7日步数汇总已生成",
-  "hint": "下游可通过 ${call_01:summary} 引用"
-}
-```
-
-完整  `dataForTool` **默认不进入**模型上下文。
+- 放在 terminal private payload / extendData，**不修改 Relay 协议**。
+- `items.sourceReference` 集合必须等于 summary 中唯一完整 ref 集合。
+- service 侧校验 → 写入 parent Store → remap 为 service-local UUID ref → 主 Agent 只见本地引用。
+- 融合回复示例：`下面是脑图 ${uuid.fileLink}` —— 交付层保留完整 token，禁止截断或把内部 ref 暴露给用户。
 
 ---
 
-## 5. 错误码（建议）
+## 5. SystemPrompt 建议
+
+见一页纸 §8（可直接嵌入）。要点：
+
+- 写法：`${<resultId>.<字段路径>}`，`resultId` 为 UUID。
+- 完整参数值时，整个参数必须等于占位符本身。
+- 允许值内引用时，仍禁止改写 UUID 或路径。
+- 用户原话 / 可独立确定的短字面量仍直接填。
+
+---
+
+## 6. 错误处理（建议）
 
 | 错误 | 含义 |
 |------|------|
 | `ref_syntax_error` | 引用格式非法 |
-| `ref_not_allowed` | 参数未声明 `x-ref` |
-| `ref_not_found` | resultId 在 workmemory 中不存在或已淘汰 |
-| `path_not_found` | jsonpath 在允许的数据源中无匹配 |
+| `ref_not_found` | resultId 不存在或已随 Message TTL 失效 |
+| `path_not_found` | jsonpath 无匹配 |
 | `ref_type_mismatch` | 解析值类型与参数 schema 不匹配 |
+| `ref_collision` | 相同 ID 不同 value |
+| `bundle_integrity_error` | 跨端 bundle 缺项/多项/digest/kind 失败 |
 
-失败时应返回明确错误给模型，便于重试或改写计划；勿静默把 `${...}` 原样传给下游工具。
-
----
-
-## 6. 示例
-
-### 6.1 健康数据 → 再处理
-
-```text
-① get_health_summary
-   resultId = call_01
-   resultData = { "summary": "步数偏少", "steps": 12345 }
-   回模型：{ resultId, summary }
-
-② generate_advice
-   args.text = "${call_01:$.summary}"
-   DM 解析 → text = "步数偏少" → 执行
-```
-
-### 6.2 授权 URL 在 dataForTool
-
-```text
-① request_auth
-   resultId = call_auth
-   resultDataList = { "status": "pending", "auth_session_id": "as_1" }
-   dataForTool = { "authorize_url": "https://...很长..." }
-
-   端：从 dataForTool.authorize_url 打开授权页
-   模型：只看 status + auth_session_id
-
-② 若某工具参数确实需要 URL，且声明 x-ref + 允许 dataForTool：
-   args.url = "${call_auth:authorize_url}"
-   DM 在 resultData 未命中后，从 dataForTool 取出
-```
+失败时应明确返回给模型或 fail closed；禁止静默降级为长文本搬运。
 
 ---
 
-## 7. 与链式调度的关系
+## 7. 规范决策（定稿）
 
-本方案可独立落地，也服务于「模型一次 plan，Runtime 链式调度」：
-
-1. 模型输出多步工具计划（可含 `${resultId:jsonpath}` 入参模板）。
-2. DM 按依赖执行；每步结果写入 workmemory。
-3. 下游步骤 invoke 前解析引用并填参。
-4. 仅在计划结束或授权等卡点时，把短状态回灌模型。
-
-这样可同时减少：
-
-- **模型往返轮次**（链式/并行调度）
-- **每轮 input token**（大结果不进 prompt，只留 resultId + 摘要）
-
----
-
-## 8. 规范决策（建议定稿）
-
-| 项 | 建议 |
+| 项 | 定稿 |
 |----|------|
-| 引用格式 | `${resultId:jsonpath}` |
-| 未声明 x-ref 却出现引用语法 | 校验失败 |
-| 默认 x-ref-source | `both`（先 resultData 再 dataForTool）或更严的 `resultData` |
-| 类型不匹配 | 报错 |
-| resultId | 复用 `tool_call_id` |
+| 引用格式 | `${resultId.jsonpath}` |
+| resultId | UUID（Runtime 生成） |
+| toolCallId | 仅追踪 / 内部幂等 |
+| 不可见值存储 | Message.`extendData.toolResultReferences` |
+| 可见值存储 | 内存 WM + 工作区缓存，不持久化 |
+| 入参替换 | 递归；整体 + 值内 |
+| Mask | Runtime 绑定 policy |
+| SubAgent | 出入 mask 不还原；交 memoryList |
+| 快慢边界 | V0 不传引用 |
+| 跨端 | #2520 `referenceBundle` v1 |
 
 ---
 
-## 9. 一句话总结
+## 8. 一句话总结
 
-**工具结果默认进入 workmemory；Skill 参数显式允许 `${resultId:jsonpath}`；DM 在 invoke 前解析并填参；模型只看短摘要与 resultId。**
+**工具结果按 policy 投影为 UUID 引用；不可见精确值进 Message.extendData，可见值只活在内存；太初/DM 在执行前递归还原；SubAgent 用 memoryList 交包；跨端走 #2520 referenceBundle。**

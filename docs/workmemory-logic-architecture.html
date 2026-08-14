@@ -191,7 +191,7 @@
 <body>
   <header>
     <h1>逻辑架构图 · workmemory 引用填参</h1>
-    <p>工具结果默认入记忆 · Skill 显式 <code style="background:#134e4a;color:#ccfbf1;padding:1px 6px;border-radius:4px">${resultId:param}</code> 引用 · DM 在 invoke 前解析填参</p>
+    <p>工具结果默认入记忆 · 语法 <code style="background:#134e4a;color:#ccfbf1;padding:1px 6px;border-radius:4px">${resultId.jsonpath}</code>（resultId=UUID）· Runtime policy mask · 执行前递归解析</p>
   </header>
   <main>
     <div class="legend">
@@ -208,8 +208,8 @@
           <h3>模型 / LLM</h3>
           <ul>
             <li>plan / 发起工具调用</li>
-            <li>只见短摘要 + <code>resultId</code></li>
-            <li>下游入参可写 <code>${resultId:param}</code></li>
+            <li>只见短摘要 + UUID <code>resultId</code></li>
+            <li>下游入参可写 <code>${resultId.jsonpath}</code></li>
           </ul>
         </div>
         <div class="card blue">
@@ -231,32 +231,32 @@
         <div class="card primary">
           <h3>写入 workmemory</h3>
           <ul>
-            <li>工具执行结束后默认缓存</li>
-            <li><code>resultId → resultData</code></li>
-            <li>可选 <code>dataForTool</code></li>
+            <li>工具结束后默认缓存；生成 UUID</li>
+            <li>不可见值 → <code>extendData</code> 持久化</li>
+            <li>可见值 → 仅内存 + 工作区</li>
           </ul>
         </div>
         <div class="card primary">
-          <h3>回灌控制</h3>
+          <h3>回灌 / mask</h3>
           <ul>
-            <li>只把短摘要 + <code>resultId</code> 回给模型</li>
-            <li>大字段不进 prompt</li>
-            <li>降低 input token / TTFT</li>
+            <li>Runtime 绑定 CapturePolicy</li>
+            <li>指针字段 mask 为 <code>${uuid.path}</code></li>
+            <li>大字段不进 Provider request</li>
           </ul>
         </div>
         <div class="card primary">
           <h3>引用解析</h3>
           <ul>
-            <li>仅 <code>x-ref: true</code> 参数</li>
-            <li>格式 <code>${resultId:param}</code></li>
+            <li>递归遍历入参 JSON</li>
+            <li>整体引用 + 值内引用</li>
             <li>先 resultData，再 dataForTool</li>
           </ul>
         </div>
         <div class="card primary">
           <h3>invoke / exec</h3>
           <ul>
-            <li>替换入参后再调 Skill/工具</li>
-            <li>解析失败则明确报错</li>
+            <li>执行副本中还原真值</li>
+            <li>解析失败 fail closed</li>
             <li>工具侧无感</li>
           </ul>
         </div>
@@ -292,8 +292,8 @@
           <h3>Skill Schema</h3>
           <ul>
             <li>特定参数声明 <code>x-ref: true</code></li>
-            <li>允许入参写 <code>${resultId:param}</code></li>
-            <li>未声明参数不解析引用</li>
+            <li>允许入参写 <code>${resultId.jsonpath}</code></li>
+            <li>Prompt/Skill 约束「看」与「传」分离</li>
           </ul>
         </div>
         <div class="card orange">
@@ -310,17 +310,18 @@
     <div class="flow-box">
       <h2>数据流（端到端）</h2>
       <div class="flow-steps">
-        <div class="step"><b>STEP 1</b>执行工具 A，生成 <code>resultId_A</code></div>
-        <div class="step"><b>STEP 2</b>DM 写入 workmemory（resultData + dataForTool）</div>
-        <div class="step"><b>STEP 3</b>回灌模型：摘要 + <code>resultId_A</code></div>
-        <div class="step"><b>STEP 4</b>模型调工具 B，入参 <code>${resultId_A:param}</code></div>
-        <div class="step"><b>STEP 5</b>DM 解析填参 → invoke 工具 B</div>
+        <div class="step"><b>STEP 1</b>执行工具 A，Runtime 生成 UUID <code>resultId</code></div>
+        <div class="step"><b>STEP 2</b>DM/太初写入 WM；不可见值进 extendData</div>
+        <div class="step"><b>STEP 3</b>按 policy mask 后回灌模型</div>
+        <div class="step"><b>STEP 4</b>模型调工具 B，入参 <code>${uuid.jsonpath}</code></div>
+        <div class="step"><b>STEP 5</b>递归解析填参 → invoke 工具 B</div>
       </div>
       <strong>一句话：</strong>
-      工具结果 → workmemory →（模型只见摘要）→ 下游 <code>${resultId:param}</code> → DM 解析填参 → 再调工具
+      工具结果 → UUID 引用投影 →（模型只见短 token）→ 下游 <code>${resultId.jsonpath}</code> → 执行前还原 → 再调工具
       <div class="note">
-        resultId：字母数字（如去横线 UUID） · 引用格式：<code>${resultId:param}</code> ·
-        建议正则：<code>^\$\{([A-Za-z0-9]+):([A-Za-z0-9_]+)\}$</code>
+        resultId：UUID · 引用格式：<code>${resultId.jsonpath}</code> ·
+        跨端见 <a href="./issue-2520-ref-design.html">issue-2520-ref-design.html</a> ·
+        一页纸：<a href="./workmemory-ref-onepager.html">workmemory-ref-onepager.html</a>
       </div>
     </div>
 

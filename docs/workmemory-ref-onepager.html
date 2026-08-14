@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Workmemory 引用方案 · 一页纸</title>
+<title>Workmemory 引用方案 · 一页纸（#2520 对齐）</title>
 <style>
   :root {
     --ink: #14201c; --muted: #5a6b64; --line: #d5e0da; --bg: #f3f7f4;
     --paper: #fff; --teal: #0f6b5c;
     --amber: #9a6700; --amber-soft: #fff6e0;
     --blue: #1a5f9e; --blue-soft: #e8f1fa;
+    --rose: #8b3a3a; --rose-soft: #f8ecec;
   }
   * { box-sizing: border-box; }
   body {
@@ -17,15 +18,15 @@
     font: 12.5px/1.4 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   }
   .page {
-    max-width: 980px; margin: 16px auto; background: var(--paper);
+    max-width: 1040px; margin: 16px auto; background: var(--paper);
     border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 14px;
   }
   header {
-    display: flex; justify-content: space-between; align-items: baseline;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
     border-bottom: 2px solid var(--teal); padding-bottom: 8px; margin-bottom: 10px;
   }
-  h1 { margin: 0; font-size: 20px; color: var(--teal); }
-  .meta { color: var(--muted); font-size: 11px; }
+  h1 { margin: 0; font-size: 19px; color: var(--teal); }
+  .meta { color: var(--muted); font-size: 11px; text-align: right; }
   .code {
     font-family: ui-monospace, Menlo, Consolas, monospace;
     background: #eef4f1; border: 1px solid #d7e4de; border-radius: 3px;
@@ -46,7 +47,7 @@
   .steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
   .step {
     border: 1px solid var(--line); border-radius: 6px; padding: 6px 7px;
-    background: #fff; position: relative; min-height: 54px;
+    background: #fff; position: relative; min-height: 58px;
   }
   .step::after {
     content: "→"; position: absolute; right: -8px; top: 50%;
@@ -67,7 +68,13 @@
     margin-top: 5px; padding: 5px 7px; background: #fff; border-radius: 5px;
     border: 1px solid var(--line); font-size: 11px;
   }
-  .mid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .mid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 8px; margin-bottom: 8px; }
+  .note {
+    border: 1px solid #e0cfcf; border-radius: 8px; padding: 8px 10px;
+    background: var(--rose-soft); margin-bottom: 8px;
+  }
+  .note h2 { margin: 0 0 4px; font-size: 12.5px; color: var(--rose); }
+  .note ul { margin: 0; padding-left: 15px; }
   .prompt {
     border: 1px solid var(--teal); border-radius: 8px; padding: 10px 12px;
     background: #f3faf7; margin-top: 4px;
@@ -87,9 +94,11 @@
     body { background: #fff; }
     .page { margin: 0; border: none; max-width: none; }
   }
-  @media (max-width: 860px) {
+  @media (max-width: 900px) {
     .grid, .two, .mid, .steps { grid-template-columns: 1fr; }
     .step::after { content: ""; }
+    header { flex-direction: column; align-items: flex-start; }
+    .meta { text-align: left; }
   }
 </style>
 </head>
@@ -97,92 +106,111 @@
   <article class="page">
     <header>
       <h1>Workmemory 引用方案 · 一页纸</h1>
-      <div class="meta">语法 <span class="code">${resultId.jsonpath}</span> · resultId = 8 位十六进制（无 <span class="code">.</span>）</div>
+      <div class="meta">
+        对齐 TaiChu <span class="code">#2520</span> / Lizzy67 定稿要点<br />
+        语法 <span class="code">${resultId.jsonpath}</span> · <b>resultId = UUID</b>
+      </div>
     </header>
 
     <section class="grid">
       <div class="card">
         <h2>1. 背景</h2>
         <ul>
-          <li>大结果照抄回下一工具 → 遵从性差、Input Token 高。</li>
-          <li>URI 等只需当下游入参，模型感知变量即可。</li>
-          <li>送模前按配置 mask 成 <span class="code">${resultId.jsonpath}</span>。</li>
+          <li>精确值（URI / fileId / 大段 JSON）经模型多次搬运易抄错。</li>
+          <li>模型只需感知短引用；执行前由 Runtime/DM 回填真值。</li>
+          <li>跨端（PC→service）只传 summary 实际用到的引用（见 #2520 bundle）。</li>
         </ul>
       </div>
       <div class="card">
-        <h2>2. 方案原则</h2>
+        <h2>2. 定稿原则</h2>
         <ul>
-          <li>工具返回默认写入 workmemory。</li>
-          <li>invoke/exec 前按引用解析回填。</li>
-          <li>查找：<span class="code">resultDataList</span> → <span class="code">dataForTool</span>。</li>
+          <li><b>resultId 统一 UUID</b>（opaque 128-bit），不再用 toolCallId 截断 hash。</li>
+          <li>toolCallId 仅作来源追踪 / 内部幂等，不进公开引用身份。</li>
+          <li>Mask policy <b>绑定 Runtime</b>：一套 Runtime ↔ 一套 policy。</li>
+          <li>引用在快/慢系统内闭环；边界外暂不传，出边界再恢复（后续）。</li>
         </ul>
       </div>
       <div class="card">
-        <h2>3. Mask 配置</h2>
+        <h2>3. Mask / Policy</h2>
         <ul>
-          <li><b>通用默认</b>：字段名命中 <span class="code">fileUri</span> / <span class="code">fileId</span> / <span class="code">objectId</span> / <span class="code">*Url</span> 等指针型 → 默认 mask。</li>
-          <li><b>工具覆盖</b>：单工具可增删 mask 字段（要读的正文勿进默认名单）。</li>
-          <li>优先级：工具配置 &gt; 通用默认。</li>
+          <li>指针字段默认 mask（fileUri / fileId / objectId / *Url…）。</li>
+          <li>工具可覆盖；优先级：工具配置 &gt; Runtime 默认。</li>
+          <li>值不可见 → policy 替换为 <span class="code">${uuid.path}</span>。</li>
+          <li>值可见 → 结果根目录落工作区；按 Prompt/Skill 要求模型输出引用。</li>
         </ul>
       </div>
     </section>
 
     <section class="flow">
-      <h2>4. 流程</h2>
+      <h2>4. 慢系统 Loop（DM ↔ 太初）</h2>
       <div class="steps">
-        <div class="step"><b>① 返回</b><span>工具产出结果</span></div>
-        <div class="step"><b>② 入库</b><span>写 workmemory + 生成 resultId</span></div>
-        <div class="step"><b>③ 送模</b><span>通用/工具配置 mask</span></div>
-        <div class="step"><b>④ 出参</b><span>模型写 <span class="code">${id.path}</span></span></div>
-        <div class="step"><b>⑤ 回填</b><span>resultDataList → dataForTool</span></div>
-        <div class="step"><b>⑥ 调用</b><span>真值执行，再入库</span></div>
+        <div class="step"><b>① MCP 返回</b><span>DM 调工具拿结果</span></div>
+        <div class="step"><b>② 缓存 WM</b><span>DM 写入 workmemory</span></div>
+        <div class="step"><b>③ 太初 mask</b><span>按 Runtime policy 加 mask</span></div>
+        <div class="step"><b>④ 模型推理</b><span>看到短引用 / 可见摘要</span></div>
+        <div class="step"><b>⑤ 太初还原</b><span>出参引用 → 真值</span></div>
+        <div class="step"><b>⑥ DM 执行</b><span>无引用则无需再还原</span></div>
       </div>
     </section>
 
     <section class="two">
       <div class="scenario s1">
-        <h3>场景① 不看 value</h3>
+        <h3>场景① 值不可见</h3>
         <ul>
-          <li>默认/工具 mask；模型只感知变量。</li>
-          <li>典型：fileUri、fileId。</li>
+          <li>Policy mask；模型只感知变量。</li>
+          <li><b>需持久化</b>：sessionStore，挂在 ToolResult message 的 <span class="code">extendData</span>。</li>
+          <li>与 #2520 增强一致：<span class="code">extendData.toolResultReferences</span>。</li>
         </ul>
-        <div class="ex"><span class="code">${a1b2c3d4.fileUri}</span> → 原样引用 → DM 回填</div>
+        <div class="ex"><span class="code">${019f…a12.fileUri}</span> → 执行前还原；原值不进日志/UI/Provider</div>
       </div>
       <div class="scenario s2">
-        <h3>场景② 要看 value</h3>
+        <h3>场景② 值可见</h3>
         <ul>
-          <li>可见/摘要供推理；传参仍用引用（Skill + Prompt）。</li>
-          <li>「看」与「传」分离。</li>
+          <li>例：先生成 Java，再把其中一份转成 Python。</li>
+          <li>结果根目录缓存到工作区；模型按 Prompt/Skill 输出 <span class="code">resultId.jsonpath</span>。</li>
+          <li><b>不持久化</b>：workmemory 仅内存临时保存。</li>
         </ul>
-        <div class="ex">可见 text → 入参 <span class="code">${e5f6a7b8.text}</span></div>
+        <div class="ex">可见代码摘要 → 入参仍用 <span class="code">${uuid.text}</span></div>
       </div>
     </section>
 
     <section class="mid">
       <div class="card">
-        <h2>5. resultId 设计</h2>
+        <h2>5. 入参替换（递归）</h2>
         <ul>
-          <li><b>为何不直接用 toolCallId</b>：供应商签发、长度常 32+、格式不一（可能含 <span class="code">_</span>/<span class="code">-</span>），直接进 <span class="code">${...}</span> 费 token、难统一解析。</li>
-          <li><b>分工</b>：toolCallId = 对内关联键；resultId = <b>对模短引用</b>（8 位 <span class="code">[0-9a-f]</span>）。入库时存映射 <span class="code">resultId ↔ toolCallId</span>。</li>
-          <li><b>统一算法（推荐）</b>：DM 唯一生成；<span class="code">resultId = hex8(FNV-1a-64(toolCallId))</span>（会话级存储可再混 sessionId）。禁止各系统各自 <span class="code">UUID[:8]</span> 随机截断。</li>
-          <li>会话内调用量远低于 32-bit 碰撞阈值；需要更稳可升 12 位 hex。</li>
+          <li>工具入参 JSON <b>递归遍历所有字段</b>。</li>
+          <li>区分：<b>整体变量引用</b>（整值 = <span class="code">${...}</span>）与 <b>值内引用</b>（字符串内嵌 token）。</li>
+          <li>命中后替换；未命中 / 冲突 fail closed。</li>
+          <li>查找：WM / Reference Map → jsonpath；跨 Runtime 不直接共享 ID。</li>
         </ul>
+        <p style="margin:6px 0 0;font-size:11.5px;">
+          说明：#2520 sink/summary 侧仍要求「完整 token 独占 string」；DM 入参侧按本条做递归/值内替换。
+        </p>
       </div>
       <div class="card">
-        <h2>6. 生命周期 / 约束序</h2>
-        <ol>
-          <li>创建：返回 → 算 resultId → 入库并挂 toolCallId</li>
-          <li>暴露：默认/工具 mask，或可见 + 可引用路径</li>
-          <li>引用：模型输出 → invoke 前展开</li>
-          <li>失效：会话结束 / TTL；未命中报错</li>
-        </ol>
-        <p style="margin:6px 0 0;font-size:11.5px;">约束序：<b>mask &gt; Skill &gt; SystemPrompt</b>。Prompt 为软兜底（token&gt;12 禁照抄）。</p>
+        <h2>6. SubAgent 特殊规则</h2>
+        <ul>
+          <li>输出阶段即对 URI 等加 mask。</li>
+          <li>特殊工具 / hook：从自然语言中抽出 <span class="code">${...}</span>，随 <span class="code">memoryList</span> 返回。</li>
+          <li><b>输入 mask 不还原；输出 mask 也不还原。</b></li>
+          <li>需裁剪 <span class="code">memoryList{引用名:变量值}</span> 交回父侧。</li>
+        </ul>
       </div>
     </section>
 
+    <section class="note">
+      <h2>7. 与 #2520 / 跨端的衔接（必读）</h2>
+      <ul>
+        <li>PC CapturePolicy → Runtime 捕获 → 模型见 local ref → summary 保留完整 ref → <span class="code">referenceBundle</span> 按需导出（不改 Relay 协议，放 extendData / private payload）。</li>
+        <li>service 侧导入并 remap 为 service-local UUID ref；主 Agent 只见本地引用。</li>
+        <li>快系统上下文 UAT 当前无指代；引用不在快慢之间传；出边界恢复属后续能力。</li>
+        <li>融合回复里的指代（如「下面是脑图 <span class="code">${XXXX.fileLink}</span>」）由 Runtime 投影/交付约束保证完整 token，禁止拼接截断。</li>
+      </ul>
+    </section>
+
     <section class="prompt">
-      <h2>7. SystemPrompt 建议文案（可直接嵌入）</h2>
-      <div class="hint">作用范围：工具入参的「照抄上一步结果」；用户原话/可独立确定的字面量仍直接填。</div>
+      <h2>8. SystemPrompt 建议文案（可直接嵌入）</h2>
+      <div class="hint">作用范围：工具入参「照抄上一步结果」；用户原话 / 可独立确定的字面量仍直接填。</div>
       <pre># 工具结果引用约定
 
 当某个工具参数的取值来自上一步某条工具结果中的字段时，不要复述、改写或猜测该值，请输出引用占位符，由系统在执行前回填真实值。
@@ -190,13 +218,14 @@
 ## 写法
 `${&lt;resultId&gt;.&lt;字段路径&gt;}`
 
-- `&lt;resultId&gt;`：从上下文中对应 role=tool 结果读取的 resultId（仅字母数字）。必须照抄上下文，禁止编造。
+- `&lt;resultId&gt;`：上下文中对应工具结果的 UUID（字母数字与连字符）。必须照抄上下文，禁止编造。
 - `&lt;字段路径&gt;`：该结果内的字段路径，支持点号嵌套，例如 `entityId`、`data.fileUri`。
-- 整个参数值必须等于占位符本身：不要省略 `$` / `{` / `}`，不要前后拼接其它文字。
+- 作为完整参数值时：整个参数必须等于占位符本身（不要省略 `$`/`{`/`}`，不要前后拼接）。
+- 若参数说明允许值内引用：可在字符串中嵌入完整 `${...}` token，仍禁止改写 UUID 或路径。
 
 ## 何时必须用引用
 - 参数说明要求引用，或取值明确来自已有工具结果字段；
-- 尤其当该值较长（建议：超过约 12 个 token，如 URI、fileId、大段文本）时，禁止照抄原文，改输出引用。
+- 尤其当该值较长（建议：超过约 12 个 token，如 URI、fileId、大段文本）时，禁止照抄原文。
 
 ## 何时仍填字面值
 - 取值来自用户原话，或可独立确定的短信息（如相册名、数量、开关等），且并非某一工具结果字段的拷贝。
@@ -205,7 +234,8 @@
     </section>
 
     <footer>
-      通用 mask（fileUri/fileId…）+ 工具覆盖 → 短 resultId 对模、toolCallId 对内 → Prompt 禁长值照抄 → invoke 前 resultDataList → dataForTool 回填。
+      UUID resultId · Runtime 绑定 mask policy · 不可见值进 extendData / 可见值仅内存 ·
+      入参递归替换 · SubAgent 出入 mask 不还原、交 memoryList · 跨端走 #2520 referenceBundle。
     </footer>
   </article>
 </body>
