@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Workmemory 引用方案 · 一页纸（#2520 对齐）</title>
+<title>Workmemory 引用方案 · 一页纸</title>
 <style>
   :root {
     --ink: #14201c; --muted: #5a6b64; --line: #d5e0da; --bg: #f3f7f4;
     --paper: #fff; --teal: #0f6b5c;
     --amber: #9a6700; --amber-soft: #fff6e0;
     --blue: #1a5f9e; --blue-soft: #e8f1fa;
-    --rose: #8b3a3a; --rose-soft: #f8ecec;
   }
   * { box-sizing: border-box; }
   body {
@@ -56,6 +55,15 @@
   .step:last-child::after { content: ""; }
   .step b { display: block; font-size: 11px; color: var(--teal); margin-bottom: 2px; }
   .step span { font-size: 10.5px; color: var(--muted); }
+  .arch {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px;
+  }
+  .arch .box {
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff;
+  }
+  .arch .box b { display: block; color: var(--teal); font-size: 12px; margin-bottom: 4px; }
+  .arch .box ul { margin: 0; padding-left: 15px; }
+  .arch .box li { margin: 0 0 2px; font-size: 11.5px; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
   .scenario { border-radius: 8px; border: 1px solid var(--line); padding: 8px 10px; }
   .s1 { background: var(--blue-soft); border-color: #c5daf0; }
@@ -69,12 +77,6 @@
     border: 1px solid var(--line); font-size: 11px;
   }
   .mid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 8px; margin-bottom: 8px; }
-  .note {
-    border: 1px solid #e0cfcf; border-radius: 8px; padding: 8px 10px;
-    background: var(--rose-soft); margin-bottom: 8px;
-  }
-  .note h2 { margin: 0 0 4px; font-size: 12.5px; color: var(--rose); }
-  .note ul { margin: 0; padding-left: 15px; }
   .prompt {
     border: 1px solid var(--teal); border-radius: 8px; padding: 10px 12px;
     background: #f3faf7; margin-top: 4px;
@@ -95,7 +97,7 @@
     .page { margin: 0; border: none; max-width: none; }
   }
   @media (max-width: 900px) {
-    .grid, .two, .mid, .steps { grid-template-columns: 1fr; }
+    .grid, .two, .mid, .steps, .arch { grid-template-columns: 1fr; }
     .step::after { content: ""; }
     header { flex-direction: column; align-items: flex-start; }
     .meta { text-align: left; }
@@ -107,8 +109,8 @@
     <header>
       <h1>Workmemory 引用方案 · 一页纸</h1>
       <div class="meta">
-        对齐 TaiChu <span class="code">#2520</span> / Lizzy67 定稿要点<br />
-        语法 <span class="code">${resultId.jsonpath}</span> · <b>resultId = UUID</b>
+        语法 <span class="code">${resultId.jsonpath}</span><br />
+        resultId = <span class="code">UUID.randomUUID().toString().substring(0, 8)</span>
       </div>
     </header>
 
@@ -116,27 +118,26 @@
       <div class="card">
         <h2>1. 背景</h2>
         <ul>
-          <li>精确值（URI / fileId / 大段 JSON）经模型多次搬运易抄错。</li>
-          <li>模型只需感知短引用；执行前由 Runtime/DM 回填真值。</li>
-          <li>跨端（PC→service）只传 summary 实际用到的引用（见 #2520 bundle）。</li>
+          <li>精确值（URI / fileId / 大段文本）经模型多次搬运易抄错。</li>
+          <li>模型只需感知短引用；执行前由 Runtime 回填真值。</li>
         </ul>
       </div>
       <div class="card">
         <h2>2. 定稿原则</h2>
         <ul>
-          <li><b>resultId 统一 UUID</b>（opaque 128-bit），不再用 toolCallId 截断 hash。</li>
-          <li>toolCallId 仅作来源追踪 / 内部幂等，不进公开引用身份。</li>
+          <li><b>resultId</b>：统一 <span class="code">UUID…substring(0,8)</span>（取 32 位 UUID 字符串前 8 位）。</li>
+          <li><b>值不可见</b>：进模型前加 mask，换成 <span class="code">${id.path}</span>。</li>
+          <li><b>值可见</b>：原样送给模型；模型按 SystemPrompt / Skill 只输出引用，Runtime 再替换真值。</li>
           <li>Mask policy <b>绑定 Runtime</b>：一套 Runtime ↔ 一套 policy。</li>
-          <li>引用在快/慢系统内闭环；边界外暂不传，出边界再恢复（后续）。</li>
         </ul>
       </div>
       <div class="card">
         <h2>3. Mask / Policy</h2>
         <ul>
-          <li>指针字段默认 mask（fileUri / fileId / objectId / *Url…）。</li>
-          <li>工具可覆盖；优先级：工具配置 &gt; Runtime 默认。</li>
-          <li>值不可见 → policy 替换为 <span class="code">${uuid.path}</span>。</li>
-          <li>值可见 → 结果根目录落工作区；按 Prompt/Skill 要求模型输出引用。</li>
+          <li><b>默认 policy</b>：拦截 fileUri / fileId / objectId / *Url 等字段。</li>
+          <li><b>工具 policy</b>：可标明额外拦截变量；优先级：工具 &gt; 默认。</li>
+          <li>支持配置 <b>正则</b>：某类变量值命中则加 mask。</li>
+          <li>Runtime 同时缓存工具返回的 <span class="code">resultDataList</span>。</li>
         </ul>
       </div>
     </section>
@@ -145,71 +146,84 @@
       <h2>4. 慢系统 Loop（DM ↔ 太初）</h2>
       <div class="steps">
         <div class="step"><b>① MCP 返回</b><span>DM 调工具拿结果</span></div>
-        <div class="step"><b>② 缓存 WM</b><span>DM 写入 workmemory</span></div>
-        <div class="step"><b>③ 太初 mask</b><span>按 Runtime policy 加 mask</span></div>
-        <div class="step"><b>④ 模型推理</b><span>看到短引用 / 可见摘要</span></div>
+        <div class="step"><b>② 缓存 WM</b><span>写入 workmemory / resultDataList</span></div>
+        <div class="step"><b>③ 太初 mask</b><span>按默认/工具 policy（+正则）</span></div>
+        <div class="step"><b>④ 模型推理</b><span>不可见见引用；可见见原文</span></div>
         <div class="step"><b>⑤ 太初还原</b><span>出参引用 → 真值</span></div>
         <div class="step"><b>⑥ DM 执行</b><span>无引用则无需再还原</span></div>
+      </div>
+
+      <h2 style="margin-top:10px">逻辑架构（进模型 → 出引用 → 还原）</h2>
+      <div class="arch">
+        <div class="box">
+          <b>① 进模型前</b>
+          <ul>
+            <li>默认 policy 拦截 uri、fileId 等；或工具 policy 标明拦截变量。</li>
+            <li>可配正则约束某类变量值加 mask。</li>
+            <li>Runtime 缓存工具返回的 <span class="code">resultDataList</span>。</li>
+          </ul>
+        </div>
+        <div class="box">
+          <b>② Skill / SystemPrompt</b>
+          <ul>
+            <li>约束模型输出引用变量。</li>
+            <li>加 mask 后：只能输出引用，禁止照抄原值。</li>
+            <li>值可见时：可看原文，传参仍只出引用。</li>
+          </ul>
+        </div>
+        <div class="box">
+          <b>③ Runtime 解析</b>
+          <ul>
+            <li>递归遍历工具入参 JSON。</li>
+            <li>整体引用 / 值内引用 → 查缓存还原真值。</li>
+            <li>未命中 fail closed。</li>
+          </ul>
+        </div>
       </div>
     </section>
 
     <section class="two">
       <div class="scenario s1">
-        <h3>场景① 值不可见</h3>
+        <h3>原则① 值不可见 = 加 mask</h3>
         <ul>
-          <li>Policy mask；模型只感知变量。</li>
-          <li><b>需持久化</b>：sessionStore，挂在 ToolResult message 的 <span class="code">extendData</span>。</li>
-          <li>与 #2520 增强一致：<span class="code">extendData.toolResultReferences</span>。</li>
+          <li>进模型前替换为 <span class="code">${a1b2c3d4.fileUri}</span>。</li>
+          <li>模型只感知变量名，不看真值。</li>
+          <li>精确值留在 Runtime 缓存，执行时还原。</li>
         </ul>
-        <div class="ex"><span class="code">${019f…a12.fileUri}</span> → 执行前还原；原值不进日志/UI/Provider</div>
+        <div class="ex">典型：fileUri、fileId、长 URL</div>
       </div>
       <div class="scenario s2">
-        <h3>场景② 值可见</h3>
+        <h3>原则② 值可见 = 原样进模型</h3>
         <ul>
-          <li>例：先生成 Java，再把其中一份转成 Python。</li>
-          <li>结果根目录缓存到工作区；模型按 Prompt/Skill 输出 <span class="code">resultId.jsonpath</span>。</li>
-          <li><b>不持久化</b>：workmemory 仅内存临时保存。</li>
+          <li>原文原样输入给模型（供推理）。</li>
+          <li>输出时仍按 SystemPrompt / Skill <b>只输出引用</b>。</li>
+          <li>由 Runtime 替换为真实值后再调下游工具。</li>
         </ul>
-        <div class="ex">可见代码摘要 → 入参仍用 <span class="code">${uuid.text}</span></div>
+        <div class="ex">例：先生成 Java 代码（可见）→ 再转 Python，入参用 <span class="code">${e5f6a7b8.text}</span></div>
       </div>
     </section>
 
     <section class="mid">
       <div class="card">
-        <h2>5. 入参替换（递归）</h2>
+        <h2>5. resultId 与入参替换</h2>
         <ul>
-          <li>工具入参 JSON <b>递归遍历所有字段</b>。</li>
-          <li>区分：<b>整体变量引用</b>（整值 = <span class="code">${...}</span>）与 <b>值内引用</b>（字符串内嵌 token）。</li>
-          <li>命中后替换；未命中 / 冲突 fail closed。</li>
-          <li>查找：WM / Reference Map → jsonpath；跨 Runtime 不直接共享 ID。</li>
+          <li>生成算法统一：<span class="code">UUID.randomUUID().toString().substring(0, 8)</span>。</li>
+          <li>工具入参 JSON <b>递归遍历</b>：整体变量引用 + 值内引用，再替换。</li>
+          <li>查找：Runtime 缓存的 <span class="code">resultDataList</span>（及必要的 dataForTool）。</li>
         </ul>
-        <p style="margin:6px 0 0;font-size:11.5px;">
-          说明：#2520 sink/summary 侧仍要求「完整 token 独占 string」；DM 入参侧按本条做递归/值内替换。
-        </p>
       </div>
       <div class="card">
         <h2>6. SubAgent 特殊规则</h2>
         <ul>
-          <li>输出阶段即对 URI 等加 mask。</li>
-          <li>特殊工具 / hook：从自然语言中抽出 <span class="code">${...}</span>，随 <span class="code">memoryList</span> 返回。</li>
-          <li><b>输入 mask 不还原；输出 mask 也不还原。</b></li>
-          <li>需裁剪 <span class="code">memoryList{引用名:变量值}</span> 交回父侧。</li>
+          <li>输出阶段对 URI 等加 mask。</li>
+          <li>hook 抽出自然语言中的 <span class="code">${...}</span>，随 <span class="code">memoryList</span> 返回。</li>
+          <li><b>输入 / 输出 mask 均不还原</b>；裁 <span class="code">memoryList{名:值}</span> 交回。</li>
         </ul>
       </div>
     </section>
 
-    <section class="note">
-      <h2>7. 与 #2520 / 跨端的衔接（必读）</h2>
-      <ul>
-        <li>PC CapturePolicy → Runtime 捕获 → 模型见 local ref → summary 保留完整 ref → <span class="code">referenceBundle</span> 按需导出（不改 Relay 协议，放 extendData / private payload）。</li>
-        <li>service 侧导入并 remap 为 service-local UUID ref；主 Agent 只见本地引用。</li>
-        <li>快系统上下文 UAT 当前无指代；引用不在快慢之间传；出边界恢复属后续能力。</li>
-        <li>融合回复里的指代（如「下面是脑图 <span class="code">${XXXX.fileLink}</span>」）由 Runtime 投影/交付约束保证完整 token，禁止拼接截断。</li>
-      </ul>
-    </section>
-
     <section class="prompt">
-      <h2>8. SystemPrompt 建议文案（可直接嵌入）</h2>
+      <h2>7. SystemPrompt 建议文案（可直接嵌入）</h2>
       <div class="hint">作用范围：工具入参「照抄上一步结果」；用户原话 / 可独立确定的字面量仍直接填。</div>
       <pre># 工具结果引用约定
 
@@ -218,14 +232,13 @@
 ## 写法
 `${&lt;resultId&gt;.&lt;字段路径&gt;}`
 
-- `&lt;resultId&gt;`：上下文中对应工具结果的 UUID（字母数字与连字符）。必须照抄上下文，禁止编造。
+- `&lt;resultId&gt;`：上下文中对应工具结果的 8 位 ID（UUID 前 8 位）。必须照抄上下文，禁止编造。
 - `&lt;字段路径&gt;`：该结果内的字段路径，支持点号嵌套，例如 `entityId`、`data.fileUri`。
 - 作为完整参数值时：整个参数必须等于占位符本身（不要省略 `$`/`{`/`}`，不要前后拼接）。
-- 若参数说明允许值内引用：可在字符串中嵌入完整 `${...}` token，仍禁止改写 UUID 或路径。
 
 ## 何时必须用引用
 - 参数说明要求引用，或取值明确来自已有工具结果字段；
-- 尤其当该值较长（建议：超过约 12 个 token，如 URI、fileId、大段文本）时，禁止照抄原文。
+- 字段已被 mask，或值较长（建议超过约 12 个 token）时，禁止照抄原文。
 
 ## 何时仍填字面值
 - 取值来自用户原话，或可独立确定的短信息（如相册名、数量、开关等），且并非某一工具结果字段的拷贝。
@@ -234,8 +247,8 @@
     </section>
 
     <footer>
-      UUID resultId · Runtime 绑定 mask policy · 不可见值进 extendData / 可见值仅内存 ·
-      入参递归替换 · SubAgent 出入 mask 不还原、交 memoryList · 跨端走 #2520 referenceBundle。
+      resultId = UUID 前 8 位 · 不可见加 mask / 可见原样进模但只出引用 ·
+      进模前 policy(+正则) mask 并缓存 resultDataList · Skill/Prompt 约束出引用 · Runtime 还原。
     </footer>
   </article>
 </body>

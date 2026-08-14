@@ -81,11 +81,11 @@
     <section class="warn">
       <h2>相对旧一页纸的关键变更</h2>
       <ul>
-        <li><b>resultId</b>：由 8 位 hex(FNV) → <b>Runtime 生成 UUID / 128-bit opaque ID</b>（回应 #2520 comment：身份与 toolCallId/session hash 解耦）。</li>
-        <li><b>持久化</b>：不可见精确值写入 Message <span class="code">extendData.toolResultReferences</span>；可见值仅内存 WM，不落盘。</li>
-        <li><b>入参</b>：递归遍历 JSON，支持整体引用与值内引用替换（DM 侧）。</li>
+        <li><b>resultId</b>：统一 <span class="code">UUID.randomUUID().toString().substring(0, 8)</span>（取 UUID 字符串前 8 位）。</li>
+        <li><b>可见/不可见</b>：不可见=进模前加 mask；可见=原样进模，输出仍只出引用，Runtime 还原。</li>
+        <li><b>逻辑架构</b>：① policy(+正则) mask 并缓存 resultDataList → ② Skill/Prompt 约束出引用 → ③ Runtime 解析真值。</li>
+        <li><b>入参</b>：递归遍历 JSON，整体引用 + 值内引用。</li>
         <li><b>SubAgent</b>：出入 mask 均不还原；裁 <span class="code">memoryList</span> 交回。</li>
-        <li><b>Policy</b>：与 Runtime 绑定，一套 Runtime 一套 mask policy。</li>
       </ul>
     </section>
 
@@ -93,9 +93,9 @@
       <h2>V0 五阶段（部署视角）</h2>
       <div class="flow">
         <div class="step"><b>1. 捕获</b><span>PC 注入 CapturePolicy；Runtime 选字段写 Store / extendData</span></div>
-        <div class="step"><b>2. PC 内流转</b><span>模型只见 UUID ref；执行副本还原真值</span></div>
+        <div class="step"><b>2. PC 内流转</b><span>模型见 8 位 resultId ref；执行副本还原真值</span></div>
         <div class="step"><b>3. 跨端导出</b><span>summary 保留完整 ref；按需打 referenceBundle</span></div>
-        <div class="step"><b>4. Source 本地化</b><span>service 校验导入并 remap 为本地 UUID ref</span></div>
+        <div class="step"><b>4. Source 本地化</b><span>service 校验导入并 remap 为本地 8 位 ref</span></div>
         <div class="step"><b>5. 最终消费</b><span>主 Agent 交 sink；execution-only resolve</span></div>
       </div>
     </section>
@@ -109,9 +109,9 @@
             <tr><td>1</td><td>入参递归遍历；整体/值内引用替换</td><td>DM / Runtime resolver</td></tr>
             <tr><td>2</td><td>快慢系统引用内部闭环；边界外暂不传</td><td>UAT：当前无指代；后续边界恢复</td></tr>
             <tr><td>3</td><td>慢系统：DM 缓存 WM → 太初 mask → 模型 → 太初还原</td><td>DM 无引用则跳过二次还原</td></tr>
-            <tr><td>4</td><td>不可见 mask；可见结果落工作区 + Prompt/Skill 出引用</td><td>CapturePolicy + workspace</td></tr>
-            <tr><td>5</td><td>resultId = UUID</td><td>弃用 session+toolCallId 截断 hash</td></tr>
-            <tr><td>6</td><td>可见不持久化；不可见进 sessionStore.extendData</td><td>对齐 toolResultReferences 增强</td></tr>
+            <tr><td>4</td><td>不可见=mask；可见=原样进模，输出仍只出引用</td><td>policy + Skill/Prompt</td></tr>
+            <tr><td>5</td><td>resultId = UUID 前 8 位</td><td><span class="code">UUID…substring(0,8)</span></td></tr>
+            <tr><td>6</td><td>Runtime 缓存 resultDataList；按需持久化</td><td>WM / extendData</td></tr>
             <tr><td>7</td><td>SubAgent 输出 mask + hook 抽 <span class="code">${}</span> + memoryList</td><td>subagent delivery hook</td></tr>
             <tr><td>8</td><td>mask policy 绑定 Runtime</td><td><span class="code">toolResultReferencePolicyJson</span></td></tr>
           </tbody>
@@ -141,11 +141,10 @@
           <li>合法：<span class="code">下面是脑图 ${uuid.fileLink}</span> 中的完整 token 由交付层保留。</li>
           <li>禁止把 ref 截断、插值进 URL、或把内部 ref 直接给用户。</li>
         </ul>
-        <h3>身份模型（替代旧 32-bit）</h3>
+        <h3>resultId 生成</h3>
         <ul>
-          <li><span class="code">artifactId / resultId</span>：UUID</li>
-          <li><span class="code">sessionId</span>：隔离 / TTL</li>
-          <li><span class="code">sourceToolCallId</span>：追踪 / 可选幂等索引</li>
+          <li><span class="code">UUID.randomUUID().toString().substring(0, 8)</span></li>
+          <li><span class="code">toolCallId</span>：仅追踪，不进公开引用身份</li>
         </ul>
       </section>
     </div>

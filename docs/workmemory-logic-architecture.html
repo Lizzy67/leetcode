@@ -191,7 +191,7 @@
 <body>
   <header>
     <h1>逻辑架构图 · workmemory 引用填参</h1>
-    <p>工具结果默认入记忆 · 语法 <code style="background:#134e4a;color:#ccfbf1;padding:1px 6px;border-radius:4px">${resultId.jsonpath}</code>（resultId=UUID）· Runtime policy mask · 执行前递归解析</p>
+    <p>工具结果默认入记忆 · 语法 <code style="background:#134e4a;color:#ccfbf1;padding:1px 6px;border-radius:4px">${resultId.jsonpath}</code>（resultId=UUID前8位）· Runtime policy mask · 执行前递归解析</p>
   </header>
   <main>
     <div class="legend">
@@ -208,7 +208,7 @@
           <h3>模型 / LLM</h3>
           <ul>
             <li>plan / 发起工具调用</li>
-            <li>只见短摘要 + UUID <code>resultId</code></li>
+            <li>只见短摘要 + 8 位 <code>resultId</code></li>
             <li>下游入参可写 <code>${resultId.jsonpath}</code></li>
           </ul>
         </div>
@@ -231,9 +231,9 @@
         <div class="card primary">
           <h3>写入 workmemory</h3>
           <ul>
-            <li>工具结束后默认缓存；生成 UUID</li>
-            <li>不可见值 → <code>extendData</code> 持久化</li>
-            <li>可见值 → 仅内存 + 工作区</li>
+            <li>缓存 <code>resultDataList</code>；生成 8 位 resultId</li>
+            <li>不可见 → 进模前加 mask</li>
+            <li>可见 → 原样进模，输出仍出引用</li>
           </ul>
         </div>
         <div class="card primary">
@@ -310,17 +310,16 @@
     <div class="flow-box">
       <h2>数据流（端到端）</h2>
       <div class="flow-steps">
-        <div class="step"><b>STEP 1</b>执行工具 A，Runtime 生成 UUID <code>resultId</code></div>
-        <div class="step"><b>STEP 2</b>DM/太初写入 WM；不可见值进 extendData</div>
-        <div class="step"><b>STEP 3</b>按 policy mask 后回灌模型</div>
-        <div class="step"><b>STEP 4</b>模型调工具 B，入参 <code>${uuid.jsonpath}</code></div>
-        <div class="step"><b>STEP 5</b>递归解析填参 → invoke 工具 B</div>
+        <div class="step"><b>STEP 1</b>执行工具 A，生成 <code>resultId=UUID前8位</code> 并缓存 resultDataList</div>
+        <div class="step"><b>STEP 2</b>按默认/工具 policy（+正则）加 mask</div>
+        <div class="step"><b>STEP 3</b>回灌模型（不可见见引用；可见见原文）</div>
+        <div class="step"><b>STEP 4</b>Skill/Prompt 约束只出 <code>${id.jsonpath}</code></div>
+        <div class="step"><b>STEP 5</b>Runtime 递归解析 → invoke 工具 B</div>
       </div>
       <strong>一句话：</strong>
-      工具结果 → UUID 引用投影 →（模型只见短 token）→ 下游 <code>${resultId.jsonpath}</code> → 执行前还原 → 再调工具
+      缓存 resultDataList → policy mask → 模型只出引用 → Runtime 还原真值 → 再调工具
       <div class="note">
-        resultId：UUID · 引用格式：<code>${resultId.jsonpath}</code> ·
-        跨端见 <a href="./issue-2520-ref-design.html">issue-2520-ref-design.html</a> ·
+        resultId：<code>UUID.randomUUID().toString().substring(0, 8)</code> · 引用格式：<code>${resultId.jsonpath}</code> ·
         一页纸：<a href="./workmemory-ref-onepager.html">workmemory-ref-onepager.html</a>
       </div>
     </div>
