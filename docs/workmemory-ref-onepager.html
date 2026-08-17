@@ -120,9 +120,9 @@
       <div class="card">
         <h2>3. Mask 配置</h2>
         <ul>
-          <li><b>通用默认</b>：字段名命中 <span class="code">fileUri</span> / <span class="code">fileId</span> / <span class="code">objectId</span> / <span class="code">*Url</span> 等指针型 → 默认 mask。</li>
-          <li><b>工具覆盖</b>：单工具可增删 mask 字段（要读的正文勿进默认名单）。</li>
-          <li>优先级：工具配置 &gt; 通用默认。</li>
+          <li><b>通用默认</b>：<span class="code">fileUri</span> / <span class="code">fileId</span> / <span class="code">objectId</span> / <span class="code">*Url</span> 等 → mask。</li>
+          <li><b>工具覆盖</b> &gt; 通用默认。</li>
+          <li><b>mask 形态</b>：所见即所填。可用完整 <span class="code">${id.path}</span>，或会话内短句柄 <span class="code">${r1}</span>（DM 映射到 id+path）；勿用无歧义的统一死字符串（如所有字段都是 <span class="code">&lt;MASKED&gt;</span>）。</li>
         </ul>
       </div>
     </section>
@@ -146,7 +146,7 @@
           <li>默认/工具 mask；模型只感知变量。</li>
           <li>典型：fileUri、fileId。</li>
         </ul>
-        <div class="ex"><span class="code">${a1b2c3d4.fileUri}</span> → 原样引用 → DM 回填</div>
+        <div class="ex">mask 为 <span class="code">${r1}</span> 或 <span class="code">${a1b2c3d4.fileUri}</span> → 原样回填参数 → DM 展开</div>
       </div>
       <div class="scenario s2">
         <h3>场景② 要看 value</h3>
@@ -182,30 +182,30 @@
 
     <section class="prompt">
       <h2>7. SystemPrompt 建议文案（可直接嵌入）</h2>
-      <div class="hint">作用范围：工具入参的「照抄上一步结果」；用户原话/可独立确定的字面量仍直接填。</div>
+      <div class="hint">模型只记「照抄占位符 / 勿抄长值」；短句柄与 resultId 映射由 Runtime 处理，不必写进 Prompt。</div>
       <pre># 工具结果引用约定
 
-当某个工具参数的取值来自上一步某条工具结果中的字段时，不要复述、改写或猜测该值，请输出引用占位符，由系统在执行前回填真实值。
+工具参数若应使用「已有工具结果里的某个字段」，不要复述、改写或猜测该值；请填引用占位符，系统会在执行前回填真实值。
 
-## 写法
-`${&lt;resultId&gt;.&lt;字段路径&gt;}`
+## 怎么填
+1. 上下文里该字段若已是 `${...}` 占位符（含被 mask 的值）：**原样复制**到参数里，不要改写。
+2. 否则写成：`${&lt;resultId&gt;.&lt;字段路径&gt;}`
+   - `&lt;resultId&gt;`：只从上下文中已有工具结果读取（一般为 8 位字母数字），禁止编造。
+   - `&lt;字段路径&gt;`：结果内字段，支持点号嵌套，如 `entityId`、`data.fileUri`。
+3. 占位符必须是**整个参数值**：勿省略 `$`/`{`/`}`，勿前后拼接其它文字。
 
-- `&lt;resultId&gt;`：从上下文中对应 role=tool 结果读取的 resultId（仅字母数字）。必须照抄上下文，禁止编造。
-- `&lt;字段路径&gt;`：该结果内的字段路径，支持点号嵌套，例如 `entityId`、`data.fileUri`。
-- 整个参数值必须等于占位符本身：不要省略 `$` / `{` / `}`，不要前后拼接其它文字。
+## 必须用引用
+- 参数说明要求引用，或取值来自已有工具结果字段；
+- 字段已被 mask，或值较长（约 &gt;12 token，如 URI、fileId、大段文本）。
 
-## 何时必须用引用
-- 参数说明要求引用，或取值明确来自已有工具结果字段；
-- 尤其当该值较长（建议：超过约 12 个 token，如 URI、fileId、大段文本）时，禁止照抄原文，改输出引用。
+## 仍用字面值
+- 来自用户原话，或可独立确定的短信息（相册名、数量、开关等），且不是某工具结果字段的拷贝。
 
-## 何时仍填字面值
-- 取值来自用户原话，或可独立确定的短信息（如相册名、数量、开关等），且并非某一工具结果字段的拷贝。
-
-具体该引用哪个字段，以各工具/方法的参数说明为准。</pre>
+以各工具参数说明为准；有可选枚举时，优先选枚举中的引用项。</pre>
     </section>
 
     <footer>
-      通用 mask（fileUri/fileId…）+ 工具覆盖 → 短 resultId 对模、toolCallId 对内 → Prompt 禁长值照抄 → invoke 前 resultDataList → dataForTool 回填。
+      mask 所见即所填（完整引用或短句柄 ${rN}）→ Prompt 只教照抄 → invoke 前展开；resultId 由 DM 确定性生成，勿写 UUID[:8]。
     </footer>
   </article>
 </body>
