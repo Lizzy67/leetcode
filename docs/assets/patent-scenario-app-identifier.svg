@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560">
+<defs>
+<marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#000"/></marker>
+<style>.box{fill:#fff;stroke:#000;stroke-width:2}.dash{fill:#fff;stroke:#000;stroke-width:2;stroke-dasharray:8 6}.arr{fill:none;stroke:#000;stroke-width:2;marker-end:url(#a)}.ret{fill:none;stroke:#000;stroke-width:2;stroke-dasharray:7 5;marker-end:url(#a)}.t{font:700 25px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}.h{font:700 18px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}.b{font:15px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}.s{font:13px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}</style>
+</defs>
+<rect width="1200" height="560" fill="#fff"/>
+<text x="600" y="38" text-anchor="middle" class="t">图A  语义实体引用在应用权限控制场景中的流程</text>
+<text x="600" y="64" text-anchor="middle" class="s">正常路径一次业务调用；真实包名由词典查表获得</text>
+<rect x="45" y="125" width="185" height="115" rx="8" class="box"/>
+<text x="137.5" y="157" text-anchor="middle" class="h">用户</text>
+<text x="137.5" y="187" text-anchor="middle" class="b">禁止抖音使用</text>
+<text x="137.5" y="212" text-anchor="middle" class="b">麦克风</text>
+<rect x="285" y="125" width="230" height="115" rx="8" class="box"/>
+<text x="400.0" y="157" text-anchor="middle" class="h">大语言模型</text>
+<text x="400.0" y="187" text-anchor="middle" class="b">选择权限工具</text>
+<text x="400.0" y="212" text-anchor="middle" class="b">只表达引用意图</text>
+<rect x="570" y="105" width="250" height="155" rx="8" class="box"/>
+<text x="695.0" y="137" text-anchor="middle" class="h">引用解析拦截器</text>
+<text x="695.0" y="167" text-anchor="middle" class="b">识别语义三段式</text>
+<text x="695.0" y="192" text-anchor="middle" class="b">${app.抖音.bundleName}</text>
+<text x="695.0" y="217" text-anchor="middle" class="b">执行前查表</text>
+<rect x="875" y="125" width="270" height="115" rx="8" class="box"/>
+<text x="1010.0" y="157" text-anchor="middle" class="h">权限工具</text>
+<text x="1010.0" y="187" text-anchor="middle" class="b">bundleName=真实包名</text>
+<text x="1010.0" y="212" text-anchor="middle" class="b">permission=麦克风</text>
+<path d="M230 182 L285 182" class="arr"/>
+<text x="257.5" y="172" text-anchor="middle" class="s">用户意图</text>
+<path d="M515 182 L570 182" class="arr"/>
+<text x="542.5" y="172" text-anchor="middle" class="s">含引用的工具参数</text>
+<path d="M820 182 L875 182" class="arr"/>
+<text x="847.5" y="172" text-anchor="middle" class="s">回填真值</text>
+<rect x="355" y="355" width="205" height="105" rx="8" class="box"/>
+<text x="457.5" y="387" text-anchor="middle" class="h">同义词表</text>
+<text x="457.5" y="417" text-anchor="middle" class="b">douyin / Douyin</text>
+<text x="457.5" y="442" text-anchor="middle" class="b">→ 抖音</text>
+<rect x="640" y="355" width="270" height="105" rx="8" class="box"/>
+<text x="775.0" y="387" text-anchor="middle" class="h">实体属性映射表</text>
+<text x="775.0" y="417" text-anchor="middle" class="b">(app, 抖音, bundleName)</text>
+<text x="775.0" y="442" text-anchor="middle" class="b">→ com.ss.android...</text>
+<path d="M670 260 L500 355" class="arr"/>
+<text x="585.0" y="250" text-anchor="middle" class="s">① 别名归一</text>
+<path d="M720 355 L700 260" class="arr"/>
+<text x="710.0" y="250" text-anchor="middle" class="s">② 属性映射</text>
+<text x="600" y="525" text-anchor="middle" class="b">未命中或多候选：短路，可转查询已安装应用的兜底路径；禁止猜测或透传引用字面量。</text>
+</svg>
