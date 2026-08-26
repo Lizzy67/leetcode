@@ -15,32 +15,32 @@
     font:14px/1.65 "Source Han Serif SC","Noto Serif SC","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
   }
   .page {
-    width:1280px; min-height:720px; margin:20px auto; padding:44px 58px 34px;
+    width:1280px; min-height:720px; margin:20px auto; padding:42px 58px 32px;
     background:#fff; box-shadow:0 14px 40px rgba(11,84,78,.10);
   }
 
   /* header */
   .kicker { font-size:12px; letter-spacing:.35em; color:var(--teal); font-weight:700; margin-bottom:6px; }
-  h1 { margin:0 0 10px; font-size:30px; font-weight:800; letter-spacing:.01em; }
-  .thesis { font-size:15px; color:var(--ink); max-width:900px; }
+  h1 { margin:0 0 10px; font-size:29px; font-weight:800; letter-spacing:.01em; }
+  .thesis { font-size:15px; color:var(--ink); max-width:920px; }
   .thesis b { color:var(--teal-deep); }
-  .headrule { border:none; border-top:2px solid var(--ink); margin:18px 0 0; }
+  .headrule { border:none; border-top:2px solid var(--ink); margin:16px 0 0; }
 
   /* section heading */
-  .sec { display:flex; align-items:baseline; gap:12px; margin:26px 0 10px; }
+  .sec { display:flex; align-items:baseline; gap:12px; margin:24px 0 9px; }
   .sec .no { font-size:13px; font-weight:800; color:var(--teal); letter-spacing:.12em; }
   .sec h2 { margin:0; font-size:16px; font-weight:800; letter-spacing:.04em; }
   .sec .note { margin-left:auto; font-size:12px; color:var(--faint); }
 
-  /* 01 problem: prose + inline terms */
-  .problem p { margin:0; max-width:1080px; color:var(--ink); }
-  .problem .terms { margin-top:8px; font-size:13px; color:var(--muted); }
-  .problem .terms b { color:var(--ink); font-weight:700; }
+  /* 01 problem */
+  .problem p { margin:0; max-width:1080px; }
+  .problem .terms { margin-top:7px; font-size:13px; color:var(--muted); }
+  .problem .terms b { color:var(--ink); }
   .problem .terms span { margin-right:26px; }
 
-  /* 02 flow: the single graphic element */
-  .flow { display:flex; align-items:stretch; gap:0; margin-top:14px; }
-  .node { flex:1; position:relative; padding:12px 18px 12px 16px; background:var(--wash); border-top:2px solid var(--teal); }
+  /* 02 flow */
+  .flow { display:flex; gap:0; margin-top:12px; }
+  .node { flex:1; position:relative; padding:11px 16px; background:var(--wash); border-top:2px solid var(--teal); }
   .node + .node { margin-left:26px; }
   .node + .node::before {
     content:"→"; position:absolute; left:-23px; top:50%; transform:translateY(-50%);
@@ -54,23 +54,35 @@
     color:var(--teal-deep);
   }
 
-  /* 03 details: three text columns, no boxes */
-  .cols { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; margin-top:6px; }
-  .col { padding:0 30px; border-left:1px solid var(--line); }
-  .col:first-child { padding-left:0; border-left:none; }
-  .col:last-child { padding-right:0; }
-  .col h3 { margin:0 0 8px; font-size:14px; font-weight:800; color:var(--teal-deep); }
-  .col p { margin:0 0 10px; font-size:13px; color:var(--ink); }
-  .col p:last-child { margin-bottom:0; }
-  .col .lead { color:var(--muted); font-size:12px; }
+  /* 03 two scenarios */
+  .scenes { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:4px; }
+  .scene { padding:0 34px 0 0; }
+  .scene + .scene { padding:0 0 0 34px; border-left:1px solid var(--line); }
+  .scene .tagline { font-size:12px; color:var(--faint); letter-spacing:.06em; margin-bottom:2px; }
+  .scene h3 { margin:0 0 7px; font-size:15px; font-weight:800; color:var(--teal-deep); }
+  .scene p { margin:0 0 8px; font-size:13px; }
+  .scene p:last-child { margin-bottom:0; }
+  .scene .fine { font-size:12px; color:var(--muted); }
+  .mini {
+    margin:8px 0; padding:8px 12px; background:var(--wash); border-left:2px solid var(--teal);
+    font:11.5px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; color:var(--ink);
+  }
+  .mini .dim { color:var(--faint); }
+
+  /* 04 guarantees */
+  .cols2 { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:4px; }
+  .colg { padding:0 34px 0 0; font-size:13px; }
+  .colg + .colg { padding:0 0 0 34px; border-left:1px solid var(--line); }
+  .colg h3 { margin:0 0 6px; font-size:14px; font-weight:800; color:var(--teal-deep); }
+  .colg p { margin:0 0 6px; }
+  .colg .fine { color:var(--muted); font-size:12px; }
 
   /* footer */
-  .footrule { border:none; border-top:1px solid var(--line); margin:26px 0 14px; }
+  .footrule { border:none; border-top:1px solid var(--line); margin:22px 0 12px; }
   .gains { display:flex; justify-content:space-between; gap:20px; }
-  .gain { font-size:13px; }
   .gain b { display:block; font-size:14px; color:var(--teal-deep); margin-bottom:1px; }
   .gain span { color:var(--muted); font-size:12px; }
-  .close { margin-top:16px; text-align:center; font-size:13.5px; font-weight:700; color:var(--ink); }
+  .close { margin-top:14px; text-align:center; font-size:13.5px; font-weight:700; }
   .close em { font-style:normal; color:var(--teal-deep); }
 
   @media print { body{background:#fff}.page{margin:0;box-shadow:none} }
@@ -79,8 +91,8 @@
     .flow{flex-direction:column}
     .node+.node{margin-left:0;margin-top:20px}
     .node+.node::before{left:12px;top:-19px;transform:none}
-    .cols{grid-template-columns:1fr}
-    .col{padding:0;border-left:none;margin-bottom:18px}
+    .scenes,.cols2{grid-template-columns:1fr}
+    .scene+.scene,.colg+.colg{padding:0;border-left:none;margin-top:16px}
     .gains{flex-wrap:wrap}
   }
 </style>
@@ -91,9 +103,9 @@
   <div class="kicker">AGENT · TOOL CALLING</div>
   <h1>工具结果引用：让模型写「引用」，让 Runtime 填「真值」</h1>
   <p class="thesis">
-    上一个工具的结果不再回灌给模型抄写，而是由模型在下游参数里写一个引用；
+    上一个工具的结果不再由模型抄进下游参数，而是写一个引用 <code>${resultId.path}</code>；
     <b>Runtime 在工具执行前从工作记忆取出真值、按需转换结构、校验合法</b>，再去调用工具。
-    真值全程不经模型之手，存量工具一行不改。
+    真值不经模型之手，存量工具一行不改。
   </p>
   <hr class="headrule" />
 
@@ -102,7 +114,7 @@
     <p>
       串行工具链里，下一个工具的参数常常来自上一个工具的结果：文件 URI、对象 ID、大段文本、一整个列表。
       这些值现在要先整段塞回模型上下文，再由模型原样抄进下游参数——长 URI 抄着抄着就断了；
-      上下游结构不一致时，还要模型手工改写大段 JSON。抄写和改写，两件事模型都做不稳，而且每一轮都在烧 Token。
+      结构不一致时，还要模型手工改写大段 JSON。抄写和改写，模型都做不稳，而且每一轮都在烧 Token。
     </p>
     <div class="terms">
       <span><b>抄不准</b>：长值复述易截断、改写、漏字符</span>
@@ -124,13 +136,13 @@
       </div>
       <div class="node">
         <div class="who">Runtime</div>
-        <div class="what">送模呈现</div>
-        <div class="how">指针字段直接换成引用给模型看；要推理的内容照常给</div>
+        <div class="what">按 Policy 送模</div>
+        <div class="how">命中 mask policy 的字段换成引用，其余内容全量可见</div>
       </div>
       <div class="node">
         <div class="who">模型</div>
         <div class="what">只写引用</div>
-        <div class="how">下游参数填 <code>${resultId.path}</code>，不复述真值，所见即所填</div>
+        <div class="how">下游参数填 <code>${resultId.path}</code>，可见与否都不复述真值</div>
       </div>
       <div class="node">
         <div class="who">Runtime</div>
@@ -146,40 +158,63 @@
   </section>
 
   <section>
-    <div class="sec"><span class="no">03</span><h2>三个关键问题</h2></div>
-    <div class="cols">
-      <div class="col">
-        <h3>引用怎么写</h3>
+    <div class="sec">
+      <span class="no">03</span><h2>两种场景</h2>
+      <span class="note">按「模型要不要看到这个值」分流，殊途同归于引用</span>
+    </div>
+    <div class="scenes">
+      <div class="scene">
+        <div class="tagline">场景一 · 可见但引用</div>
+        <h3>结果全量进上下文，参数仍写引用</h3>
         <p>
-          用 <code>${resultId.path}</code> 指定「哪条结果的哪个字段」：
-          <code>resultId</code> 是入库时分配的短标识，<code>path</code> 支持点号取嵌套字段，
-          比如 <code>${a1b2c3d4.data.fileUri}</code>。
+          模型需要读内容才能决策：工具返回原样进入上下文，正文、结构、字段都可见，推理照常。
+          唯一的约束是——把这些值传给下游工具时，参数里写 <code>${resultId.path}</code>，不许把看过的内容再抄一遍。
         </p>
-        <p class="lead">
-          模型不需要看值时，送模前就把值换成引用，模型照抄即可；需要看值推理时，内容照常给，
-          但参数里仍然写引用——「看」与「传」分开。
-        </p>
+        <div class="mini">
+          <span class="dim">上下文：</span>text = "血糖偏高，建议…"（全量可见）<br/>
+          <span class="dim">模型出参：</span>report(content = <b>${e5f6a7b8.text}</b>)
+        </div>
+        <p class="fine">「看」与「传」分开：看的是内容，传的是引用。由 Skill 参数约定与系统提示共同约束。</p>
       </div>
-      <div class="col">
-        <h3>真值从哪来</h3>
+      <div class="scene">
+        <div class="tagline">场景二 · Mask 后不可见</div>
+        <h3>Policy 注入掩码，模型全程不接触真值</h3>
         <p>
-          只从工作记忆取：先查全量结果集，未命中再查工具适配视图。
-          <code>resultId</code> 由 Runtime 统一生成，对内保留与 toolCallId 的映射，可追踪、可对账。
+          模型不需要理解的值（文件 URI、对象 ID 这类指针字段），送模之前就被替换成引用占位符。
+          替换规则由两层 Policy 注入：<b>通用 Policy</b> 按字段名兜底（fileUri、fileId、*Url…），
+          <b>业务 Policy</b> 按工具粒度增删覆盖，业务优先。
         </p>
-        <p class="lead">
-          结构不一致时按参数策略转换：<code>[563,728]</code> 自动变成
+        <div class="mini">
+          <span class="dim">真值：</span>fileUri = "https://…/very/long/path?token=…"<br/>
+          <span class="dim">送模后：</span>fileUri = <b>${a1b2c3d4.fileUri}</b> ← 模型所见即所填
+        </div>
+        <p class="fine">模型只是照抄占位符，真值从入库到执行始终留在 Runtime 侧。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec"><span class="no">04</span><h2>真值与保障</h2></div>
+    <div class="cols2">
+      <div class="colg">
+        <h3>真值从哪来、怎么变</h3>
+        <p>
+          只从工作记忆取：先查全量结果集，未命中再查工具适配视图。<code>resultId</code> 由 Runtime 统一生成，
+          对内保留与 toolCallId 的映射，可追踪、可对账。
+        </p>
+        <p class="fine">
+          上下游结构不一致时按参数策略转换：<code>[563,728]</code> 自动变成
           <code>[{"file_id":"563"},…]</code>，模型和工具都不用动。
         </p>
       </div>
-      <div class="col">
+      <div class="colg">
         <h3>出错怎么办</h3>
         <p>
           引用非法、结果不存在、字段没有、转换失败，一律短路：<code>${…}</code> 原文绝不透传给工具，
-          错误明确回给模型，引导改写引用后重试。
+          错误明确回给模型，引导改写后重试。
         </p>
-        <p class="lead">
-          结果带会话作用域和有效期，过期或越权即拒绝；并行链路必须显式写 <code>resultId</code>，
-          不允许含糊的「上一条」。
+        <p class="fine">
+          结果带会话作用域和有效期，过期或越权即拒绝；并行链路必须显式写 <code>resultId</code>，不允许含糊的「上一条」。
         </p>
       </div>
     </div>
