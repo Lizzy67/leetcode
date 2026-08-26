@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="850" viewBox="0 0 1400 850">
+<defs>
+<marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#000"/></marker>
+<style>
+      .box{fill:#fff;stroke:#000;stroke-width:2.1}
+      .runtime{fill:#fff;stroke:#000;stroke-width:2.2;stroke-dasharray:11 7}
+      .pipeline{fill:#fff;stroke:#000;stroke-width:2.5}
+      .arrow{fill:none;stroke:#000;stroke-width:2.1;marker-end:url(#arrowhead)}
+      .return{fill:none;stroke:#000;stroke-width:2.1;stroke-dasharray:8 6;marker-end:url(#arrowhead)}
+      .data{fill:none;stroke:#000;stroke-width:1.9;stroke-dasharray:3 4;marker-end:url(#arrowhead)}
+      .title{font:700 27px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}
+      .subtitle{font:14px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}
+      .module{font:700 18px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}
+      .body{font:14px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}
+      .label{font:700 13px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}
+      .note{font:14px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}
+      .num{font:700 14px Arial,sans-serif;fill:#000}
+      .number{fill:#fff;stroke:#000;stroke-width:1.8}
+    </style>
+</defs>
+<rect width="1400" height="850" fill="#fff"/>
+<text x="700" y="38" text-anchor="middle" class="title">图2  本发明系统总体架构示意图</text>
+<text x="700" y="65" text-anchor="middle" class="subtitle">模型只表达引用意图；调度层在工具执行前求值、转换、校验并回填真值</text>
+<rect x="28" y="130" width="205" height="125" rx="9" class="box"/>
+<text x="130.5" y="162" text-anchor="middle" class="module">用户终端</text>
+<text x="130.5" y="192" text-anchor="middle" class="body">手机 / 电视 / 车机</text>
+<text x="130.5" y="217" text-anchor="middle" class="body">用户请求 + 设备状态</text>
+<rect x="275" y="88" width="870" height="650" rx="15" class="runtime"/>
+<rect x="310" y="74" width="235" height="31" fill="#fff"/>
+<text x="427" y="96" text-anchor="middle" class="module">智能体运行系统</text>
+<rect x="315" y="130" width="220" height="130" rx="9" class="box"/>
+<text x="425.0" y="162" text-anchor="middle" class="module">交互与上下文模块</text>
+<text x="425.0" y="192" text-anchor="middle" class="body">组装对话 / deviceInfo</text>
+<text x="425.0" y="217" text-anchor="middle" class="body">工具结果可选 mask</text>
+<rect x="600" y="130" width="205" height="130" rx="9" class="box"/>
+<text x="702.5" y="162" text-anchor="middle" class="module">大语言模型</text>
+<text x="702.5" y="192" text-anchor="middle" class="body">理解意图</text>
+<text x="702.5" y="217" text-anchor="middle" class="body">输出含 ${…} 的 tool call</text>
+<rect x="870" y="130" width="225" height="130" rx="9" class="box"/>
+<text x="982.5" y="162" text-anchor="middle" class="module">工具调度模块</text>
+<text x="982.5" y="192" text-anchor="middle" class="body">接收工具名与参数</text>
+<text x="982.5" y="217" text-anchor="middle" class="body">统一调度入口</text>
+<rect x="330" y="315" width="750" height="175" rx="12" class="pipeline"/>
+<rect x="365" y="301" width="245" height="31" fill="#fff"/>
+<text x="487" y="323" text-anchor="middle" class="module">调用前参数处理流水线</text>
+<rect x="365" y="355" width="150" height="95" rx="9" class="box"/>
+<text x="440.0" y="387" text-anchor="middle" class="module">① 引用识别</text>
+<text x="440.0" y="417" text-anchor="middle" class="body">扫描 ${…}</text>
+<text x="440.0" y="442" text-anchor="middle" class="body">判别引用类型</text>
+<rect x="540" y="355" width="150" height="95" rx="9" class="box"/>
+<text x="615.0" y="387" text-anchor="middle" class="module">② 引用求值</text>
+<text x="615.0" y="417" text-anchor="middle" class="body">查记忆/词典</text>
+<text x="615.0" y="442" text-anchor="middle" class="body">回填业务真值</text>
+<rect x="715" y="355" width="150" height="95" rx="9" class="box"/>
+<text x="790.0" y="387" text-anchor="middle" class="module">③ 策略转换</text>
+<text x="790.0" y="417" text-anchor="middle" class="body">列表 map / 对象封装</text>
+<text x="790.0" y="442" text-anchor="middle" class="body">类型/字段转换</text>
+<rect x="890" y="355" width="155" height="95" rx="9" class="box"/>
+<text x="967.5" y="387" text-anchor="middle" class="module">④ 校验/短路</text>
+<text x="967.5" y="417" text-anchor="middle" class="body">校验 schema</text>
+<text x="967.5" y="442" text-anchor="middle" class="body">失败禁止透传</text>
+<path d="M320,577 C320,561 540,561 540,577 L540,673 C540,689 320,689 320,673 Z" class="box"/>
+<ellipse cx="430.0" cy="577" rx="110.0" ry="12" class="box"/>
+<text x="430.0" y="608" text-anchor="middle" class="module">工作记忆</text>
+<text x="430.0" y="635" text-anchor="middle" class="body">工具结果集</text>
+<text x="430.0" y="658" text-anchor="middle" class="body">resultId → 字段真值</text>
+<path d="M605,577 C605,561 825,561 825,577 L825,673 C825,689 605,689 605,673 Z" class="box"/>
+<ellipse cx="715.0" cy="577" rx="110.0" ry="12" class="box"/>
+<text x="715.0" y="608" text-anchor="middle" class="module">语义词典</text>
+<text x="715.0" y="635" text-anchor="middle" class="body">同义词/别名表</text>
+<text x="715.0" y="658" text-anchor="middle" class="body">实体属性映射表</text>
+<path d="M890,577 C890,561 1095,561 1095,577 L1095,673 C1095,689 890,689 890,673 Z" class="box"/>
+<ellipse cx="992.5" cy="577" rx="102.5" ry="12" class="box"/>
+<text x="992.5" y="608" text-anchor="middle" class="module">参数策略仓</text>
+<text x="992.5" y="635" text-anchor="middle" class="body">通用规则 + 工具覆盖</text>
+<text x="992.5" y="658" text-anchor="middle" class="body">格式转换 policy</text>
+<rect x="1200" y="270" width="175" height="170" rx="9" class="box"/>
+<text x="1287.5" y="302" text-anchor="middle" class="module">工具执行模块</text>
+<text x="1287.5" y="332" text-anchor="middle" class="body">端侧工具</text>
+<text x="1287.5" y="357" text-anchor="middle" class="body">云端 API / 第三方工具</text>
+<text x="1287.5" y="382" text-anchor="middle" class="body">仅接收最终真值</text>
+<path d="M233 192 H315" class="arrow"/>
+<text x="274" y="177" text-anchor="middle" class="label">用户意图 / 设备上下文</text>
+<circle cx="274" cy="211" r="13" class="number"/>
+<text x="274" y="216" text-anchor="middle" class="num">1</text>
+<path d="M535 195 H600" class="arrow"/>
+<text x="568" y="178" text-anchor="middle" class="label">模型上下文</text>
+<circle cx="568" cy="211" r="13" class="number"/>
+<text x="568" y="216" text-anchor="middle" class="num">2</text>
+<path d="M805 195 H870" class="arrow"/>
+<text x="838" y="178" text-anchor="middle" class="label">含引用的工具调用</text>
+<circle cx="838" cy="211" r="13" class="number"/>
+<text x="838" y="216" text-anchor="middle" class="num">3</text>
+<path d="M982 260 V315" class="arrow"/>
+<text x="1040" y="294" text-anchor="middle" class="label">进入 pre-call 流水线</text>
+<circle cx="982" cy="287" r="13" class="number"/>
+<text x="982" y="292" text-anchor="middle" class="num">4</text>
+<path d="M515 402 H540" class="arrow"/>
+<path d="M690 402 H715" class="arrow"/>
+<path d="M865 402 H890" class="arrow"/>
+<path d="M430 565 V510 H615 V450" class="data"/>
+<text x="500" y="535" text-anchor="middle" class="label">结果引用数据源</text>
+<path d="M715 565 V510 H645 V450" class="data"/>
+<text x="725" y="535" text-anchor="middle" class="label">语义引用数据源</text>
+<path d="M992 565 V450" class="data"/>
+<text x="1060" y="525" text-anchor="middle" class="label">转换/校验规则</text>
+<path d="M1045 402 H1200" class="arrow"/>
+<text x="1122" y="385" text-anchor="middle" class="label">最终真值参数</text>
+<circle cx="1122" cy="418" r="13" class="number"/>
+<text x="1122" y="423" text-anchor="middle" class="num">5</text>
+<path d="M1287 440 V730 H430 V685" class="return"/>
+<text x="875" y="757" text-anchor="middle" class="label">工具结果默认写入工作记忆</text>
+<circle cx="1165" cy="730" r="13" class="number"/>
+<text x="1165" y="735" text-anchor="middle" class="num">6</text>
+<path d="M430 565 V520 H425 V260" class="return"/>
+<text x="330" y="520" text-anchor="middle" class="label">结果/掩码后上下文回流</text>
+<path d="M967 450 V520 H1165 V520" class="return"/>
+<text x="1060" y="545" text-anchor="middle" class="label">失败：返回明确错误，不调工具</text>
+<rect x="35" y="782" width="1330" height="48" rx="7" class="box"/>
+<text x="62" y="812" text-anchor="start" class="label">图例：</text>
+<text x="125" y="812" text-anchor="start" class="note">实线箭头=主调用流；短虚线=数据/策略读取；长虚线=结果或错误回流；工具实现无需识别引用协议。</text>
+</svg>
