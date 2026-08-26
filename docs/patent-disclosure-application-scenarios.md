@@ -12,7 +12,7 @@
 
 传统方式需要模型先调用“查询全部已安装应用”类工具，在下一轮从查询结果中抄写真实包名，再调用权限管理、应用跳转等业务工具；若模型跳过查询并凭记忆填写，则容易产生虚假包名。
 
-如图A所示，本发明中模型直接在业务工具的标识参数中填写语义实体引用，例如：
+如图4所示，本发明中模型直接在业务工具的标识参数中填写语义实体引用，例如：
 
 ```text
 ${app.抖音.bundleName}
@@ -28,8 +28,8 @@ ${app.抖音.bundleName}
 
 映射命中时，模型可以直接发起权限管理等业务工具调用，无需先执行全量查询，从而将正常路径由两次工具循环缩减为一次业务调用。
 
-**图A：语义实体引用在应用权限控制场景中的流程**  
-![图A 语义实体引用在应用权限控制场景中的流程](assets/patent-scenario-app-identifier.svg)
+**图4：语义实体引用在应用权限控制场景中的流程**  
+![图4 语义实体引用在应用权限控制场景中的流程](assets/patent-scenario-app-identifier.svg)
 
 ---
 
@@ -39,7 +39,7 @@ ${app.抖音.bundleName}
 
 传统方式将工具A的完整结果重新输入模型，由模型在工具B参数中原样复述长值。该方式会增加上下文长度，并容易产生截断、漏字符或改写。
 
-如图B所示，本发明按照以下流程处理：
+如图5所示，本发明按照以下流程处理：
 
 1. 工具A成功返回后，调度模块将结果默认写入工作记忆，并分配结果标识；
 2. 对模型无需理解的字段，可在送入模型之前将真值掩码为结果引用；
@@ -49,8 +49,8 @@ ${app.抖音.bundleName}
 
 该场景实现“所见即所填”，使模型不再承担长字符串抄写任务，并保持存量工具的接口与实现不变。
 
-**图B：跨工具结果引用与送模掩码流程**  
-![图B 跨工具结果引用与送模掩码流程](assets/patent-scenario-result-transfer.svg)
+**图5：跨工具结果引用与送模掩码流程**  
+![图5 跨工具结果引用与送模掩码流程](assets/patent-scenario-result-transfer.svg)
 
 ---
 
@@ -70,7 +70,7 @@ ${app.抖音.bundleName}
 
 若由模型完成逐项转换，列表稍长即容易产生遗漏、字段名错误或类型错误；若逐个修改上下游工具协议，则难以规模化。
 
-如图C所示，本发明在引用解析和工具执行之间增加参数策略化转换阶段：
+如图6所示，本发明在引用解析和工具执行之间增加参数策略化转换阶段：
 
 1. 模型仅将上游列表字段的结果引用写入 `images` 参数；
 2. 引用求值单元从工作记忆取得真实列表；
@@ -85,8 +85,8 @@ ${app.抖音.bundleName}
 
 该方案把“引用求值”和“结构适配”组成统一的执行前参数处理流水线，使模型无需生成长对象数组，并使上下游工具保持零改动。
 
-**图C：引用展开后的入参策略化格式转换**  
-![图C 引用展开后的入参策略化格式转换](assets/patent-scenario-format-transform.svg)
+**图6：引用展开后的入参策略化格式转换**  
+![图6 引用展开后的入参策略化格式转换](assets/patent-scenario-format-transform.svg)
 
 ---
 
@@ -104,8 +104,8 @@ ${app.抖音.bundleName}
 
 | 图号 | 附图文件 | 形式 |
 |------|----------|------|
-| 图A | `assets/patent-scenario-app-identifier.svg` | 黑白、无灰度、可编辑SVG |
-| 图B | `assets/patent-scenario-result-transfer.svg` | 黑白、无灰度、可编辑SVG |
-| 图C | `assets/patent-scenario-format-transform.svg` | 黑白、无灰度、可编辑SVG |
+| 图4 | `assets/patent-scenario-app-identifier.svg` | 黑白、无灰度、可编辑SVG |
+| 图5 | `assets/patent-scenario-result-transfer.svg` | 黑白、无灰度、可编辑SVG |
+| 图6 | `assets/patent-scenario-format-transform.svg` | 黑白、无灰度、可编辑SVG |
 
 对应PNG文件仅用于预览；正式交底书建议插入SVG或将SVG导入绘图软件后转为专利附图要求的可编辑线图。
