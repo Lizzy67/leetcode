@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>智能体工具参数引用方案 · 一页纸</title>
+<style>
+  :root {
+    --ink:#15231f; --muted:#60706a; --line:#cfdbd5; --paper:#fff;
+    --bg:#eef4f1; --teal:#0f766e; --teal2:#115e59; --soft:#ecf8f4;
+    --blue:#1d4f91; --bluebg:#edf4fc; --amber:#8a5a00; --amberbg:#fff7e4;
+    --red:#8b3144; --redbg:#fff0f3;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font:13px/1.4 "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  .page {
+    width:1280px; min-height:720px; margin:18px auto; padding:22px 26px 18px;
+    background:var(--paper); border:1px solid var(--line); border-radius:14px;
+    box-shadow:0 12px 32px rgba(17,94,89,.08);
+  }
+  header {
+    display:flex; align-items:flex-end; justify-content:space-between;
+    border-bottom:3px solid var(--teal); padding-bottom:10px; margin-bottom:12px;
+  }
+  h1 { margin:0; font-size:25px; color:var(--teal2); letter-spacing:.02em; }
+  .subtitle { margin-top:3px; color:var(--muted); font-size:12px; }
+  .syntax { color:var(--muted); font-size:12px; text-align:right; }
+  code {
+    font:11.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    padding:1px 5px; border-radius:4px; border:1px solid #d3e1db;
+    background:#f0f6f3; color:var(--teal2);
+  }
+  h2 { margin:0 0 6px; color:var(--teal2); font-size:14px; }
+  h3 { margin:0 0 4px; font-size:13px; }
+  ul { margin:0; padding-left:17px; }
+  li { margin:0 0 3px; }
+  .top { display:grid; grid-template-columns:1fr 1.35fr 1fr; gap:10px; margin-bottom:10px; }
+  .card {
+    border:1px solid var(--line); border-radius:9px; padding:9px 11px;
+    background:#fbfdfc;
+  }
+  .goal { background:var(--soft); }
+  .principle { background:var(--bluebg); }
+  .guard { background:var(--amberbg); }
+  .flow {
+    border:1px solid var(--line); border-radius:10px; padding:9px 11px;
+    margin-bottom:10px; background:linear-gradient(180deg,#f5fbf8,#fff);
+  }
+  .steps { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .step {
+    position:relative; min-height:77px; padding:7px 8px;
+    border:1px solid var(--line); border-radius:7px; background:#fff;
+  }
+  .step:after {
+    content:"→"; position:absolute; right:-10px; top:33px; color:var(--teal);
+    font-weight:800; z-index:2;
+  }
+  .step:last-child:after { content:""; }
+  .step b { display:block; color:var(--teal2); font-size:11px; margin-bottom:3px; }
+  .step span { color:var(--muted); font-size:10.5px; }
+  .middle { display:grid; grid-template-columns:1fr 1fr 1.05fr; gap:10px; margin-bottom:10px; }
+  .source { background:var(--bluebg); border-color:#bed4ec; }
+  .visible { background:var(--amberbg); border-color:#ebd79b; }
+  .transform { background:var(--soft); border-color:#bcded4; }
+  .example {
+    margin-top:6px; padding:5px 7px; border:1px dashed #aabdb5;
+    border-radius:5px; background:#fff; font-size:10.8px;
+  }
+  .bottom { display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:10px; }
+  .rules { background:#fbfdfc; }
+  .benefit { background:var(--soft); }
+  .boundary { background:var(--redbg); border-color:#e7c4cc; }
+  .tag {
+    display:inline-block; padding:1px 7px; margin-right:4px; border-radius:999px;
+    background:#dff2eb; color:var(--teal2); font-size:10.5px; font-weight:700;
+  }
+  footer {
+    margin-top:9px; padding-top:7px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; color:var(--muted); font-size:11px;
+  }
+  @media print {
+    body{background:#fff}.page{margin:0;border:0;box-shadow:none}
+  }
+  @media(max-width:900px) {
+    .page{width:auto;margin:0;border-radius:0}.top,.middle,.bottom,.steps{grid-template-columns:1fr}
+    .step:after{content:""}
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <div>
+      <h1>智能体工具参数引用方案</h1>
+      <div class="subtitle">模型表达“引用谁” · Runtime负责“取真值、做转换、再调用” · 工具零改动</div>
+    </div>
+    <div class="syntax">
+      结果引用 <code>${resultId.path}</code>　语义引用 <code>${namespace.entity.attribute}</code>
+    </div>
+  </header>
+
+  <section class="top">
+    <div class="card goal">
+      <h2>为什么需要</h2>
+      <ul>
+        <li>长URI/列表让模型照抄：Token高、易截断改写</li>
+        <li>包名等弱语义标识：模型易凭记忆编造</li>
+        <li>上下游Schema不同：让模型改长JSON不稳定</li>
+      </ul>
+    </div>
+    <div class="card principle">
+      <h2>核心原则</h2>
+      <ul>
+        <li><b>模型只输出引用意图</b>，业务真值来自工作记忆/语义词典</li>
+        <li><b>统一Pre-call流水线</b>：求值 → 可选转换 → 校验 → 调工具</li>
+        <li><b>工具无感知</b>：存量工具仍接收原有真实参数</li>
+      </ul>
+    </div>
+    <div class="card guard">
+      <h2>可靠性底线</h2>
+      <ul>
+        <li>解析/映射/转换/Schema任一失败即短路</li>
+        <li>禁止把<code>${…}</code>字面量或半成品透传工具</li>
+        <li>权限与作用域由Runtime校验，模型不能决定</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="flow">
+    <h2>完整主链路</h2>
+    <div class="steps">
+      <div class="step"><b>① 工具返回</b><span>工具A产出URI、ID、列表或对象</span></div>
+      <div class="step"><b>② 默认入库</b><span>写入工作记忆并生成resultId</span></div>
+      <div class="step"><b>③ 送模</b><span>按需mask；或保留内容+引用</span></div>
+      <div class="step"><b>④ 模型填引用</b><span>下游参数写引用，不复述真值</span></div>
+      <div class="step"><b>⑤ 引用求值</b><span>查工作记忆或语义词典回填</span></div>
+      <div class="step"><b>⑥ 转换/校验</b><span>按Policy适配结构并校验Schema</span></div>
+      <div class="step"><b>⑦ 执行闭环</b><span>真值调用工具B；结果再次入库</span></div>
+    </div>
+  </section>
+
+  <section class="middle">
+    <div class="card source">
+      <h2>两类引用 · 同一管道</h2>
+      <h3><span class="tag">A</span>工具结果引用</h3>
+      <div><code>${a1b2c3d4.fileUri}</code> → Workmemory</div>
+      <h3 style="margin-top:7px"><span class="tag">B</span>语义实体引用</h3>
+      <div><code>${app.抖音.bundleName}</code> → 别名归一 + 属性映射</div>
+    </div>
+    <div class="card visible">
+      <h2>两种可见性</h2>
+      <ul>
+        <li><b>模型不用看值：</b>送模前mask为引用，所见即所填</li>
+        <li><b>模型需要看值：</b>内容/摘要供推理，工具入参仍写引用</li>
+      </ul>
+      <div class="example">约束层级：<b>Runtime硬校验 ＞ Schema/Skill ＞ SystemPrompt</b></div>
+    </div>
+    <div class="card transform">
+      <h2>引用后可做结构适配</h2>
+      <div class="example">
+        模型：<code>images=${rid.merged_id_list}</code><br/>
+        Resolve：<code>[563, 728]</code><br/>
+        Transform：<code>[{"file_id":"563"},{"file_id":"728"}]</code>
+      </div>
+      <div style="margin-top:5px">先求值，再按目标工具参数Policy转换；模型和工具均不用改结构。</div>
+    </div>
+  </section>
+
+  <section class="bottom">
+    <div class="card rules">
+      <h2>关键实现约定</h2>
+      <ul>
+        <li>结果默认写入Workmemory；查询可兼容全量结果集 → 工具适配视图</li>
+        <li>resultId为模型侧短标识；内部toolCallId继续用于追踪</li>
+        <li>通用mask字段（fileUri/fileId等）支持工具级覆盖</li>
+      </ul>
+    </div>
+    <div class="card benefit">
+      <h2>核心收益</h2>
+      <ul>
+        <li>降Input Token与串行时延</li>
+        <li>减少长值抄错和业务标识幻觉</li>
+        <li>热路径少一次查询Loop</li>
+        <li>框架统一接入，工具零改动</li>
+      </ul>
+    </div>
+    <div class="card boundary">
+      <h2>边界与兜底</h2>
+      <ul>
+        <li>多候选不静默猜：返回候选/动态枚举</li>
+        <li>未命中可调用查询工具，确认后刷新映射</li>
+        <li>并行链路必须显式引用，不用含糊“上一条”</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <span><b>一句话：</b>模型只决定“引用哪个对象/结果”，Runtime保证“真实、适配、合法”后再执行。</span>
+    <span>Reference → Resolve → Transform → Validate → Invoke</span>
+  </footer>
+</main>
+</body>
+</html>
