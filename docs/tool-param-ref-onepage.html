@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>工具参数引用方案</title>
+<title>工具结果引用方案</title>
 <style>
   :root {
     --ink:#1c2925; --muted:#6b7a74; --faint:#9aa8a2; --line:#dde5e1;
@@ -22,7 +22,7 @@
   /* header */
   .kicker { font-size:12px; letter-spacing:.35em; color:var(--teal); font-weight:700; margin-bottom:6px; }
   h1 { margin:0 0 10px; font-size:30px; font-weight:800; letter-spacing:.01em; }
-  .thesis { font-size:15px; color:var(--ink); max-width:860px; }
+  .thesis { font-size:15px; color:var(--ink); max-width:900px; }
   .thesis b { color:var(--teal-deep); }
   .headrule { border:none; border-top:2px solid var(--ink); margin:18px 0 0; }
 
@@ -89,24 +89,25 @@
 <main class="page">
 
   <div class="kicker">AGENT · TOOL CALLING</div>
-  <h1>工具参数引用：让模型写「引用」，让 Runtime 填「真值」</h1>
+  <h1>工具结果引用：让模型写「引用」，让 Runtime 填「真值」</h1>
   <p class="thesis">
-    工具入参不再由模型亲手写出真实值，而是写一个引用；<b>Runtime 在工具执行前查表求值、按需转换、校验合法</b>，再去调用工具。
-    真值始终出自可信数据源，存量工具一行不改。
+    上一个工具的结果不再回灌给模型抄写，而是由模型在下游参数里写一个引用；
+    <b>Runtime 在工具执行前从工作记忆取出真值、按需转换结构、校验合法</b>，再去调用工具。
+    真值全程不经模型之手，存量工具一行不改。
   </p>
   <hr class="headrule" />
 
   <section class="problem">
     <div class="sec"><span class="no">01</span><h2>为什么要做</h2></div>
     <p>
-      串行工具链里，下一个工具的参数常常来自上一个工具的结果，或者来自「抖音」这类口语名称背后的真实标识。
-      这些值现在都靠模型亲手写：长 URI 抄着抄着就断了；包名靠记忆，就编出了 <code>com.douyin.app</code>；
-      上下游结构不一致时，还要模型手工改写大段 JSON。抄写、回忆、改写——三件事模型都做不稳。
+      串行工具链里，下一个工具的参数常常来自上一个工具的结果：文件 URI、对象 ID、大段文本、一整个列表。
+      这些值现在要先整段塞回模型上下文，再由模型原样抄进下游参数——长 URI 抄着抄着就断了；
+      上下游结构不一致时，还要模型手工改写大段 JSON。抄写和改写，两件事模型都做不稳，而且每一轮都在烧 Token。
     </p>
     <div class="terms">
-      <span><b>抄不准</b>：长值复述易截断改写，还抬高输入 Token</span>
-      <span><b>会编造</b>：弱语义标识凭记忆幻觉</span>
-      <span><b>改不动</b>：结构适配靠模型或逐个改工具，都不划算</span>
+      <span><b>抄不准</b>：长值复述易截断、改写、漏字符</span>
+      <span><b>太昂贵</b>：大结果反复回灌，输入 Token 和时延一起涨</span>
+      <span><b>改不动</b>：结构适配靠模型改 JSON 或逐个改工具，都不划算</span>
     </div>
   </section>
 
@@ -119,7 +120,7 @@
       <div class="node">
         <div class="who">工具 A</div>
         <div class="what">结果入库</div>
-        <div class="how">返回结果写入工作记忆，得到短标识 <code>resultId</code></div>
+        <div class="how">返回结果默认写入工作记忆，得到短标识 <code>resultId</code></div>
       </div>
       <div class="node">
         <div class="who">Runtime</div>
@@ -129,12 +130,12 @@
       <div class="node">
         <div class="who">模型</div>
         <div class="what">只写引用</div>
-        <div class="how">下游参数填 <code>${…}</code>，不复述真值，所见即所填</div>
+        <div class="how">下游参数填 <code>${resultId.path}</code>，不复述真值，所见即所填</div>
       </div>
       <div class="node">
         <div class="who">Runtime</div>
         <div class="what">求值 · 转换 · 校验</div>
-        <div class="how">查表回填真值，按参数策略适配结构，验完 Schema 与权限</div>
+        <div class="how">查工作记忆回填真值，按参数策略适配结构，验完 Schema 与权限</div>
       </div>
       <div class="node">
         <div class="who">工具 B</div>
@@ -150,8 +151,9 @@
       <div class="col">
         <h3>引用怎么写</h3>
         <p>
-          上一步的结果，用 <code>${resultId.path}</code> 指定字段；「抖音的包名」这类稳定标识，
-          写成 <code>${app.抖音.bundleName}</code>。两种写法走同一条解析管道。
+          用 <code>${resultId.path}</code> 指定「哪条结果的哪个字段」：
+          <code>resultId</code> 是入库时分配的短标识，<code>path</code> 支持点号取嵌套字段，
+          比如 <code>${a1b2c3d4.data.fileUri}</code>。
         </p>
         <p class="lead">
           模型不需要看值时，送模前就把值换成引用，模型照抄即可；需要看值推理时，内容照常给，
@@ -161,8 +163,8 @@
       <div class="col">
         <h3>真值从哪来</h3>
         <p>
-          结果引用查工作记忆：先查全量结果集，再查工具适配视图。
-          语义引用查词典：先把 douyin、Douyin 归一成「抖音」，再由映射表给出真实包名。
+          只从工作记忆取：先查全量结果集，未命中再查工具适配视图。
+          <code>resultId</code> 由 Runtime 统一生成，对内保留与 toolCallId 的映射，可追踪、可对账。
         </p>
         <p class="lead">
           结构不一致时按参数策略转换：<code>[563,728]</code> 自动变成
@@ -172,12 +174,12 @@
       <div class="col">
         <h3>出错怎么办</h3>
         <p>
-          解析失败、映射歧义、转换出错，一律短路：<code>${…}</code> 原文绝不透传给工具，
-          错误明确回给模型。权限与作用域由 Runtime 校验，模型说了不算。
+          引用非法、结果不存在、字段没有、转换失败，一律短路：<code>${…}</code> 原文绝不透传给工具，
+          错误明确回给模型，引导改写引用后重试。
         </p>
         <p class="lead">
-          语义映射没命中，就退回查询工具拿候选，确认后刷新词典再重试——
-          失败只是多一轮，不会错着执行。
+          结果带会话作用域和有效期，过期或越权即拒绝；并行链路必须显式写 <code>resultId</code>，
+          不允许含糊的「上一条」。
         </p>
       </div>
     </div>
@@ -185,13 +187,13 @@
 
   <hr class="footrule" />
   <div class="gains">
-    <div class="gain"><b>省 Token</b><span>长值不再回灌复述，输入与时延同降</span></div>
-    <div class="gain"><b>消幻觉</b><span>标识只出自查表，不靠模型记忆</span></div>
-    <div class="gain"><b>少一轮</b><span>映射命中时，一次业务调用完成</span></div>
+    <div class="gain"><b>省 Token</b><span>大结果不再回灌复述，输入与时延同降</span></div>
+    <div class="gain"><b>抄不错</b><span>真值不经模型之手，杜绝截断改写</span></div>
+    <div class="gain"><b>结构解耦</b><span>上下游 Schema 差异由策略转换消化</span></div>
     <div class="gain"><b>零改动</b><span>能力在框架层，存量工具无感接入</span></div>
   </div>
 
-  <p class="close">模型决定<em>引用哪个对象</em>，Runtime 保证<em>真实、适配、合法</em>，然后才执行。</p>
+  <p class="close">模型决定<em>引用哪条结果的哪个字段</em>，Runtime 保证<em>真实、适配、合法</em>，然后才执行。</p>
 </main>
 </body>
 </html>
