@@ -111,6 +111,28 @@
 | **现象** | 多轮都操作「抖音」 |
 | **解法要点** | 语义引用 `${app.抖音.bundleName}` 天然跨轮；结果引用则保留 resultId 或会话短句柄 `${rN}` |
 
+### 场景 S6：引用展开 + 入参策略化格式转换
+
+| 项 | 内容 |
+|----|------|
+| **现象** | 工具 A 返回标识列表（如 `merged_id_list = [563, 563, …]`）；工具 B 要求 `images: [{"file_id":"563"}, …]` |
+| **风险** | 让模型改写结构易截断/类型错；为每个工具改输入输出协议成本高 |
+| **引用类型** | **A. 结果引用** + **执行前 Transform** |
+| **解法要点** | 模型只写 `images: ${resultId.merged_id_list}` → 拦截器先 resolve 成真列表 → 再按参数 policy 做 map/dict/类型转换 → 调工具 B |
+| **policy 语义（示例）** | 对已展开列表逐元素生成 `{"file_id": string(item)}`，得到对象列表 |
+| **Loop** | 模型侧仍一次表达引用；结构适配不占用模型抄写，工具零改动 |
+
+**流水线示意：**
+
+```text
+模型:  {"images": "${resultId.merged_id_list}"}
+          ↓ ① Ref resolve
+运行时: {"images": [563, 563, …]}
+          ↓ ② Policy transform（读该参数转换策略）
+运行时: {"images": [{"file_id": "563"}, {"file_id": "563"}, …]}
+          ↓ ③ invoke 工具B
+```
+
 ---
 
 ## 4. 关键设计
@@ -441,6 +463,7 @@ ref:
 | 跨工具 fileUri 等 | `${resultId.path}` | workmemory | 无额外为抄写而查 | 无 |
 | 应用 bundleName 等 | `${app.名.bundleName}` | 同义词+映射表 | **1**（失败才 2） | 无 |
 | 可见仍引用 | `${resultId.path}` | workmemory | 同左 | 无 |
+| 列表→对象结构转换 | `${resultId.list}` + policy transform | workmemory + 参数策略 | 模型一次写引用 | 无 |
 
 **结构性保证：** 只要拦截器在统一调度入口生效，真实标识符只能来自查表/记忆；模型不再是真值权威，只负责表达「哪个实体 / 哪条结果的哪个字段」。
 
