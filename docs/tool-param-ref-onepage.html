@@ -14,78 +14,91 @@
   * { box-sizing:border-box; }
   body {
     margin:0; background:var(--bg); color:var(--ink);
-    font:13px/1.4 "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    font:13px/1.42 "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
   }
   .page {
-    width:1280px; min-height:720px; margin:18px auto; padding:22px 26px 18px;
+    width:1280px; min-height:720px; margin:18px auto; padding:20px 26px 16px;
     background:var(--paper); border:1px solid var(--line); border-radius:14px;
     box-shadow:0 12px 32px rgba(17,94,89,.08);
   }
   header {
     display:flex; align-items:flex-end; justify-content:space-between;
-    border-bottom:3px solid var(--teal); padding-bottom:10px; margin-bottom:12px;
+    border-bottom:3px solid var(--teal); padding-bottom:9px; margin-bottom:11px;
   }
-  h1 { margin:0; font-size:25px; color:var(--teal2); letter-spacing:.02em; }
-  .subtitle { margin-top:3px; color:var(--muted); font-size:12px; }
-  .syntax { color:var(--muted); font-size:12px; text-align:right; }
+  h1 { margin:0; font-size:24px; color:var(--teal2); letter-spacing:.02em; }
+  .syntax { color:var(--muted); font-size:12px; text-align:right; line-height:1.5; }
   code {
     font:11.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     padding:1px 5px; border-radius:4px; border:1px solid #d3e1db;
     background:#f0f6f3; color:var(--teal2);
   }
-  h2 { margin:0 0 6px; color:var(--teal2); font-size:14px; }
-  h3 { margin:0 0 4px; font-size:13px; }
-  ul { margin:0; padding-left:17px; }
+  h2 { margin:0 0 6px; color:var(--teal2); font-size:13.5px; }
+  ul { margin:0; padding-left:16px; }
   li { margin:0 0 3px; }
-  .top { display:grid; grid-template-columns:1fr 1.35fr 1fr; gap:10px; margin-bottom:10px; }
-  .card {
-    border:1px solid var(--line); border-radius:9px; padding:9px 11px;
-    background:#fbfdfc;
-  }
-  .goal { background:var(--soft); }
-  .principle { background:var(--bluebg); }
-  .guard { background:var(--amberbg); }
-  .flow {
-    border:1px solid var(--line); border-radius:10px; padding:9px 11px;
-    margin-bottom:10px; background:linear-gradient(180deg,#f5fbf8,#fff);
-  }
-  .steps { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+
+  /* Layer 1: problem -> idea */
+  .layer1 { display:grid; grid-template-columns:1.15fr .06fr 1fr; gap:0; align-items:stretch; margin-bottom:10px; }
+  .l1card { border:1px solid var(--line); border-radius:9px; padding:9px 12px; }
+  .problem { background:var(--redbg); border-color:#e7c4cc; }
+  .idea { background:var(--soft); border-color:#bcded4; }
+  .l1arrow { display:flex; align-items:center; justify-content:center; color:var(--teal); font-size:22px; font-weight:800; }
+  .problem h2 { color:var(--red); }
+  .inline-list { display:flex; gap:14px; flex-wrap:wrap; }
+  .inline-list div { flex:1; min-width:0; }
+  .idea .big { font-size:14px; font-weight:700; color:var(--teal2); margin-bottom:4px; }
+
+  /* Layer 2: pipeline with 3 phase groups */
+  .layer2 { border:1px solid var(--teal); border-radius:10px; padding:9px 11px 11px; margin-bottom:10px; background:linear-gradient(180deg,#f5fbf8,#fff); }
+  .layer2 h2 { margin-bottom:8px; }
+  .phases { display:grid; grid-template-columns:2fr 2fr 3fr; gap:8px; }
+  .phase { border-radius:8px; padding:6px 7px 8px; }
+  .phase-label { font-size:11px; font-weight:800; margin:0 0 6px; text-align:center; letter-spacing:.05em; }
+  .p1 { background:var(--bluebg); }  .p1 .phase-label { color:var(--blue); }
+  .p2 { background:var(--amberbg); } .p2 .phase-label { color:var(--amber); }
+  .p3 { background:var(--soft); }    .p3 .phase-label { color:var(--teal2); }
+  .steps { display:grid; gap:6px; }
+  .p1 .steps, .p2 .steps { grid-template-columns:1fr 1fr; }
+  .p3 .steps { grid-template-columns:1fr 1fr 1fr; }
   .step {
-    position:relative; min-height:77px; padding:7px 8px;
+    position:relative; min-height:70px; padding:6px 7px;
     border:1px solid var(--line); border-radius:7px; background:#fff;
   }
+  .step b { display:block; color:var(--teal2); font-size:10.8px; margin-bottom:3px; }
+  .step span { color:var(--muted); font-size:10.2px; }
   .step:after {
-    content:"→"; position:absolute; right:-10px; top:33px; color:var(--teal);
+    content:"→"; position:absolute; right:-9px; top:26px; color:var(--teal);
     font-weight:800; z-index:2;
   }
-  .step:last-child:after { content:""; }
-  .step b { display:block; color:var(--teal2); font-size:11px; margin-bottom:3px; }
-  .step span { color:var(--muted); font-size:10.5px; }
-  .middle { display:grid; grid-template-columns:1fr 1fr 1.05fr; gap:10px; margin-bottom:10px; }
-  .source { background:var(--bluebg); border-color:#bed4ec; }
-  .visible { background:var(--amberbg); border-color:#ebd79b; }
-  .transform { background:var(--soft); border-color:#bcded4; }
+  .phases .phase:last-child .step:last-child:after { content:""; }
+
+  /* Layer 3: three pillars aligned to phases */
+  .layer3 { display:grid; grid-template-columns:2fr 2fr 3fr; gap:8px; margin-bottom:10px; }
+  .pillar { border:1px solid var(--line); border-radius:9px; padding:9px 11px; }
+  .pl1 { background:var(--bluebg); border-color:#bed4ec; }
+  .pl2 { background:var(--amberbg); border-color:#ebd79b; }
+  .pl3 { background:var(--redbg); border-color:#e7c4cc; }
+  .pl1 h2 { color:var(--blue); } .pl2 h2 { color:var(--amber); } .pl3 h2 { color:var(--red); }
+  .sub { font-size:11px; font-weight:700; color:var(--ink); margin:5px 0 2px; }
   .example {
-    margin-top:6px; padding:5px 7px; border:1px dashed #aabdb5;
-    border-radius:5px; background:#fff; font-size:10.8px;
+    margin-top:5px; padding:4px 7px; border:1px dashed #aabdb5;
+    border-radius:5px; background:#fff; font-size:10.6px;
   }
-  .bottom { display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:10px; }
-  .rules { background:#fbfdfc; }
-  .benefit { background:var(--soft); }
-  .boundary { background:var(--redbg); border-color:#e7c4cc; }
-  .tag {
-    display:inline-block; padding:1px 7px; margin-right:4px; border-radius:999px;
-    background:#dff2eb; color:var(--teal2); font-size:10.5px; font-weight:700;
+
+  /* Layer 4: benefits strip */
+  .layer4 {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+    border-top:1px solid var(--line); padding-top:9px;
   }
+  .benefit { text-align:center; }
+  .benefit b { display:block; color:var(--teal2); font-size:12.5px; margin-bottom:2px; }
+  .benefit span { color:var(--muted); font-size:10.8px; }
   footer {
-    margin-top:9px; padding-top:7px; border-top:1px solid var(--line);
-    display:flex; justify-content:space-between; color:var(--muted); font-size:11px;
+    margin-top:8px; text-align:center; color:var(--teal2); font-size:12px; font-weight:700;
   }
-  @media print {
-    body{background:#fff}.page{margin:0;border:0;box-shadow:none}
-  }
+  @media print { body{background:#fff}.page{margin:0;border:0;box-shadow:none} }
   @media(max-width:900px) {
-    .page{width:auto;margin:0;border-radius:0}.top,.middle,.bottom,.steps{grid-template-columns:1fr}
+    .page{width:auto;margin:0;border-radius:0}
+    .layer1,.phases,.layer3,.layer4{grid-template-columns:1fr}
     .step:after{content:""}
   }
 </style>
@@ -93,114 +106,113 @@
 <body>
 <main class="page">
   <header>
-    <div>
-      <h1>智能体工具参数引用方案</h1>
-      <div class="subtitle">模型表达“引用谁” · Runtime负责“取真值、做转换、再调用” · 工具零改动</div>
-    </div>
+    <h1>智能体工具参数引用方案</h1>
     <div class="syntax">
       结果引用 <code>${resultId.path}</code>　语义引用 <code>${namespace.entity.attribute}</code>
     </div>
   </header>
 
-  <section class="top">
-    <div class="card goal">
-      <h2>为什么需要</h2>
-      <ul>
-        <li>长URI/列表让模型照抄：Token高、易截断改写</li>
-        <li>包名等弱语义标识：模型易凭记忆编造</li>
-        <li>上下游Schema不同：让模型改长JSON不稳定</li>
-      </ul>
-    </div>
-    <div class="card principle">
-      <h2>核心原则</h2>
-      <ul>
-        <li><b>模型只输出引用意图</b>，业务真值来自工作记忆/语义词典</li>
-        <li><b>统一Pre-call流水线</b>：求值 → 可选转换 → 校验 → 调工具</li>
-        <li><b>工具无感知</b>：存量工具仍接收原有真实参数</li>
-      </ul>
-    </div>
-    <div class="card guard">
-      <h2>可靠性底线</h2>
-      <ul>
-        <li>解析/映射/转换/Schema任一失败即短路</li>
-        <li>禁止把<code>${…}</code>字面量或半成品透传工具</li>
-        <li>权限与作用域由Runtime校验，模型不能决定</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="flow">
-    <h2>完整主链路</h2>
-    <div class="steps">
-      <div class="step"><b>① 工具返回</b><span>工具A产出URI、ID、列表或对象</span></div>
-      <div class="step"><b>② 默认入库</b><span>写入工作记忆并生成resultId</span></div>
-      <div class="step"><b>③ 送模</b><span>按需mask；或保留内容+引用</span></div>
-      <div class="step"><b>④ 模型填引用</b><span>下游参数写引用，不复述真值</span></div>
-      <div class="step"><b>⑤ 引用求值</b><span>查工作记忆或语义词典回填</span></div>
-      <div class="step"><b>⑥ 转换/校验</b><span>按Policy适配结构并校验Schema</span></div>
-      <div class="step"><b>⑦ 执行闭环</b><span>真值调用工具B；结果再次入库</span></div>
-    </div>
-  </section>
-
-  <section class="middle">
-    <div class="card source">
-      <h2>两类引用 · 同一管道</h2>
-      <h3><span class="tag">A</span>工具结果引用</h3>
-      <div><code>${a1b2c3d4.fileUri}</code> → Workmemory</div>
-      <h3 style="margin-top:7px"><span class="tag">B</span>语义实体引用</h3>
-      <div><code>${app.抖音.bundleName}</code> → 别名归一 + 属性映射</div>
-    </div>
-    <div class="card visible">
-      <h2>两种可见性</h2>
-      <ul>
-        <li><b>模型不用看值：</b>送模前mask为引用，所见即所填</li>
-        <li><b>模型需要看值：</b>内容/摘要供推理，工具入参仍写引用</li>
-      </ul>
-      <div class="example">约束层级：<b>Runtime硬校验 ＞ Schema/Skill ＞ SystemPrompt</b></div>
-    </div>
-    <div class="card transform">
-      <h2>引用后可做结构适配</h2>
-      <div class="example">
-        模型：<code>images=${rid.merged_id_list}</code><br/>
-        Resolve：<code>[563, 728]</code><br/>
-        Transform：<code>[{"file_id":"563"},{"file_id":"728"}]</code>
+  <!-- 层1：问题 → 核心思路 -->
+  <section class="layer1">
+    <div class="l1card problem">
+      <h2>问题：模型直接生成业务真值不可靠</h2>
+      <div class="inline-list">
+        <div><b>抄不准</b><br/>长URI/列表照抄易截断改写，Token高</div>
+        <div><b>会编造</b><br/>包名等弱语义标识凭记忆幻觉</div>
+        <div><b>改不动</b><br/>上下游Schema不同，改长JSON不稳、改工具成本高</div>
       </div>
-      <div style="margin-top:5px">先求值，再按目标工具参数Policy转换；模型和工具均不用改结构。</div>
     </div>
-  </section>
-
-  <section class="bottom">
-    <div class="card rules">
-      <h2>关键实现约定</h2>
+    <div class="l1arrow">→</div>
+    <div class="l1card idea">
+      <h2>核心思路：职责分离</h2>
+      <div class="big">模型只表达“引用谁”，Runtime负责“取真值、做适配、保合法”</div>
       <ul>
-        <li>结果默认写入Workmemory；查询可兼容全量结果集 → 工具适配视图</li>
-        <li>resultId为模型侧短标识；内部toolCallId继续用于追踪</li>
-        <li>通用mask字段（fileUri/fileId等）支持工具级覆盖</li>
-      </ul>
-    </div>
-    <div class="card benefit">
-      <h2>核心收益</h2>
-      <ul>
-        <li>降Input Token与串行时延</li>
-        <li>减少长值抄错和业务标识幻觉</li>
-        <li>热路径少一次查询Loop</li>
-        <li>框架统一接入，工具零改动</li>
-      </ul>
-    </div>
-    <div class="card boundary">
-      <h2>边界与兜底</h2>
-      <ul>
-        <li>多候选不静默猜：返回候选/动态枚举</li>
-        <li>未命中可调用查询工具，确认后刷新映射</li>
-        <li>并行链路必须显式引用，不用含糊“上一条”</li>
+        <li>真值只来自可信数据源（工作记忆 / 语义词典）</li>
+        <li>全部处理收敛在工具执行前的统一入口，<b>工具零改动</b></li>
       </ul>
     </div>
   </section>
 
-  <footer>
-    <span><b>一句话：</b>模型只决定“引用哪个对象/结果”，Runtime保证“真实、适配、合法”后再执行。</span>
-    <span>Reference → Resolve → Transform → Validate → Invoke</span>
-  </footer>
+  <!-- 层2：主链路（三阶段分组） -->
+  <section class="layer2">
+    <h2>主链路：Reference → Resolve → Invoke</h2>
+    <div class="phases">
+      <div class="phase p1">
+        <div class="phase-label">Ⅰ 引用表达（模型侧）</div>
+        <div class="steps">
+          <div class="step"><b>① 结果入库</b><span>工具A返回，写入工作记忆并生成resultId</span></div>
+          <div class="step"><b>② 送模呈现</b><span>指针字段mask成引用；要推理的保留内容+引用</span></div>
+        </div>
+      </div>
+      <div class="phase p2">
+        <div class="phase-label">Ⅱ 求值与适配（Runtime侧）</div>
+        <div class="steps">
+          <div class="step"><b>③ 模型填引用</b><span>下游入参写<code>${…}</code>，不复述真值</span></div>
+          <div class="step"><b>④ 引用求值</b><span>查工作记忆 / 语义词典，回填真值</span></div>
+        </div>
+      </div>
+      <div class="phase p3">
+        <div class="phase-label">Ⅲ 校验与执行（工具侧）</div>
+        <div class="steps">
+          <div class="step"><b>⑤ 结构适配</b><span>按参数Policy做转换（可选）</span></div>
+          <div class="step"><b>⑥ 校验/短路</b><span>Schema与权限校验；失败不透传</span></div>
+          <div class="step"><b>⑦ 执行闭环</b><span>真值调工具B；结果再入库</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 层3：三大支柱，与阶段一一对应 -->
+  <section class="layer3">
+    <div class="pillar pl1">
+      <h2>支柱Ⅰ：引用怎么写</h2>
+      <div class="sub">两类引用，同一管道</div>
+      <ul>
+        <li>结果引用 <code>${a1b2c3d4.fileUri}</code> → 工作记忆</li>
+        <li>语义引用 <code>${app.抖音.bundleName}</code> → 词典</li>
+      </ul>
+      <div class="sub">两种可见性</div>
+      <ul>
+        <li>不用看值：mask后所见即所填</li>
+        <li>需要看值：内容供推理，入参仍写引用</li>
+      </ul>
+    </div>
+    <div class="pillar pl2">
+      <h2>支柱Ⅱ：真值怎么来</h2>
+      <div class="sub">可信数据源</div>
+      <ul>
+        <li>工作记忆：全量结果集 → 工具适配视图</li>
+        <li>语义词典：别名归一表 + 实体属性映射表</li>
+      </ul>
+      <div class="sub">结构适配（Policy）</div>
+      <div class="example">
+        <code>${rid.merged_id_list}</code> → <code>[563,728]</code> → <code>[{"file_id":"563"},…]</code>
+      </div>
+    </div>
+    <div class="pillar pl3">
+      <h2>支柱Ⅲ：错误怎么兜</h2>
+      <div class="sub">硬约束（Runtime）</div>
+      <ul>
+        <li>解析/映射/转换/Schema失败即短路，禁止<code>${…}</code>透传</li>
+        <li>作用域与权限由Runtime校验，模型无权决定</li>
+      </ul>
+      <div class="sub">可恢复（兜底）</div>
+      <ul>
+        <li>多候选返回列表/动态枚举，不静默猜</li>
+        <li>未命中→查询工具→确认后刷新映射→重试</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 层4：收益 -->
+  <section class="layer4">
+    <div class="benefit"><b>省Token</b><span>长值不回灌不复述，降输入与时延</span></div>
+    <div class="benefit"><b>消幻觉</b><span>真值只出自查表，标识不再编造</span></div>
+    <div class="benefit"><b>少一轮</b><span>映射命中时业务调用1次Loop完成</span></div>
+    <div class="benefit"><b>零改动</b><span>框架层统一生效，存量工具无感</span></div>
+  </section>
+
+  <footer>一句话：模型决定“引用哪个对象”，Runtime保证“真实、适配、合法”后再执行。</footer>
 </main>
 </body>
 </html>
