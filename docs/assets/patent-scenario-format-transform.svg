@@ -4,7 +4,7 @@
 <style>.box{fill:#fff;stroke:#000;stroke-width:2}.dash{fill:#fff;stroke:#000;stroke-width:2;stroke-dasharray:8 6}.arr{fill:none;stroke:#000;stroke-width:2;marker-end:url(#a)}.ret{fill:none;stroke:#000;stroke-width:2;stroke-dasharray:7 5;marker-end:url(#a)}.t{font:700 25px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}.h{font:700 18px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}.b{font:15px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}.s{font:13px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}</style>
 </defs>
 <rect width="1200" height="560" fill="#fff"/>
-<text x="600" y="38" text-anchor="middle" class="t">图C  引用展开后的入参策略化格式转换</text>
+<text x="600" y="38" text-anchor="middle" class="t">图6  引用展开后的入参策略化格式转换</text>
 <text x="600" y="64" text-anchor="middle" class="s">先求值，再转换，最后校验并调用下游工具</text>
 <rect x="40" y="120" width="235" height="140" rx="8" class="box"/>
 <text x="157.5" y="152" text-anchor="middle" class="h">模型工具调用</text>

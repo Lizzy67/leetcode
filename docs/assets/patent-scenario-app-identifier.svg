@@ -4,7 +4,7 @@
 <style>.box{fill:#fff;stroke:#000;stroke-width:2}.dash{fill:#fff;stroke:#000;stroke-width:2;stroke-dasharray:8 6}.arr{fill:none;stroke:#000;stroke-width:2;marker-end:url(#a)}.ret{fill:none;stroke:#000;stroke-width:2;stroke-dasharray:7 5;marker-end:url(#a)}.t{font:700 25px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}.h{font:700 18px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}.b{font:15px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}.s{font:13px WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, sans-serif;fill:#000}</style>
 </defs>
 <rect width="1200" height="560" fill="#fff"/>
-<text x="600" y="38" text-anchor="middle" class="t">图A  语义实体引用在应用权限控制场景中的流程</text>
+<text x="600" y="38" text-anchor="middle" class="t">图4  语义实体引用在应用权限控制场景中的流程</text>
 <text x="600" y="64" text-anchor="middle" class="s">正常路径一次业务调用；真实包名由词典查表获得</text>
 <rect x="45" y="125" width="185" height="115" rx="8" class="box"/>
 <text x="137.5" y="157" text-anchor="middle" class="h">用户</text>
