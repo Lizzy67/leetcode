@@ -195,12 +195,12 @@ code_block(MX, PY_ + 0.22, PCW, 1.06, [
 ])
 
 x2 = MX + PCW + 0.5
-txt(x2, PY_, PCW, 0.18, [[("BeforeHook Policy：入参结构转换", 9.5, True, TEAL_D)]])
+txt(x2, PY_, PCW, 0.18, [[("BeforeHook Policy：入参结构转换（JSONata）", 9.5, True, TEAL_D)]])
 code_block(x2, PY_ + 0.22, PCW, 1.06, [
     [("createCollage.beforeHookPolicy {", 7.5, False, INK)],
-    [('  images: list(dict("file_id", string(item)) for item in ', 7.5, False, INK), ("$value", 7.5, True, TEAL_D), (")", 7.5, False, INK)],
+    [('  images: "$map(', 7.5, False, INK), ("$", 7.5, True, TEAL_D), (", function($v) {{ 'file_id': $string($v) }})\"", 7.5, False, INK)],
     [("}", 7.5, False, INK)],
-    [("# $value = 引用展开后的真实列表；publishNote 无需转换，仅求值与 Schema 校验", 7.5, False, FAINT)],
+    [("# $ = 引用展开后的真实列表；限量取前 18：$map($[[0..17]], …)；求值失败即短路", 7.5, False, FAINT)],
 ])
 
 # ---------- footer ----------

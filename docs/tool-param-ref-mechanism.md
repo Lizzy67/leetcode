@@ -133,6 +133,36 @@
           ↓ ③ invoke 工具B
 ```
 
+**变换表达式建议用 [JSONata](https://jsonata.org/)（声明式 JSON→JSON，AWS Step Functions 同款选型）。** 表达式求值时 `$` 绑定为该参数引用展开后的真值：
+
+```jsonata
+/* images: [563, 728, …] → [{"file_id":"563"}, …] */
+$map($, function($v) {{ "file_id": $string($v) }})
+
+/* 叠加数量上限：至多取前 18 项再封装 */
+$map($[[0..17]], function($v) {{ "file_id": $string($v) }})
+```
+
+Policy 配置即一段纯数据：
+
+```json
+{
+  "createCollage": {
+    "beforeHookPolicy": {
+      "images": "$map($, function($v) {{ \"file_id\": $string($v) }})"
+    }
+  }
+}
+```
+
+**JSONata 落地约束：**
+
+1. 表达式只能来自 Policy 配置（工具接入方书写），**禁止由模型生成**；模型可写的仍只有 `${…}` 引用。
+2. 失败对齐 fail-closed：表达式返回 undefined、类型不符或求值异常，一律短路，禁止把未变换值或 undefined 透传给工具。
+3. 执行约束：超时（几十毫秒级）、递归与输出大小上限；禁用 `$eval`（与 AWS Step Functions 相同裁剪）。
+4. 单元素塌陷：JSONata 序列语义下结果仅 1 项时可能返回对象而非数组；送 schema 校验前由运行时按参数期望类型归一化（期望 array 则包一层），并用单元素用例专测。
+5. 锁定规范版本（如 2.0.6）；跨语言实现（jsonata-js / dashjoin jsonata-java 等）按同一套参考测试验收。
+
 ---
 
 ## 4. 关键设计
