@@ -133,14 +133,22 @@
           ↓ ③ invoke 工具B
 ```
 
-**变换表达式建议用 [JSONata](https://jsonata.org/)（声明式 JSON→JSON，AWS Step Functions 同款选型）。** 表达式求值时 `$` 绑定为该参数引用展开后的真值：
+**变换表达式建议用 [JSONata](https://jsonata.org/)（声明式 JSON→JSON，AWS Step Functions 同款选型）。** 表达式求值时 `$` 绑定为该参数引用展开后的真值。与伪代码语义对照：
 
-```jsonata
-/* images: [563, 728, …] → [{"file_id":"563"}, …] */
-$map($, function($v) {{ "file_id": $string($v) }})
+```text
+# 伪代码（语义示意）
+images: list(dict("file_id", string(item)) for item in $value)
 
-/* 叠加数量上限：至多取前 18 项再封装 */
-$map($[[0..17]], function($v) {{ "file_id": $string($v) }})
+# JSONata（可执行，$ 即 $value）
+images: $map($, function($v) {{ "file_id": $string($v) }})
+```
+
+```text
+# 伪代码：至多取前 18 项再封装
+images: list(dict("file_id", string(item)) for item in $value[:18])
+
+# JSONata 等价写法
+images: $map($[[0..17]], function($v) {{ "file_id": $string($v) }})
 ```
 
 Policy 配置即一段纯数据：

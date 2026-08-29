@@ -205,8 +205,17 @@ createCollage.maskPolicy {
       <div class="pcol">
         <h3>BeforeHook Policy：入参结构转换</h3>
         <pre><span class="dim"># createCollage 执行前：images 参数
-# 先 resolve 引用，再按 JSONata 表达式变换
-# （$ 绑定为引用展开后的真实列表）</span>
+# 先 resolve 引用，再按表达式变换
+
+# 伪代码（语义示意，$value = 展开后的真实列表）</span>
+createCollage.beforeHookPolicy {
+  images: list(
+    dict(<span class="k">"file_id"</span>, string(item))
+    for item in <span class="ref">$value</span>
+  )
+}
+
+<span class="dim"># JSONata（可执行等价，$ 即 $value）</span>
 createCollage.beforeHookPolicy {
   images: <span class="k">"$map($, function($v) {{ 'file_id': $string($v) }})"</span>
 }
@@ -216,7 +225,7 @@ createCollage.beforeHookPolicy {
 
 # publishNote 无需转换，
 # beforeHook 只做引用求值与 Schema 校验</span></pre>
-        <p>变换表达式采用 JSONata（AWS Step Functions 同款选型）：逐元素转字符串再封装成对象，顺序保持，不足上限自动截短。表达式只能由工具接入方在 Policy 中书写，禁止模型生成；求值失败即短路。模型和两端工具都不感知这次转换。</p>
+        <p>上为语义伪代码，下为可执行 JSONata（AWS Step Functions 同款选型）：逐元素转字符串再封装成对象，顺序保持，不足上限自动截短。表达式只能由工具接入方在 Policy 中书写，禁止模型生成；求值失败即短路。模型和两端工具都不感知这次转换。</p>
       </div>
     </div>
   </section>
