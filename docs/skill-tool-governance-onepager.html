@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Skill / Tool 配套治理方案 · 一页说明</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a2332;
+      --muted: #5a6577;
+      --line: #d5dbe6;
+      --bg: #f3f6fa;
+      --panel: #ffffff;
+      --accent: #0b6e4f;
+      --accent-soft: #e6f4ef;
+      --warn: #9a5b00;
+      --warn-soft: #fff4e5;
+      --hard: #1e4d8c;
+      --soft: #6b4f9a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Noto Sans SC", "DM Sans", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 420px at 10% -10%, #dce9f5 0%, transparent 55%),
+        radial-gradient(700px 380px at 100% 0%, #d9efe6 0%, transparent 50%),
+        var(--bg);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 40px 24px 56px;
+    }
+
+    header {
+      margin-bottom: 28px;
+      animation: rise 0.5s ease both;
+    }
+
+    header .eyebrow {
+      font-family: "DM Sans", sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: clamp(26px, 4vw, 34px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      max-width: 18em;
+    }
+
+    header p {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 42em;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    @media (min-width: 800px) {
+      .grid.two { grid-template-columns: 1.1fr 0.9fr; }
+      .grid.three { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    section {
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+      backdrop-filter: blur(6px);
+      animation: rise 0.55s ease both;
+    }
+
+    section:nth-child(2) { animation-delay: 0.05s; }
+    section:nth-child(3) { animation-delay: 0.1s; }
+    section:nth-child(4) { animation-delay: 0.15s; }
+    section:nth-child(5) { animation-delay: 0.2s; }
+    section:nth-child(6) { animation-delay: 0.25s; }
+
+    h2 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2 .n {
+      font-family: "DM Sans", sans-serif;
+      font-size: 11px;
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    .chip.hard { border-color: color-mix(in srgb, var(--hard) 35%, var(--line)); background: #eef4fb; color: var(--hard); }
+    .chip.soft { border-color: color-mix(in srgb, var(--soft) 30%, var(--line)); background: #f5f0fb; color: var(--soft); }
+    .chip.ok { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); background: var(--accent-soft); color: var(--accent); }
+
+    .arrow {
+      color: var(--muted);
+      font-family: "DM Sans", sans-serif;
+      font-size: 14px;
+    }
+
+    ul {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      font-size: 13.5px;
+    }
+
+    li {
+      padding-left: 14px;
+      position: relative;
+      color: var(--ink);
+    }
+
+    li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.7;
+    }
+
+    li strong { font-weight: 600; }
+
+    .split {
+      display: grid;
+      gap: 10px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 10px;
+      align-items: start;
+      font-size: 13px;
+    }
+
+    .tag {
+      font-family: "DM Sans", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-align: center;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .tag.warn { background: var(--warn-soft); color: var(--warn); }
+    .tag.blue { background: #eef4fb; color: var(--hard); }
+
+    .phases {
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 10px;
+      align-items: baseline;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--line);
+    }
+
+    .phase:last-child { border-bottom: 0; padding-bottom: 0; }
+
+    .phase b {
+      font-family: "DM Sans", sans-serif;
+      font-size: 12px;
+      color: var(--accent);
+    }
+
+    .note {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 10px 10px 0;
+      font-size: 14px;
+      animation: rise 0.6s ease both;
+      animation-delay: 0.3s;
+    }
+
+    .note strong { color: var(--accent); }
+
+    footer {
+      margin-top: 18px;
+      font-size: 12px;
+      color: var(--muted);
+      animation: rise 0.6s ease both;
+      animation-delay: 0.35s;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media print {
+      body { background: #fff; }
+      section { break-inside: avoid; backdrop-filter: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="eyebrow">Xiaoyi · Agentic Skill Platform</div>
+      <h1>Skill / Tool 配套治理 · 一页说明</h1>
+      <p>可以有配套，但消灭人肉版本表；不配套时体验可控。匹配靠能力契约，灰度靠独立放量，工具按接口规范管。</p>
+    </header>
+
+    <div class="grid" style="margin-bottom: 16px;">
+      <section>
+        <h2><span class="n">1</span>一句话方案</h2>
+        <ul>
+          <li><strong>Skill</strong> 只声明依赖哪些 Tool（requires）</li>
+          <li><strong>端</strong> 上报实际能力（capabilities），Gate 做匹配</li>
+          <li><strong>Tool</strong> 补齐元数据后，再自动推导 ROM/App 生效范围</li>
+          <li><strong>灰度</strong> 独立 Release，不再写进 Skill 的 ROM 框</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="grid two" style="margin-bottom: 16px;">
+      <section>
+        <h2><span class="n">2</span>运行时三道门</h2>
+        <div class="flow" style="margin-bottom: 14px;">
+          <span class="chip">Search 召回</span>
+          <span class="arrow">→</span>
+          <span class="chip hard">Compat 硬</span>
+          <span class="arrow">→</span>
+          <span class="chip soft">Rollout 软</span>
+          <span class="arrow">→</span>
+          <span class="chip ok">Load / Fallback</span>
+        </div>
+        <div class="split">
+          <div class="row">
+            <span class="tag blue">Compat</span>
+            <span>capabilities ⊇ requires；同名取最高可跑版本</span>
+          </div>
+          <div class="row">
+            <span class="tag">Rollout</span>
+            <span>白名单 / 百分比 / audience；未命中优先回退旧全量版</span>
+          </div>
+          <div class="row">
+            <span class="tag warn">失败</span>
+            <span>不支持 → 拒答升级；不放量 → fallback；禁止长 Loop</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="n">3</span>三件事拆开配</h2>
+        <div class="split">
+          <div class="row">
+            <span class="tag blue">兼容</span>
+            <span>能不能跑 → requires + 端能力（远期从 Tool 推 ROM）</span>
+          </div>
+          <div class="row">
+            <span class="tag">多版本</span>
+            <span>同名多 skill_version；requires 变严才出新版并存</span>
+          </div>
+          <div class="row">
+            <span class="tag warn">灰度</span>
+            <span>先给谁用 → Release；可用 ROM 作 audience，不作永久配套</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid three" style="margin-bottom: 16px;">
+      <section>
+        <h2><span class="n">4</span>Skill 怎么改</h2>
+        <ul>
+          <li>必填 <strong>requires</strong></li>
+          <li>薄 <strong>env_gates</strong>（机型/包名/锁屏）</li>
+          <li>ROM 矩阵降级为 legacy，最终只读推导</li>
+          <li>仅优化体验且依赖不变 → 覆盖发</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2><span class="n">5</span>Tool 怎么管</h2>
+        <ul>
+          <li>登记 tool_id / 契约版本 / schema / owner</li>
+          <li>已上线行为冻结（2D API）</li>
+          <li>新能力用 MINOR/feature，破坏走 MAJOR+TMG</li>
+          <li>改 Tool 自动扫描依赖 Skill</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2><span class="n">6</span>现状过渡</h2>
+        <ul>
+          <li>Tool <strong>暂不配</strong> ROM/App</li>
+          <li>先跑：端能力匹配</li>
+          <li>并行：ToMP 补热门 min_rom</li>
+          <li>再切：Skill 范围自动推导</li>
+        </ul>
+      </section>
+    </div>
+
+    <section>
+      <h2><span class="n">7</span>落地节奏</h2>
+      <div class="phases">
+        <div class="phase"><b>P0</b><span>发规范：三层配置 + Tool 冻结 + 拒答不 Loop</span></div>
+        <div class="phase"><b>P1</b><span>requires + capabilities + skillGate Compat；Release 放量拆出</span></div>
+        <div class="phase"><b>P2</b><span>ToMP 最小闭环 + ArkTS 收编 + 多版本 fallback</span></div>
+        <div class="phase"><b>P3</b><span>Tool 补 ROM/App 元数据 → 推导生效范围 → 退役人肉表</span></div>
+      </div>
+    </section>
+
+    <div class="note">
+      <strong>总纲：</strong>Skill 依赖 Tool，Gate 按端能力匹配；灰度走 Release；工具平台管契约与变更联动。人肉 Skill×ROM 配套表退出主路径。
+    </div>
+
+    <footer>
+      详见 docs/skill-tool-governance-spec.md
+    </footer>
+  </div>
+</body>
+</html>
