@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>工具结果引用 · 端到端样例</title>
+<style>
+  :root {
+    --ink:#1c2925; --muted:#6b7a74; --faint:#9aa8a2; --line:#dde5e1;
+    --teal:#0e6f66; --teal-deep:#0b544e; --wash:#f4f8f6;
+    --mask:#a05a1f; --maskbg:#fdf3e7; --vis:#1d5f3f;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:#e9efec; color:var(--ink);
+    font:14px/1.6 "Source Han Serif SC","Noto Serif SC","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  .page {
+    width:1280px; margin:20px auto; padding:40px 54px 30px;
+    background:#fff; box-shadow:0 14px 40px rgba(11,84,78,.10);
+  }
+
+  .kicker { font-size:12px; letter-spacing:.35em; color:var(--teal); font-weight:700; margin-bottom:6px; }
+  h1 { margin:0 0 8px; font-size:27px; font-weight:800; }
+  .thesis { font-size:14.5px; max-width:1000px; }
+  .thesis b { color:var(--teal-deep); }
+  .headrule { border:none; border-top:2px solid var(--ink); margin:14px 0 0; }
+
+  .sec { display:flex; align-items:baseline; gap:12px; margin:20px 0 8px; }
+  .sec .no { font-size:13px; font-weight:800; color:var(--teal); letter-spacing:.12em; }
+  .sec h2 { margin:0; font-size:15.5px; font-weight:800; }
+  .sec .note { margin-left:auto; font-size:12px; color:var(--faint); }
+
+  /* legend */
+  .legend { font-size:12px; color:var(--muted); }
+  .legend i { font-style:normal; font-weight:700; padding:0 6px; border-radius:3px; margin:0 3px; }
+  .lv { color:var(--vis); background:#e9f5ee; }
+  .lm { color:var(--mask); background:var(--maskbg); }
+
+  /* steps: three columns */
+  .steps { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; margin-top:8px; }
+  .step { padding:0 22px; border-left:1px solid var(--line); }
+  .step:first-child { padding-left:0; border-left:none; }
+  .step:last-child { padding-right:0; }
+  .step .who { font-size:11px; color:var(--faint); letter-spacing:.08em; }
+  .step h3 { margin:2px 0 6px; font-size:14px; font-weight:800; color:var(--teal-deep); }
+  .step .say { font-size:12px; color:var(--muted); margin-bottom:8px; }
+
+  .block { margin:0 0 8px; }
+  .block .cap { font-size:11px; color:var(--faint); margin-bottom:3px; letter-spacing:.04em; }
+  pre {
+    margin:0; padding:8px 10px; background:var(--wash); border-left:2px solid var(--teal);
+    font:11px/1.62 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color:var(--ink); white-space:pre-wrap; word-break:break-all;
+  }
+  pre .k { color:var(--teal-deep); }
+  pre .ref { color:var(--teal-deep); font-weight:700; }
+  pre .vis { color:var(--vis); font-weight:700; }
+  pre .msk { color:var(--mask); font-weight:700; }
+  pre .dim { color:var(--faint); }
+
+  /* policy section */
+  .policy { display:grid; grid-template-columns:1.15fr 1fr; gap:0; margin-top:8px; }
+  .pcol { padding:0 26px 0 0; }
+  .pcol + .pcol { padding:0 0 0 26px; border-left:1px solid var(--line); }
+  .pcol h3 { margin:0 0 6px; font-size:13.5px; font-weight:800; color:var(--teal-deep); }
+  .pcol p { margin:6px 0 0; font-size:12px; color:var(--muted); }
+
+  .footrule { border:none; border-top:1px solid var(--line); margin:18px 0 10px; }
+  .takeaway { display:flex; justify-content:space-between; gap:24px; font-size:12.5px; }
+  .takeaway b { color:var(--teal-deep); }
+  .takeaway span { color:var(--muted); }
+
+  @media print { body{background:#fff}.page{margin:0;box-shadow:none} }
+  @media (max-width:960px) {
+    .page{width:auto;padding:22px}
+    .steps,.policy{grid-template-columns:1fr}
+    .step,.pcol{padding:0;border-left:none;margin-bottom:16px}
+    .takeaway{flex-direction:column;gap:8px}
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <div class="kicker">AGENT · TOOL CALLING · EXAMPLE</div>
+  <h1>端到端样例：搜图 → 拼图 → 发布</h1>
+  <p class="thesis">
+    用户一句「把上周的滑雪照片拼成一张长图，发到我的相册笔记」，三个工具串联完成。
+    全程模型只写引用：<b>ID 列表和长 URI 被 mask、从未见过真值；长文案可见、供推理，但传参仍是引用</b>。
+  </p>
+  <hr class="headrule" />
+
+  <section>
+    <div class="sec">
+      <span class="no">01</span><h2>三步执行</h2>
+      <span class="note legend">字段标记：<i class="lv">可见</i>模型能读到内容　<i class="lm">mask</i>送模前已换成引用，模型只见占位符</span>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="who">STEP 1 · 工具 searchPhotos</div>
+        <h3>搜索照片，结果入库 r1</h3>
+        <div class="say">模型调用 searchPhotos(query="上周 滑雪")，返回结果写入工作记忆。</div>
+        <div class="block">
+          <div class="cap">工具返回（Runtime 所见，入库 resultId = r1）</div>
+          <pre>{
+  <span class="k">"merged_id_list"</span>: [563, 728, 991],
+  <span class="k">"coverUri"</span>: "https://photo.cloud/u9f3a…
+    ?sig=eyJhbGciOiJI…<span class="dim">（214 字符）</span>",
+  <span class="k">"summary"</span>: "找到3张滑雪照片，
+    拍摄于1月18日雪场"
+}</pre>
+        </div>
+        <div class="block">
+          <div class="cap">送模后（模型所见）</div>
+          <pre>{
+  <span class="k">"merged_id_list"</span>: <span class="ref">"${r1.merged_id_list}"</span>  <span class="msk">← mask·通用</span>
+  <span class="k">"coverUri"</span>: <span class="ref">"${r1.coverUri}"</span>          <span class="msk">← mask·通用</span>
+  <span class="k">"summary"</span>: "找到3张滑雪照片…"      <span class="vis">← 可见</span>
+}</pre>
+        </div>
+        <div class="say">模型据 summary 向用户播报「找到3张」；ID 和封面 URI 它不需要懂，只需拿得到。</div>
+      </div>
+
+      <div class="step">
+        <div class="who">STEP 2 · 工具 createCollage</div>
+        <h3>引用 ID 列表拼图，结果入库 r2</h3>
+        <div class="block">
+          <div class="cap">模型出参（照抄所见占位符）</div>
+          <pre>createCollage({
+  <span class="k">"images"</span>: <span class="ref">"${r1.merged_id_list}"</span>,
+  <span class="k">"style"</span>: "long-strip"
+})</pre>
+        </div>
+        <div class="block">
+          <div class="cap">Runtime beforeHook：先求值，再按 policy 转换</div>
+          <pre><span class="dim">resolve →</span> [563, 728, 991]
+<span class="dim">transform →</span> [{<span class="k">"file_id"</span>:"563"},
+  {<span class="k">"file_id"</span>:"728"}, {<span class="k">"file_id"</span>:"991"}]</pre>
+        </div>
+        <div class="block">
+          <div class="cap">工具返回（入库 r2）→ 送模后</div>
+          <pre>{
+  <span class="k">"collageUri"</span>: <span class="ref">"${r2.collageUri}"</span>      <span class="msk">← mask·业务</span>
+  <span class="k">"aiDesc"</span>: "三张照片自上而下：雪道
+    全景、腾空瞬间、雪场合影，色调
+    统一为冷蓝…<span class="dim">（180 字）</span>"        <span class="vis">← 可见</span>
+}</pre>
+        </div>
+        <div class="say">长 URI 被 mask；长文案保留可见，模型要读它来确认拼图效果、决定要不要直接用作笔记正文。</div>
+      </div>
+
+      <div class="step">
+        <div class="who">STEP 3 · 工具 publishNote</div>
+        <h3>可见的用引用传，没见过的照抄</h3>
+        <div class="block">
+          <div class="cap">模型出参</div>
+          <pre>publishNote({
+  <span class="k">"fileUri"</span>: <span class="ref">"${r2.collageUri}"</span>,   <span class="msk">场景二：
+    没见过真值，照抄占位符</span>
+  <span class="k">"content"</span>: <span class="ref">"${r2.aiDesc}"</span>,     <span class="vis">场景一：
+    读过内容，传参仍写引用</span>
+  <span class="k">"title"</span>: "上周滑雪记录"        <span class="dim">短字面量：
+    模型自己写的，直接填值</span>
+})</pre>
+        </div>
+        <div class="block">
+          <div class="cap">Runtime 求值后实际调用</div>
+          <pre>publishNote({
+  <span class="k">"fileUri"</span>: "https://media.cloud/collage/
+    7Qx2…?token=…<span class="dim">（198 字符真值）</span>",
+  <span class="k">"content"</span>: "三张照片自上而下：…<span class="dim">（180 字全文）</span>",
+  <span class="k">"title"</span>: "上周滑雪记录"
+})</pre>
+        </div>
+        <div class="say">笔记发布成功，返回 noteId 再入库。整条链路模型没抄过一个长值，Token 只花在 summary 和 aiDesc 这两段真正需要读的内容上。</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="sec">
+      <span class="no">02</span><h2>本例的 Policy 配置</h2>
+      <span class="note">mask 决定「模型看什么」，beforeHook 决定「工具收什么」</span>
+    </div>
+    <div class="policy">
+      <div class="pcol">
+        <h3>Mask Policy：通用兜底 + 业务覆盖</h3>
+        <pre><span class="dim"># 通用（所有工具生效，按字段名兜底）</span>
+global.maskPolicy {
+  fields: [<span class="k">"*Uri"</span>, <span class="k">"*Url"</span>, <span class="k">"*_id_list"</span>, <span class="k">"fileId"</span>]
+}
+
+<span class="dim"># 业务（按工具覆盖，优先于通用）</span>
+searchPhotos.maskPolicy {
+  keep_visible: [<span class="k">"summary"</span>]     <span class="dim"># 短摘要留给模型播报</span>
+}
+createCollage.maskPolicy {
+  keep_visible: [<span class="k">"aiDesc"</span>]      <span class="dim"># 长文案供推理，不 mask</span>
+}</pre>
+        <p>coverUri、collageUri、merged_id_list 均命中通用规则被 mask；summary、aiDesc 由业务规则显式放行。</p>
+      </div>
+      <div class="pcol">
+        <h3>BeforeHook Policy：入参结构转换</h3>
+        <pre><span class="dim"># createCollage 执行前：images 参数
+# 先 resolve 引用，再按表达式变换
+
+# 伪代码（语义示意，$value = 展开后的真实列表）</span>
+createCollage.beforeHookPolicy {
+  images: list(
+    dict(<span class="k">"file_id"</span>, string(item))
+    for item in <span class="ref">$value</span>
+  )
+}
+
+<span class="dim"># JSONata（可执行等价，$ 即 $value）</span>
+createCollage.beforeHookPolicy {
+  images: <span class="k">"$map($, function($v) {{ 'file_id': $string($v) }})"</span>
+}
+
+<span class="dim"># 若需叠加数量上限（至多前 18 项）：
+#   $map($[[0..17]], function($v) {{ 'file_id': $string($v) }})
+
+# publishNote 无需转换，
+# beforeHook 只做引用求值与 Schema 校验</span></pre>
+        <p>上为语义伪代码，下为可执行 JSONata（AWS Step Functions 同款选型）：逐元素转字符串再封装成对象，顺序保持，不足上限自动截短。表达式只能由工具接入方在 Policy 中书写，禁止模型生成；求值失败即短路。模型和两端工具都不感知这次转换。</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="footrule" />
+  <div class="takeaway">
+    <div><b>ID 列表 / 长 URI</b><span>　mask 后模型从未见过，占位符原样穿过三步</span></div>
+    <div><b>长文案 aiDesc</b><span>　可见、可推理，但传参依然是 ${r2.aiDesc}</span></div>
+    <div><b>短字面量 title</b><span>　模型自己生成的内容，照常直接填值</span></div>
+  </div>
+</main>
+</body>
+</html>

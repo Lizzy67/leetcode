@@ -165,11 +165,6 @@
       <div class="card">
         <h2>3. Runtime</h2>
         <ul>
-          <li>Mask policy <b>绑定 Runtime</b>：一套 Runtime ↔ 一套 policy。</li>
-          <li><b>默认 policy</b>：拦截 fileUri / fileId / objectId / *Url 等字段。</li>
-          <li><b>工具 policy</b>：可标明额外拦截变量；优先级：工具 &gt; 默认。</li>
-          <li>支持配置 <b>正则</b>：某类变量值命中则加 mask。</li>
-          <li>缓存工具返回的 <span class="code">resultDataList</span>，执行前解析引用为真值。</li>
         </ul>
       </div>
     </section>
@@ -184,16 +179,6 @@
         <div class="step"><b>⑤ 调用工具 B</b><span>使用真实入参执行</span></div>
       </div>
     </section>
-
-    <section class="flow">
-      <h2>5. 快慢系统结合后</h2>
-      <div class="steps">
-        <div class="step"><b>① MCP 返回</b><span>DM 调工具拿结果</span></div>
-        <div class="step"><b>② 缓存 WM</b><span>写入 workmemory / resultDataList</span></div>
-        <div class="step"><b>③ 太初 mask</b><span>按默认/工具 policy（+正则）</span></div>
-        <div class="step"><b>④ 模型推理</b><span>不可见见引用；可见见原文</span></div>
-        <div class="step"><b>⑤ 太初还原</b><span>出参引用 → 真值</span></div>
-        <div class="step"><b>⑥ DM 执行</b><span>无引用则无需再还原</span></div>
       </div>
     </section>
 
@@ -217,32 +202,21 @@
     </section>
 
     <section class="prompt">
-      <h2>8. SystemPrompt 建议文案（可直接嵌入）</h2>
-      <div class="hint">作用范围：工具入参「照抄上一步结果」；用户原话 / 可独立确定的字面量仍直接填。</div>
       <pre># 工具结果引用约定
 
-当某个工具参数的取值来自上一步某条工具结果中的字段时，不要复述、改写或猜测该值，请输出引用占位符，由系统在执行前回填真实值。
+工具参数若应使用「已有工具结果里的某个字段」，不要复述、改写或猜测该值；请填引用占位符，系统会在执行前回填真实值。
 
-## 写法
-`${&lt;resultId&gt;.&lt;字段路径&gt;}`
+## 怎么填
+1. 上下文里该字段若已是 `${...}` 占位符（含被 mask 的值）：**原样复制**到参数里，不要改写。
+2. 否则写成：`${&lt;resultId&gt;.&lt;字段路径&gt;}`
+   - `&lt;resultId&gt;`：只从上下文中已有工具结果读取（一般为 8 位字母数字），禁止编造。
+   - `&lt;字段路径&gt;`：结果内字段，支持点号嵌套，如 `entityId`、`data.fileUri`。
+3. 占位符必须是**整个参数值**：勿省略 `$`/`{`/`}`，勿前后拼接其它文字。
 
-- `&lt;resultId&gt;`：上下文中对应工具结果的 8 位 ID（UUID 前 8 位）。必须照抄上下文，禁止编造。
-- `&lt;字段路径&gt;`：该结果内的字段路径，支持点号嵌套，例如 `entityId`、`data.fileUri`。
-- 作为完整参数值时：整个参数必须等于占位符本身（不要省略 `$`/`{`/`}`，不要前后拼接）。
-
-## 何时必须用引用
-- 参数说明要求引用，或取值明确来自已有工具结果字段；
-- 字段已被 mask，或值较长（建议超过约 12 个 token）时，禁止照抄原文。
-
-## 何时仍填字面值
-- 取值来自用户原话，或可独立确定的短信息（如相册名、数量、开关等），且并非某一工具结果字段的拷贝。
-
-具体该引用哪个字段，以各工具/方法的参数说明为准。</pre>
+以各工具参数说明为准；有可选枚举时，优先选枚举中的引用项。</pre>
     </section>
 
     <footer>
-      resultId = UUID 前 8 位 · 不可见加 mask / 可见原样进模但只出引用 ·
-      工具A → Runtime改写入库 → 模型出引用 → Runtime改回 → 工具B。
     </footer>
   </article>
 </body>

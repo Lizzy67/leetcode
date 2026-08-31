@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#000"/>
+    </marker>
+    <style>
+      .box { fill: #fff; stroke: #000; stroke-width: 2.2; }
+      .runtime { fill: #fff; stroke: #000; stroke-width: 2.2; stroke-dasharray: 10 7; }
+      .line { fill: none; stroke: #000; stroke-width: 2.2; marker-end: url(#arrow); }
+      .return { fill: none; stroke: #000; stroke-width: 2.2; stroke-dasharray: 8 6; marker-end: url(#arrow); }
+      .title { font: 700 26px "WenQuanYi Micro Hei", "Microsoft YaHei", "PingFang SC", sans-serif; fill: #000; }
+      .module { font: 700 21px "WenQuanYi Micro Hei", "Microsoft YaHei", "PingFang SC", sans-serif; fill: #000; }
+      .body { font: 16px "WenQuanYi Micro Hei", "Microsoft YaHei", "PingFang SC", sans-serif; fill: #000; }
+      .label { font: 700 15px "WenQuanYi Micro Hei", "Microsoft YaHei", "PingFang SC", sans-serif; fill: #000; }
+      .note { font: 15px "WenQuanYi Micro Hei", "Microsoft YaHei", "PingFang SC", sans-serif; fill: #000; }
+      .number { fill: #fff; stroke: #000; stroke-width: 1.8; }
+      .numtext { font: 700 15px Arial, sans-serif; text-anchor: middle; dominant-baseline: central; fill: #000; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="760" fill="#fff"/>
+  <text x="640" y="42" text-anchor="middle" class="title">引入参数引用机制前的典型智能体工具调用架构</text>
+
+  <!-- User -->
+  <rect x="60" y="105" width="210" height="92" rx="8" class="box"/>
+  <text x="165" y="140" text-anchor="middle" class="module">用户 / 客户端</text>
+  <text x="165" y="169" text-anchor="middle" class="body">输入自然语言意图</text>
+
+  <!-- Runtime boundary -->
+  <rect x="330" y="78" width="890" height="535" rx="14" class="runtime"/>
+  <rect x="355" y="62" width="210" height="34" fill="#fff"/>
+  <text x="460" y="86" text-anchor="middle" class="module">智能体运行时</text>
+
+  <!-- LLM -->
+  <rect x="390" y="135" width="260" height="145" rx="8" class="box"/>
+  <text x="520" y="177" text-anchor="middle" class="module">大语言模型</text>
+  <text x="520" y="211" text-anchor="middle" class="body">意图理解与工具决策</text>
+  <text x="520" y="239" text-anchor="middle" class="body">生成完整参数真值</text>
+
+  <!-- Dispatcher -->
+  <rect x="750" y="135" width="215" height="145" rx="8" class="box"/>
+  <text x="858" y="177" text-anchor="middle" class="module">工具调度模块</text>
+  <text x="858" y="211" text-anchor="middle" class="body">校验工具名与参数</text>
+  <text x="858" y="239" text-anchor="middle" class="body">基本原样透传</text>
+
+  <!-- Tool runtime -->
+  <rect x="1025" y="135" width="155" height="145" rx="8" class="box"/>
+  <text x="1103" y="175" text-anchor="middle" class="module">工具执行</text>
+  <text x="1103" y="210" text-anchor="middle" class="body">工具 A</text>
+  <text x="1103" y="237" text-anchor="middle" class="body">工具 B / …</text>
+
+  <!-- Context -->
+  <rect x="510" y="405" width="410" height="125" rx="8" class="box"/>
+  <text x="715" y="444" text-anchor="middle" class="module">会话上下文</text>
+  <text x="715" y="478" text-anchor="middle" class="body">历史消息 + 工具返回结果全文</text>
+  <text x="715" y="506" text-anchor="middle" class="body">供模型下一轮读取与复述</text>
+
+  <!-- Flow 1: user to LLM -->
+  <path d="M270 151 H390" class="line"/>
+  <circle cx="315" cy="132" r="13" class="number"/>
+  <text x="315" y="132" class="numtext">1</text>
+  <text x="330" y="112" class="label">用户请求</text>
+
+  <!-- Flow 2: LLM to dispatcher -->
+  <path d="M650 207 H750" class="line"/>
+  <circle cx="700" cy="188" r="13" class="number"/>
+  <text x="700" y="188" class="numtext">2</text>
+  <text x="700" y="118" text-anchor="middle" class="label">工具名 + 完整真值参数</text>
+
+  <!-- Flow 3: dispatcher to tool -->
+  <path d="M965 207 H1025" class="line"/>
+  <circle cx="995" cy="188" r="13" class="number"/>
+  <text x="995" y="188" class="numtext">3</text>
+  <text x="995" y="118" text-anchor="middle" class="label">透传参数</text>
+
+  <!-- Flow 4: tool result to context -->
+  <path d="M1103 280 V350 Q1103 372 1081 372 H940 Q920 372 920 392 V405" class="return"/>
+  <circle cx="1030" cy="353" r="13" class="number"/>
+  <text x="1030" y="353" class="numtext">4</text>
+  <text x="1028" y="334" text-anchor="middle" class="label">工具结果全文回灌</text>
+
+  <!-- Flow 5: context to model -->
+  <path d="M510 467 H450 Q420 467 420 437 V300 Q420 280 440 280" class="return"/>
+  <circle cx="438" cy="371" r="13" class="number"/>
+  <text x="438" y="371" class="numtext">5</text>
+  <text x="455" y="354" class="label">下一轮读取、抄写、再决策</text>
+
+  <!-- Architecture absence callout -->
+  <rect x="985" y="405" width="195" height="125" rx="8" class="box"/>
+  <text x="1083" y="443" text-anchor="middle" class="module">缺失能力</text>
+  <text x="1083" y="477" text-anchor="middle" class="body">无引用解析</text>
+  <text x="1083" y="504" text-anchor="middle" class="body">无查表 / 格式转换</text>
+
+  <!-- Bottom observations -->
+  <rect x="60" y="650" width="1160" height="72" rx="8" class="box"/>
+  <text x="90" y="681" class="label">架构特征：</text>
+  <text x="190" y="681" class="note">模型同时承担“决策、业务真值生成、长值抄写及格式转换”；调度模块主要透传参数。</text>
+  <text x="90" y="708" class="label">主要问题：</text>
+  <text x="190" y="708" class="note">工具结果反复回灌造成上下文膨胀；长值易抄错；弱语义标识易幻觉；结构不一致时需模型改写或改造工具。</text>
+</svg>
