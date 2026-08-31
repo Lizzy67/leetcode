@@ -17,21 +17,28 @@
     font: 12.5px/1.4 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   }
   .page {
-    max-width: 980px; margin: 16px auto; background: var(--paper);
+    max-width: 1040px; margin: 16px auto; background: var(--paper);
     border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 14px;
   }
   header {
-    display: flex; justify-content: space-between; align-items: baseline;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
     border-bottom: 2px solid var(--teal); padding-bottom: 8px; margin-bottom: 10px;
   }
-  h1 { margin: 0; font-size: 20px; color: var(--teal); }
-  .meta { color: var(--muted); font-size: 11px; }
+  h1 { margin: 0; font-size: 19px; color: var(--teal); }
+  .meta { color: var(--muted); font-size: 11px; text-align: right; }
   .code {
     font-family: ui-monospace, Menlo, Consolas, monospace;
     background: #eef4f1; border: 1px solid #d7e4de; border-radius: 3px;
     padding: 0 4px; font-size: 11px;
   }
-  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .bg {
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+    background: #fbfdfc; margin-bottom: 8px;
+  }
+  .bg h2 { margin: 0 0 4px; font-size: 12.5px; color: var(--teal); }
+  .bg ul { margin: 0; padding-left: 15px; }
+  .bg li { margin: 0 0 2px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
   .card {
     border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fbfdfc;
   }
@@ -44,9 +51,10 @@
   }
   .flow h2 { margin: 0 0 6px; font-size: 12.5px; color: var(--teal); }
   .steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+  .steps5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
   .step {
     border: 1px solid var(--line); border-radius: 6px; padding: 6px 7px;
-    background: #fff; position: relative; min-height: 54px;
+    background: #fff; position: relative; min-height: 58px;
   }
   .step::after {
     content: "→"; position: absolute; right: -8px; top: 50%;
@@ -55,6 +63,15 @@
   .step:last-child::after { content: ""; }
   .step b { display: block; font-size: 11px; color: var(--teal); margin-bottom: 2px; }
   .step span { font-size: 10.5px; color: var(--muted); }
+  .arch {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px;
+  }
+  .arch .box {
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff;
+  }
+  .arch .box b { display: block; color: var(--teal); font-size: 12px; margin-bottom: 4px; }
+  .arch .box ul { margin: 0; padding-left: 15px; }
+  .arch .box li { margin: 0 0 2px; font-size: 11.5px; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
   .scenario { border-radius: 8px; border: 1px solid var(--line); padding: 8px 10px; }
   .s1 { background: var(--blue-soft); border-color: #c5daf0; }
@@ -67,7 +84,7 @@
     margin-top: 5px; padding: 5px 7px; background: #fff; border-radius: 5px;
     border: 1px solid var(--line); font-size: 11px;
   }
-  .mid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .mid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 8px; margin-bottom: 8px; }
   .prompt {
     border: 1px solid var(--teal); border-radius: 8px; padding: 10px 12px;
     background: #f3faf7; margin-top: 4px;
@@ -87,9 +104,11 @@
     body { background: #fff; }
     .page { margin: 0; border: none; max-width: none; }
   }
-  @media (max-width: 860px) {
-    .grid, .two, .mid, .steps { grid-template-columns: 1fr; }
+  @media (max-width: 900px) {
+    .grid2, .two, .mid, .steps, .steps5, .arch { grid-template-columns: 1fr; }
     .step::after { content: ""; }
+    header { flex-direction: column; align-items: flex-start; }
+    .meta { text-align: left; }
   }
 </style>
 </head>
@@ -97,92 +116,92 @@
   <article class="page">
     <header>
       <h1>Workmemory 引用方案 · 一页纸</h1>
-      <div class="meta">语法 <span class="code">${resultId.jsonpath}</span> · resultId = 8 位十六进制（无 <span class="code">.</span>）</div>
+      <div class="meta">
+        语法 <span class="code">${resultId.jsonpath}</span><br />
+        resultId = <span class="code">UUID.randomUUID().toString().substring(0, 8)</span>
+      </div>
     </header>
 
-    <section class="grid">
-      <div class="card">
-        <h2>1. 背景</h2>
+    <section class="bg">
+      <h2>1. 背景</h2>
+      <ul>
+        <li>精确值（URI / fileId / 大段文本）经模型多次搬运易抄错。</li>
+        <li>模型输出非自然语言长值无意义且时延长。</li>
+      </ul>
+    </section>
+
+    <section class="two">
+      <div class="scenario s1">
+        <h3>场景① 值不可见 = 加 mask</h3>
         <ul>
-          <li>大结果照抄回下一工具 → 遵从性差、Input Token 高。</li>
-          <li>URI 等只需当下游入参，模型感知变量即可。</li>
-          <li>送模前按配置 mask 成 <span class="code">${resultId.jsonpath}</span>。</li>
+          <li>进模型前替换为 <span class="code">${a1b2c3d4.fileUri}</span>。</li>
+          <li>模型只感知变量名，不看真值。</li>
+          <li>精确值留在 Runtime 缓存，执行时还原。</li>
+        </ul>
+        <div class="ex">典型：fileUri、fileId、长 URL</div>
+      </div>
+      <div class="scenario s2">
+        <h3>场景② 值可见 = 原样进模型</h3>
+        <ul>
+          <li>原文原样输入给模型（供推理）。</li>
+          <li>输出时仍按 SystemPrompt / Skill <b>只输出引用</b>。</li>
+          <li>由 Runtime 替换为真实值后再调下游工具。</li>
+        </ul>
+        <div class="ex">例：先生成 Java 代码（可见）→ 再转 Python，入参用 <span class="code">${e5f6a7b8.text}</span></div>
+      </div>
+    </section>
+
+    <section class="grid2">
+      <div class="card">
+        <h2>2. 定稿原则</h2>
+        <ul>
+          <li><b>resultId</b>：统一 <span class="code">UUID.randomUUID().toString().substring(0, 8)</span>（取 32 位 UUID 字符串前 8 位）。</li>
+          <li>引用场景分为 <b>值可见</b> / <b>值不可见</b> 两种（见上）。</li>
+          <li><b>进模型前</b>：按默认/工具 policy（+ 正则）加 mask；Runtime 缓存 <span class="code">resultDataList</span>。</li>
+          <li><b>Skill / SystemPrompt</b>：约束模型输出引用；加 mask 后只能出引用，禁止照抄原值。</li>
+          <li><b>Runtime 解析</b>：递归遍历入参，整体/值内引用 → 查缓存还原真值；未命中 fail closed。</li>
         </ul>
       </div>
       <div class="card">
-        <h2>2. 方案原则</h2>
+        <h2>3. Runtime</h2>
         <ul>
-          <li>工具返回默认写入 workmemory。</li>
-          <li>invoke/exec 前按引用解析回填。</li>
-          <li>查找：<span class="code">resultDataList</span> → <span class="code">dataForTool</span>。</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h2>3. Mask 配置</h2>
-        <ul>
-          <li><b>通用默认</b>：<span class="code">fileUri</span> / <span class="code">fileId</span> / <span class="code">objectId</span> / <span class="code">*Url</span> 等 → mask。</li>
-          <li><b>工具覆盖</b> &gt; 通用默认。</li>
-          <li><b>mask 形态</b>：所见即所填。可用完整 <span class="code">${id.path}</span>，或会话内短句柄 <span class="code">${r1}</span>（DM 映射到 id+path）；勿用无歧义的统一死字符串（如所有字段都是 <span class="code">&lt;MASKED&gt;</span>）。</li>
         </ul>
       </div>
     </section>
 
     <section class="flow">
-      <h2>4. 流程</h2>
-      <div class="steps">
-        <div class="step"><b>① 返回</b><span>工具产出结果</span></div>
-        <div class="step"><b>② 入库</b><span>写 workmemory + 生成 resultId</span></div>
-        <div class="step"><b>③ 送模</b><span>通用/工具配置 mask</span></div>
-        <div class="step"><b>④ 出参</b><span>模型写 <span class="code">${id.path}</span></span></div>
-        <div class="step"><b>⑤ 回填</b><span>resultDataList → dataForTool</span></div>
-        <div class="step"><b>⑥ 调用</b><span>真值执行，再入库</span></div>
+      <h2>4. 逻辑架构</h2>
+      <div class="steps5">
+        <div class="step"><b>① 工具 A 返回</b><span>产出精确结果</span></div>
+        <div class="step"><b>② Runtime 改写</b><span>mask 并存 workmemory</span></div>
+        <div class="step"><b>③ 模型推理</b><span>输出引用变量</span></div>
+        <div class="step"><b>④ Runtime 改回</b><span>引用 → 真值</span></div>
+        <div class="step"><b>⑤ 调用工具 B</b><span>使用真实入参执行</span></div>
       </div>
     </section>
-
-    <section class="two">
-      <div class="scenario s1">
-        <h3>场景① 不看 value</h3>
-        <ul>
-          <li>默认/工具 mask；模型只感知变量。</li>
-          <li>典型：fileUri、fileId。</li>
-        </ul>
-        <div class="ex">mask 为 <span class="code">${r1}</span> 或 <span class="code">${a1b2c3d4.fileUri}</span> → 原样回填参数 → DM 展开</div>
-      </div>
-      <div class="scenario s2">
-        <h3>场景② 要看 value</h3>
-        <ul>
-          <li>可见/摘要供推理；传参仍用引用（Skill + Prompt）。</li>
-          <li>「看」与「传」分离。</li>
-        </ul>
-        <div class="ex">可见 text → 入参 <span class="code">${e5f6a7b8.text}</span></div>
       </div>
     </section>
 
     <section class="mid">
       <div class="card">
-        <h2>5. resultId 设计</h2>
+        <h2>6. resultId 与入参替换</h2>
         <ul>
-          <li><b>为何不直接用 toolCallId</b>：供应商签发、长度常 32+、格式不一（可能含 <span class="code">_</span>/<span class="code">-</span>），直接进 <span class="code">${...}</span> 费 token、难统一解析。</li>
-          <li><b>分工</b>：toolCallId = 对内关联键；resultId = <b>对模短引用</b>（8 位 <span class="code">[0-9a-f]</span>）。入库时存映射 <span class="code">resultId ↔ toolCallId</span>。</li>
-          <li><b>统一算法（推荐）</b>：DM 唯一生成；<span class="code">resultId = hex8(FNV-1a-64(toolCallId))</span>（会话级存储可再混 sessionId）。禁止各系统各自 <span class="code">UUID[:8]</span> 随机截断。</li>
-          <li>会话内调用量远低于 32-bit 碰撞阈值；需要更稳可升 12 位 hex。</li>
+          <li>生成算法统一：<span class="code">UUID.randomUUID().toString().substring(0, 8)</span>。</li>
+          <li>工具入参 JSON <b>递归遍历</b>：整体变量引用 + 值内引用，再替换。</li>
+          <li>查找：Runtime 缓存的 <span class="code">resultDataList</span>（及必要的 dataForTool）。</li>
         </ul>
       </div>
       <div class="card">
-        <h2>6. 生命周期 / 约束序</h2>
-        <ol>
-          <li>创建：返回 → 算 resultId → 入库并挂 toolCallId</li>
-          <li>暴露：默认/工具 mask，或可见 + 可引用路径</li>
-          <li>引用：模型输出 → invoke 前展开</li>
-          <li>失效：会话结束 / TTL；未命中报错</li>
-        </ol>
-        <p style="margin:6px 0 0;font-size:11.5px;">约束序：<b>mask &gt; Skill &gt; SystemPrompt</b>。Prompt 为软兜底（token&gt;12 禁照抄）。</p>
+        <h2>7. SubAgent 特殊规则</h2>
+        <ul>
+          <li>输出阶段对 URI 等加 mask。</li>
+          <li>hook 抽出自然语言中的 <span class="code">${...}</span>，随 <span class="code">memoryList</span> 返回。</li>
+          <li><b>输入 / 输出 mask 均不还原</b>；裁 <span class="code">memoryList{名:值}</span> 交回。</li>
+        </ul>
       </div>
     </section>
 
     <section class="prompt">
-      <h2>7. SystemPrompt 建议文案（可直接嵌入）</h2>
-      <div class="hint">模型只记「照抄占位符 / 勿抄长值」；短句柄与 resultId 映射由 Runtime 处理，不必写进 Prompt。</div>
       <pre># 工具结果引用约定
 
 工具参数若应使用「已有工具结果里的某个字段」，不要复述、改写或猜测该值；请填引用占位符，系统会在执行前回填真实值。
@@ -194,18 +213,10 @@
    - `&lt;字段路径&gt;`：结果内字段，支持点号嵌套，如 `entityId`、`data.fileUri`。
 3. 占位符必须是**整个参数值**：勿省略 `$`/`{`/`}`，勿前后拼接其它文字。
 
-## 必须用引用
-- 参数说明要求引用，或取值来自已有工具结果字段；
-- 字段已被 mask，或值较长（约 &gt;12 token，如 URI、fileId、大段文本）。
-
-## 仍用字面值
-- 来自用户原话，或可独立确定的短信息（相册名、数量、开关等），且不是某工具结果字段的拷贝。
-
 以各工具参数说明为准；有可选枚举时，优先选枚举中的引用项。</pre>
     </section>
 
     <footer>
-      mask 所见即所填（完整引用或短句柄 ${rN}）→ Prompt 只教照抄 → invoke 前展开；resultId 由 DM 确定性生成，勿写 UUID[:8]。
     </footer>
   </article>
 </body>
