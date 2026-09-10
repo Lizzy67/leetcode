@@ -6,321 +6,186 @@
 <title>全量搜图建相册 · 方案一页纸</title>
 <style>
   :root {
-    --ink:#1c2925; --muted:#6b7a74; --faint:#9aa8a2; --line:#dde5e1;
-    --teal:#0e6f66; --teal-deep:#0b544e; --wash:#f4f8f6;
-    --bad:#a03a2a; --badbg:#fbeeea; --warn:#a05a1f; --warnbg:#fdf3e7; --good:#1d5f3f; --goodbg:#e9f5ee;
+    --ink:#1c2925; --muted:#66746e; --line:#dde5e1;
+    --teal:#0e6f66; --teal-d:#0b544e; --wash:#f4f8f6;
+    --bad:#b3402c; --badbg:#fbeeea; --warn:#a05a1f; --warnbg:#fdf3e7; --good:#1d5f3f; --goodbg:#e9f5ee;
   }
   * { box-sizing:border-box; }
-  body {
-    margin:0; background:#e9efec; color:var(--ink);
-    font:14px/1.6 "Source Han Serif SC","Noto Serif SC","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-  }
-  .page {
-    width:1280px; margin:20px auto; padding:40px 54px 30px;
-    background:#fff; box-shadow:0 14px 40px rgba(11,84,78,.10);
-  }
+  body { margin:0; background:#e9efec; color:var(--ink);
+    font:14px/1.55 "Noto Sans SC","PingFang SC","Microsoft YaHei","Segoe UI",sans-serif; }
+  .page { width:1180px; margin:20px auto; padding:36px 48px 28px; background:#fff; box-shadow:0 14px 40px rgba(11,84,78,.10); }
 
-  .kicker { font-size:12px; letter-spacing:.35em; color:var(--teal); font-weight:700; margin-bottom:6px; }
-  h1 { margin:0 0 8px; font-size:27px; font-weight:800; }
-  .thesis { font-size:14.5px; max-width:1040px; }
-  .thesis b { color:var(--teal-deep); }
-  .headrule { border:none; border-top:2px solid var(--ink); margin:14px 0 0; }
+  h1 { margin:0 0 6px; font-size:24px; font-weight:800; }
+  .sub { color:var(--muted); font-size:14px; margin:0 0 18px; }
+  .sub b { color:var(--teal-d); }
+  h2 { font-size:15px; font-weight:800; margin:26px 0 10px; padding-left:10px; border-left:4px solid var(--teal); }
 
-  .sec { display:flex; align-items:baseline; gap:12px; margin:22px 0 8px; }
-  .sec .no { font-size:13px; font-weight:800; color:var(--teal); letter-spacing:.12em; }
-  .sec h2 { margin:0; font-size:15.5px; font-weight:800; }
-  .sec .note { margin-left:auto; font-size:12px; color:var(--faint); }
+  /* flow diagram primitives */
+  .flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .node { padding:7px 12px; border:1.5px solid var(--ink); border-radius:6px; background:#fff; font-size:12.5px; white-space:nowrap; }
+  .node small { display:block; font-size:10.5px; color:var(--muted); white-space:normal; }
+  .node.model { border-color:var(--teal); background:var(--wash); }
+  .node.mem   { border-style:dashed; border-color:var(--muted); color:var(--muted); }
+  .node.bad   { border-color:var(--bad); background:var(--badbg); color:var(--bad); }
+  .node.warn  { border-color:var(--warn); background:var(--warnbg); }
+  .node.good  { border-color:var(--good); background:var(--goodbg); }
+  .arr { color:var(--muted); font-size:16px; }
+  .arr.bad { color:var(--bad); font-weight:800; }
+  .lane { display:grid; grid-template-columns:76px 1fr; align-items:center; gap:10px; margin:6px 0; }
+  .lane .lbl { font-size:11px; color:var(--muted); letter-spacing:.06em; text-align:right; }
 
-  .cols { display:grid; gap:0; margin-top:8px; }
-  .cols-3 { grid-template-columns:1fr 1fr 1fr; }
-  .cols-2 { grid-template-columns:1.05fr 1fr; }
-  .col { padding:0 22px; border-left:1px solid var(--line); }
-  .col:first-child { padding-left:0; border-left:none; }
-  .col:last-child { padding-right:0; }
-  .col h3 { margin:2px 0 6px; font-size:14px; font-weight:800; color:var(--teal-deep); }
-  .col .who { font-size:11px; color:var(--faint); letter-spacing:.08em; }
-  .col p { margin:6px 0 0; font-size:12.5px; color:var(--muted); }
-  .col ul { margin:6px 0 0; padding-left:18px; font-size:12.5px; color:var(--muted); }
-  .col li { margin:2px 0; }
-
-  pre {
-    margin:0; padding:8px 10px; background:var(--wash); border-left:2px solid var(--teal);
-    font:11px/1.62 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    color:var(--ink); white-space:pre-wrap; word-break:break-all;
-  }
-  pre .k { color:var(--teal-deep); }
-  pre .ref { color:var(--teal-deep); font-weight:700; }
-  pre .dim { color:var(--faint); }
-  pre .x { color:var(--bad); font-weight:700; }
-  .block { margin:8px 0 0; }
-  .block .cap { font-size:11px; color:var(--faint); margin-bottom:3px; letter-spacing:.04em; }
-
-  .tag { display:inline-block; font-size:11px; font-weight:700; padding:1px 8px; border-radius:3px; margin-left:6px; vertical-align:middle; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; }
+  .card { border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
+  .card h3 { margin:0 0 8px; font-size:13.5px; font-weight:800; display:flex; align-items:center; gap:8px; }
+  .tag { font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:3px; }
   .t-bad { color:var(--bad); background:var(--badbg); }
   .t-warn { color:var(--warn); background:var(--warnbg); }
   .t-good { color:var(--good); background:var(--goodbg); }
+  .card .flowv { display:flex; flex-direction:column; align-items:flex-start; gap:4px; margin:6px 0 10px; }
+  .card .flowv .arr { padding-left:18px; line-height:1; }
+  .card p { margin:0; font-size:12.5px; color:var(--muted); }
+  .card p b { color:var(--ink); }
+  .card.final { border-color:var(--good); background:#f7fbf8; }
 
-  .bg { display:grid; grid-template-columns:1.2fr 1fr; gap:26px; margin-top:8px; }
-  .bg p { margin:4px 0; font-size:13px; color:var(--muted); }
-  .bg b { color:var(--ink); }
-  .kv { width:100%; border-collapse:collapse; font-size:12.5px; }
-  .kv th, .kv td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
-  .kv th { color:var(--faint); font-weight:700; font-size:11.5px; letter-spacing:.04em; }
-  .kv td b { color:var(--teal-deep); }
+  .stage { border:1px solid var(--line); border-radius:8px; padding:16px 18px; background:#fff; }
+  .row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  .row .box { padding:10px 12px; border-radius:6px; background:var(--wash); font-size:12.5px; }
+  .row .box .h { font-weight:800; color:var(--teal-d); font-size:12px; margin-bottom:4px; }
+  code { font:11.5px ui-monospace,Menlo,Consolas,monospace; background:#eef3f1; padding:1px 5px; border-radius:3px; }
+  .ref { color:var(--teal-d); font-weight:700; }
 
-  .cmp { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px; }
-  .cmp th, .cmp td { padding:7px 9px; border-bottom:1px solid var(--line); vertical-align:top; text-align:left; }
-  .cmp th { background:var(--wash); font-size:12px; color:var(--teal-deep); }
-  .cmp td:first-child { color:var(--faint); font-weight:700; white-space:nowrap; }
-  .cmp .final { background:#f2f9f5; }
-  .ok { color:var(--good); font-weight:700; }
-  .no-ok { color:var(--bad); font-weight:700; }
-  .so { color:var(--warn); font-weight:700; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th, td { padding:6px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  th { background:var(--wash); color:var(--teal-d); font-size:12px; }
+  td:first-child { color:var(--muted); font-weight:700; white-space:nowrap; }
+  .ok { color:var(--good); font-weight:700; } .no { color:var(--bad); font-weight:700; } .so { color:var(--warn); font-weight:700; }
+  td.final { background:#f2f9f5; }
 
-  .footrule { border:none; border-top:1px solid var(--line); margin:18px 0 10px; }
-  .takeaway { display:flex; justify-content:space-between; gap:24px; font-size:12.5px; }
-  .takeaway b { color:var(--teal-deep); }
-  .takeaway span { color:var(--muted); }
-
+  .foot { margin-top:20px; padding-top:12px; border-top:1px solid var(--line); display:flex; gap:28px; font-size:12.5px; }
+  .foot b { color:var(--teal-d); } .foot span { color:var(--muted); }
   @media print { body{background:#fff}.page{margin:0;box-shadow:none} }
-  @media (max-width:960px) {
-    .page{width:auto;padding:22px}
-    .cols-3,.cols-2,.bg{grid-template-columns:1fr}
-    .col{padding:0;border-left:none;margin-bottom:16px}
-    .takeaway{flex-direction:column;gap:8px}
-  }
 </style>
 </head>
 <body>
 <main class="page">
 
-  <div class="kicker">AGENT · GALLERY · SEARCH → ALBUM</div>
-  <h1>「把所有猫猫照片建一个相册」：全量搜索如何接进现有 Skill 编排</h1>
-  <p class="thesis">
-    搜索 Skill 目前按页返回（默认 500/页），2 万张要翻 40 次。要支持「全部 xxx 建相册」，
-    关键不是让谁去翻页，而是<b>翻页在哪一层发生</b>。结论：<b>把「全量搜」做成搜索 Skill 的第二种 SOP，模型按意图选 SOP，相册 Skill 仍只消费结果引用</b>；
-    不让模型循环翻页，不让相册 Skill 绕过搜索 Skill 去调不完整的 Tool，也不引入当前架构尚不支持的 Skill 调 Skill。
-  </p>
-  <hr class="headrule" />
+  <h1>「把所有猫猫照片建一个相册」怎么接进现有编排</h1>
+  <p class="sub">搜索 Skill 默认一次 500 张；2 万张要翻 40 页。问题只有一个：<b>这 40 次翻页放在哪一层</b>。</p>
 
-  <!-- 01 背景 -->
-  <section>
-    <div class="sec">
-      <span class="no">01</span><h2>背景与约束</h2>
-      <span class="note">已支持：搜昨天的照片建相册 / 搜猫猫照片建相册（单页规格）</span>
+  <!-- 问题 -->
+  <h2>问题：现有链路只拿到第一页</h2>
+  <div class="stage">
+    <div class="flow">
+      <div class="node model">模型<small>「所有猫猫照片建相册」</small></div>
+      <span class="arr">→</span>
+      <div class="node">搜索 Skill<small>默认 SOP · 500 / 页</small></div>
+      <span class="arr">→</span>
+      <div class="node mem">workmemory r1<small>merged_id_list（仅 500）· hasMore=true</small></div>
+      <span class="arr">→</span>
+      <div class="node model">模型<small>createAlbum(items=<span class="ref">${r1.merged_id_list}</span>)</small></div>
+      <span class="arr">→</span>
+      <div class="node bad">相册只有 500 张<small>剩余 19 500 张丢失</small></div>
     </div>
-    <div class="bg">
-      <div>
-        <p><b>现状链路</b>　模型调搜索 Skill → 结果写 workmemory（ID 列表 mask，summary 可见）→ 模型调创建相册 Skill，入参写 <code>${r1.merged_id_list}</code> → Runtime 执行前回填真值。</p>
-        <p><b>新需求</b>　「把所有猫猫的照片建成相册」——命中 2 万张，而搜索一次默认只回 500 张，现有链路只会把第一页塞进相册。</p>
-        <p><b>问题本质</b>　「翻 40 页攒齐 ID」是一个循环，它必须落在某一层：模型、搜索 Skill、相册 Skill、Runtime。选错层，会带来 Token、时延、正确性或架构耦合的代价。</p>
-        <p><b>不可回避的两条</b>　2 万个 ID 不该进模型上下文；相册写入若有单次上限，分批也不该由模型来做。</p>
+    <p style="margin:10px 0 0;font-size:12.5px;color:var(--muted)">
+      约束：① 2 万个 ID 不能进模型上下文　② 裸搜索 Tool 能力不完整，只有搜索 Skill 是完整的　③ 当前架构<b>不支持 Skill 调 Skill</b>
+    </p>
+  </div>
+
+  <!-- 三个候选 -->
+  <h2>三个候选：翻页循环挂在谁下面</h2>
+  <div class="grid3">
+
+    <div class="card">
+      <h3>A · 模型自己翻页 <span class="tag t-bad">否决</span></h3>
+      <div class="flowv">
+        <div class="node model">模型</div><span class="arr bad">↓ ×40</span>
+        <div class="node">搜索 Skill · 第 1…40 页</div><span class="arr">↓</span>
+        <div class="node mem">r1 … r40</div><span class="arr bad">↓ 拼接?</span>
+        <div class="node bad">createAlbum</div>
       </div>
-      <div>
-        <table class="kv">
-          <tr><th>约束</th><th>含义</th></tr>
-          <tr><td><b>搜索 Tool 不完整</b></td><td>裸 Tool 缺搜索 Skill 里补齐的一截能力（排序 / 去重 / 语义改写 / 权限 / 摘要等），不能被其它 Skill 直接替代使用</td></tr>
-          <tr><td><b>暂不支持 Skill 调 Skill</b></td><td>相册 Skill 执行层无法委托搜索 Skill 的 SOP；任何「相册内部去搜」都只能退化为调 Tool 或复制逻辑</td></tr>
-          <tr><td><b>已有引用机制</b></td><td>workmemory + <code>${resultId.path}</code> + mask + beforeHook，跨 Skill 传大列表是成熟路径</td></tr>
-          <tr><td><b>beforeHook 定位</b></td><td>只做入参求值与结构转换（list → <code>[{file_id}]</code>），不是编排点</td></tr>
-        </table>
-      </div>
+      <p><b>41 次调用</b>，语音场景直接超时；<code>${rN}</code> 没有跨结果拼接语义；模型可能中途「够了」提前停，漏图无法察觉。</p>
     </div>
-  </section>
 
-  <!-- 02 候选方案 -->
-  <section>
-    <div class="sec">
-      <span class="no">02</span><h2>三个候选方案与各自的问题</h2>
-      <span class="note">差别只在「翻页循环」挂在谁下面</span>
+    <div class="card">
+      <h3>B · 相册 Skill 内部去搜 <span class="tag t-warn">当前做不对</span></h3>
+      <div class="flowv">
+        <div class="node model">模型 · createAlbum(query="猫猫")</div><span class="arr">↓</span>
+        <div class="node warn">相册 Skill 执行层<small>loop 搜索 <b>Tool</b> ×40 → 建相册</small></div>
+        <span class="arr">↓</span>
+        <div class="node">相册</div>
+      </div>
+      <p>只调 1 次很诱人，但相册内只能调<b>不完整的 Tool</b>（结果和搜索 Skill 不一致），要补齐就得复制一套搜索逻辑；想改成委托搜索 Skill 的 SOP，就是 <b>Skill 调 Skill，当前不支持</b>。且相册变成「搜+建」复合体，入参变胖、只服务建相册。</p>
     </div>
-    <div class="cols cols-3">
 
-      <div class="col">
-        <div class="who">方案 A</div>
-        <h3>模型自己翻页 <span class="tag t-bad">不可取</span></h3>
-        <div class="block">
-          <pre>search(query="猫猫", page=1)  <span class="dim">→ hasMore</span>
-search(query="猫猫", page=2)  <span class="dim">→ hasMore</span>
-<span class="x">… ×40</span>
-createAlbum(items=[<span class="x">${r1..r40} 拼接?</span>])</pre>
-        </div>
-        <ul>
-          <li>40 次 tool call，时延与 Token 不可接受，语音场景直接超时。</li>
-          <li>模型要合并 40 个结果引用，现有 <code>${rN.path}</code> 没有跨结果拼接语义。</li>
-          <li>模型可能中途「觉得够了」提前停，相册漏图且无法察觉。</li>
-          <li>把翻页这种确定性逻辑交给概率模型，是最贵也最不稳的一层。</li>
-        </ul>
+    <div class="card final">
+      <h3>C · 搜索 Skill 加全量 SOP <span class="tag t-good">采用</span></h3>
+      <div class="flowv">
+        <div class="node model">模型 · fetch_all_search("猫猫")</div><span class="arr">↓</span>
+        <div class="node good">搜索 Skill 执行层<small>内部翻 40 页攒齐 → 一个结果</small></div>
+        <span class="arr">↓</span>
+        <div class="node mem">r1 · 20 000 ids（mask）</div><span class="arr">↓</span>
+        <div class="node model">模型 · createAlbum(<span class="ref">${r1…}</span>)</div>
       </div>
-
-      <div class="col">
-        <div class="who">方案 B（同事提议）</div>
-        <h3>相册 Skill 内部直接调搜索 Tool <span class="tag t-warn">当前架构下不成立</span></h3>
-        <div class="block">
-          <pre>createAlbum({ name:"猫猫", query:"猫猫" })
-  <span class="dim">└ 相册 Skill 执行层：</span>
-     loop searchTool(page++) <span class="dim">攒 ids</span>
-     createAlbumApi(ids)</pre>
-        </div>
-        <p>本意是「一句话只调相册，翻页收进相册黑盒」，逻辑成立；但落地有三个硬伤：</p>
-        <ul>
-          <li><b>调的是不完整的 Tool</b>：绕开搜索 Skill 补齐的能力，「猫猫」在两条路径下搜出的结果不一致。</li>
-          <li><b>逻辑复制</b>：想补齐就得在相册 Skill 里再抄一套搜索逻辑；拼图、发笔记若也要「全量」，各自再抄一份。</li>
-          <li><b>职责倒置</b>：相册 Skill 变成「搜 + 建」复合体，入参既收 items 又收 query，契约变胖，审计 / Gate / 失败归因都更绕。</li>
-          <li>若改为「委托搜索 Skill 的 SOP」才能避免以上问题，但那就是 <b>Skill 调 Skill，当前架构不支持</b>。</li>
-        </ul>
-      </div>
-
-      <div class="col">
-        <div class="who">方案 C（最终方案）</div>
-        <h3>搜索 Skill 提供两种 SOP，模型按意图选 <span class="tag t-good">推荐</span></h3>
-        <div class="block">
-          <pre><span class="dim"># 搜索 Skill</span>
-SOP default_search    <span class="dim"># 现有：500/页，浏览挑图</span>
-SOP fetch_all_search  <span class="dim"># 新增：Skill 内翻页攒齐</span>
-
-<span class="dim"># 模型编排（不变的两步）</span>
-fetch_all_search(query="猫猫")      <span class="dim">→ r1</span>
-createAlbum(name="猫猫",
-            items=<span class="ref">"${r1.merged_id_list}"</span>)</pre>
-        </div>
-        <ul>
-          <li>翻页循环落在<b>搜索 Skill 执行层</b>，模型只发一次搜索、一次建相册。</li>
-          <li>全量与默认是同一能力的两种规格，归属搜索 Skill 最自然；完整能力不被绕开。</li>
-          <li>相册 Skill 零改动地继续消费引用；拼图 / 笔记 / 分享都能复用同一个全量结果。</li>
-          <li>完全复用现有机制：workmemory、mask、<code>${…}</code> 回填、beforeHook 转结构。</li>
-        </ul>
-      </div>
-
+      <p>全量 / 默认是<b>同一搜索能力的两种规格</b>，放在搜索 Skill 最自然。模型仍是 2 次调用，相册 Skill 零改动，拼图 / 笔记也能复用同一个全量结果。</p>
     </div>
-  </section>
+  </div>
 
-  <!-- 03 方案 C 细节 -->
-  <section>
-    <div class="sec">
-      <span class="no">03</span><h2>最终方案的执行链路与配套规则</h2>
-      <span class="note">模型看 summary / total，ID 列表始终不进上下文</span>
-    </div>
-    <div class="cols cols-2">
-      <div class="col">
-        <h3>一次「全部猫猫建相册」的完整过程</h3>
-        <div class="block">
-          <div class="cap">STEP 1 · 模型选 fetch_all SOP（Skill 说明中约定：含「全部 / 所有 / 都 / 建相册 / 整理」走全量）</div>
-          <pre>fetch_all_search({ <span class="k">"query"</span>: "猫猫" })</pre>
-        </div>
-        <div class="block">
-          <div class="cap">搜索 Skill 执行层（不经模型）：按 500/页翻页攒齐，可并行拉页；写入 workmemory r1</div>
-          <pre>{
-  <span class="k">"merged_id_list"</span>: [563, 728, … ]<span class="dim">（20 000 项）</span>,
-  <span class="k">"total"</span>: 20000,
-  <span class="k">"truncated"</span>: false,
-  <span class="k">"summary"</span>: "找到约 2 万张猫猫照片"
-}
-<span class="dim">送模后：</span>merged_id_list → <span class="ref">"${r1.merged_id_list}"</span>  <span class="dim">（mask）</span>
-         total / summary 可见</pre>
-        </div>
-        <div class="block">
-          <div class="cap">STEP 2 · 模型调相册 Skill，只写引用</div>
-          <pre>createAlbum({ <span class="k">"name"</span>: "猫猫", <span class="k">"items"</span>: <span class="ref">"${r1.merged_id_list}"</span> })</pre>
-        </div>
-        <div class="block">
-          <div class="cap">Runtime 执行前：resolve → beforeHook 转结构 → 相册 Tool 内部按 API 上限分批写入</div>
-          <pre><span class="dim">resolve →</span> [563, 728, …]
-<span class="dim">transform →</span> [{<span class="k">"file_id"</span>:"563"}, …]
-<span class="dim">createAlbumApi →</span> batch(2000) × 10  <span class="dim">对模型仍是一次调用</span></pre>
-        </div>
-      </div>
-      <div class="col">
-        <h3>配套规则（落地 checklist）</h3>
-        <table class="kv">
-          <tr><th>层</th><th>要做的事</th></tr>
-          <tr><td><b>搜索 Skill</b></td><td>新增 <code>fetch_all_search</code> SOP：内部翻页、返回 <code>total</code> / <code>truncated</code> / <code>summary</code>；<code>default_search</code> 保持不变</td></tr>
-          <tr><td><b>Skill 说明</b></td><td>写清路由：浏览 / 挑图 → default；全部 / 建相册 / 整理 → fetch_all；下游传参必须写 <code>${…merged_id_list}</code></td></tr>
-          <tr><td><b>Mask Policy</b></td><td><code>merged_id_list</code> 命中通用规则 mask；<code>keep_visible: [summary, total]</code></td></tr>
-          <tr><td><b>相册 Skill</b></td><td>只收 <code>items</code> 引用；beforeHook 负责 list → 对象数组；Tool 内部按 API 上限 batch</td></tr>
-          <tr><td><b>兜底策略</b></td><td>超阈值（如 total &gt; 5000）先向用户确认；硬上限时 <code>truncated: true</code> 写进 summary；拼图那套「截前 18」不复用到相册</td></tr>
-          <tr><td><b>语音体验</b></td><td>fetch_all 耗时长：进度播报 / 可取消 / 超时降级为「先建前 N 张」</td></tr>
-        </table>
-        <p style="margin-top:8px">不做的事：不给相册 Skill 加 <code>query</code> 入参；不在相册执行层调搜索 Tool；不让模型循环 default 40 次伪装成全量。</p>
+  <!-- 最终方案 -->
+  <h2>最终方案：搜索 Skill 双 SOP，模型按意图选，相册只消费引用</h2>
+  <div class="stage">
+    <div class="lane"><div class="lbl">模型</div>
+      <div class="flow">
+        <div class="node model">意图路由<small>「几张猫猫看看」→ default　「全部 / 都 / 建相册 / 整理」→ fetch_all</small></div>
+        <span class="arr">→</span>
+        <div class="node model">fetch_all_search(query="猫猫")</div>
+        <span class="arr">→ … →</span>
+        <div class="node model">createAlbum(name="猫猫", items=<span class="ref">"${r1.merged_id_list}"</span>)</div>
       </div>
     </div>
-  </section>
-
-  <!-- 04 对比 -->
-  <section>
-    <div class="sec">
-      <span class="no">04</span><h2>为什么最终选 C</h2>
-      <span class="note">三个方案都能「拿到 2 万张」，差别在代价和边界</span>
+    <div class="lane"><div class="lbl">搜索 Skill</div>
+      <div class="flow">
+        <div class="node">default_search<small>500 / 页 · hasMore（保持不变）</small></div>
+        <div class="node good">fetch_all_search<small>page 1→N 攒齐（可并行）· 返回 total / truncated / summary</small></div>
+        <span class="arr">→</span>
+        <div class="node mem">r1<small>merged_id_list → mask 成 <span class="ref">${r1.merged_id_list}</span>；summary、total 可见</small></div>
+      </div>
     </div>
-    <table class="cmp">
-      <tr>
-        <th></th>
-        <th>A · 模型翻页</th>
-        <th>B · 相册 Skill 内调搜索 Tool</th>
-        <th class="final">C · 搜索 Skill 双 SOP（最终）</th>
-      </tr>
-      <tr>
-        <td>tool call 次数</td>
-        <td><span class="no-ok">41</span></td>
-        <td><span class="ok">1</span></td>
-        <td class="final"><span class="ok">2</span>（与现有链路一致）</td>
-      </tr>
-      <tr>
-        <td>翻页循环所在层</td>
-        <td><span class="no-ok">LLM 推理 loop</span></td>
-        <td>相册 Skill 执行层</td>
-        <td class="final"><span class="ok">搜索 Skill 执行层</span></td>
-      </tr>
-      <tr>
-        <td>搜索能力完整性</td>
-        <td>完整（走 Skill）</td>
-        <td><span class="no-ok">绕开 Skill，调不完整 Tool；或复制逻辑</span></td>
-        <td class="final"><span class="ok">完整，且默认 / 全量共用一套</span></td>
-      </tr>
-      <tr>
-        <td>依赖 Skill 调 Skill</td>
-        <td>否</td>
-        <td><span class="so">想做对就需要（当前不支持）</span></td>
-        <td class="final"><span class="ok">否</span></td>
-      </tr>
-      <tr>
-        <td>职责边界</td>
-        <td>清晰但模型负担过重</td>
-        <td><span class="no-ok">相册 = 搜 + 建复合体，入参变胖</span></td>
-        <td class="final"><span class="ok">搜索管找，相册管建，Runtime 管传</span></td>
-      </tr>
-      <tr>
-        <td>结果复用</td>
-        <td>—</td>
-        <td><span class="no-ok">仅服务建相册</span></td>
-        <td class="final"><span class="ok">拼图 / 笔记 / 分享同样可接 ${r1…}</span></td>
-      </tr>
-      <tr>
-        <td>正确性风险</td>
-        <td><span class="no-ok">中途停、漏页、引用拼接错</span></td>
-        <td><span class="so">两条路径搜索结果不一致</span></td>
-        <td class="final"><span class="ok">确定性循环 + fail-closed 回填</span></td>
-      </tr>
-      <tr>
-        <td>对现有机制的改动</td>
-        <td>无，但用错了</td>
-        <td>相册 Skill 大改 + 新增 Tool 依赖</td>
-        <td class="final"><span class="ok">搜索 Skill 加一个 SOP，其余零改动</span></td>
-      </tr>
-      <tr>
-        <td>主要残余风险</td>
-        <td>—</td>
-        <td>—</td>
-        <td class="final"><span class="so">模型偶发选错 SOP</span> → 靠 Skill 说明 + 意图词路由收敛；B 的「一句话只调相册」可作为平台支持 Skill 调 Skill 后的增强</td>
-      </tr>
-    </table>
-  </section>
+    <div class="lane"><div class="lbl">Runtime</div>
+      <div class="flow">
+        <div class="node">resolve <span class="ref">${r1…}</span><small>→ 2 万个真值 id</small></div>
+        <span class="arr">→</span>
+        <div class="node">beforeHook<small>list → [{file_id}]（现有机制）</small></div>
+        <span class="arr">→</span>
+        <div class="node">相册 Tool<small>按 API 上限内部分批写入，对模型仍是 1 次</small></div>
+        <span class="arr">→</span>
+        <div class="node good">相册 · 20 000 张</div>
+      </div>
+    </div>
 
-  <hr class="footrule" />
-  <div class="takeaway">
-    <div><b>全量搜是搜索的规格</b><span>　做成搜索 Skill 的第二种 SOP，不是相册的私有逻辑</span></div>
-    <div><b>翻页永远不进模型</b><span>　循环在 Skill 执行层，模型只见 summary / total 和一个引用</span></div>
-    <div><b>相册只消费引用</b><span>　沿用 workmemory + beforeHook，分批写入在 Tool 内完成</span></div>
+    <div class="row" style="margin-top:14px">
+      <div class="box"><div class="h">要改的</div>搜索 Skill 新增 <code>fetch_all_search</code> SOP + Skill 说明里的路由规则；mask policy 放行 <code>summary / total</code>。</div>
+      <div class="box"><div class="h">不改的</div>相册 Skill 入参仍只有 <code>items</code> 引用；workmemory / mask / beforeHook 全部沿用。</div>
+      <div class="box"><div class="h">兜底</div><code>total</code> 超阈值先确认；硬上限时 <code>truncated=true</code> 进 summary；语音侧进度播报 / 可取消。</div>
+    </div>
+  </div>
+
+  <!-- 对比 -->
+  <h2>为什么是 C</h2>
+  <table>
+    <tr><th></th><th>A 模型翻页</th><th>B 相册内调搜索 Tool</th><th>C 搜索 Skill 双 SOP</th></tr>
+    <tr><td>tool call</td><td><span class="no">41</span></td><td><span class="ok">1</span></td><td class="final"><span class="ok">2</span>（同现有链路）</td></tr>
+    <tr><td>翻页循环在哪</td><td><span class="no">LLM loop</span></td><td>相册 Skill</td><td class="final"><span class="ok">搜索 Skill 执行层</span></td></tr>
+    <tr><td>搜索能力完整</td><td>是</td><td><span class="no">绕开 Skill 调裸 Tool / 复制逻辑</span></td><td class="final"><span class="ok">是，默认 / 全量共用一套</span></td></tr>
+    <tr><td>需要 Skill 调 Skill</td><td>否</td><td><span class="so">做对就需要（当前不支持）</span></td><td class="final"><span class="ok">否</span></td></tr>
+    <tr><td>职责 / 复用</td><td>模型负担过重</td><td><span class="no">相册 = 搜+建，只服务建相册</span></td><td class="final"><span class="ok">搜管找、相册管建、Runtime 管传；结果可复用</span></td></tr>
+    <tr><td>改动量</td><td>—</td><td>相册 Skill 大改</td><td class="final"><span class="ok">搜索 Skill 加 1 个 SOP</span></td></tr>
+    <tr><td>残余风险</td><td>—</td><td>—</td><td class="final"><span class="so">模型选错 SOP</span> → Skill 说明 + 意图词收敛；B 可等平台支持 Skill 调 Skill 后作为增强</td></tr>
+  </table>
+
+  <div class="foot">
+    <div><b>全量搜是搜索的规格</b><span>　不是相册的私有逻辑</span></div>
+    <div><b>翻页不进模型</b><span>　模型只见 summary / total 和一个引用</span></div>
+    <div><b>相册只消费引用</b><span>　分批写入在 Tool 内完成</span></div>
   </div>
 </main>
 </body>
