@@ -37,7 +37,7 @@
       color: var(--accent); font-weight: 600; margin-bottom: 8px;
     }
     h1 { font-size: clamp(24px, 4vw, 32px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; }
-    .lead { margin-top: 10px; color: var(--muted); font-size: 15px; max-width: 40em; }
+    .lead { margin-top: 10px; color: var(--muted); font-size: 15px; max-width: 42em; }
     section {
       margin-top: 16px; background: rgba(255,255,255,.9); border: 1px solid var(--line);
       border-radius: 14px; padding: 18px;
@@ -72,18 +72,18 @@
 </head>
 <body>
   <div class="page">
-    <div class="eyebrow">Runtime · Exception · Reflect</div>
+    <div class="eyebrow">Intent · CLI · MCP · Reflect</div>
     <h1>找不到工具时怎么处理</h1>
-    <p class="lead">模型幻觉出不存在的工具时：统一错误标识 → 有限次反思纠错 → 产品话术收口，禁止空转 Loop。</p>
+    <p class="lead">端意图、端 CLI、云 MCP 幻觉乱调时走同一套：统一错误码 → 有限反思 → 产品话术收口。差异只在谁解析、谁执行。</p>
 
     <section>
-      <h2>主流程</h2>
+      <h2>主流程（全通道同一套）</h2>
       <div class="flow">
         <span class="chip">tool_call</span>
         <span class="arrow">→</span>
-        <span class="chip hard">云预检</span>
+        <span class="chip hard">按 kind 预检</span>
         <span class="arrow">→</span>
-        <span class="chip">端执行</span>
+        <span class="chip">执行器</span>
         <span class="arrow">→</span>
         <span class="chip warn">TOOL_NOT_FOUND</span>
         <span class="arrow">→</span>
@@ -92,30 +92,29 @@
         <span class="chip ok">产品话术结束</span>
       </div>
       <ul>
-        <li>预检与端返回使用同一语义：<code>error_code = TOOL_NOT_FOUND</code></li>
-        <li>结果带回 <code>allowed_tools</code>（及可选 suggestions），供模型改调</li>
-        <li>超次或再次点名白名单外工具 → 立即话术收口</li>
+        <li><strong>包含</strong> intent / cli / mcp（及 arkts）：上层策略相同，不是只覆盖意图工具</li>
+        <li>统一 <code>error_code=TOOL_NOT_FOUND</code>，回传带 kind 的 <code>allowed_tools</code></li>
+        <li>超次或再次白名单外点名 → 立即话术收口，禁止 Loop</li>
       </ul>
     </section>
 
     <div class="grid two">
       <section>
-        <h2>端 / 云要给的标识</h2>
+        <h2>分通道谁判“不存在”</h2>
         <ul>
-          <li>稳定码：<code>TOOL_NOT_FOUND</code></li>
-          <li><code>reflectable</code> / <code>retryable</code></li>
-          <li><code>tool.requested</code> 原始点名</li>
-          <li><code>hint.allowed_tools</code> 本 Skill 白名单</li>
-          <li><code>source</code>：cloud_precheck 或 device</li>
+          <li><code>intent</code>：ToMP ∩ 端能力 → <strong>端</strong>执行器</li>
+          <li><code>cli</code>：CLI 目录 ∩ 端能力 → <strong>端 CLI</strong></li>
+          <li><code>mcp</code>：会话 list_tools ∩ 授权 → <strong>云 Gateway</strong></li>
+          <li>MCP 未挂载/断开 → 宜用 <code>TOOL_UNAVAILABLE</code></li>
         </ul>
       </section>
       <section>
         <h2>Skill / 产品要配的</h2>
         <ul>
-          <li><code>exception_handlers.TOOL_NOT_FOUND.user_utterance</code></li>
-          <li>可选：反思用尽后的变体话术</li>
+          <li>默认话术可覆盖全通道；可选 <code>by_kind</code></li>
+          <li><code>allowed_tools</code> 标明 kind（及 mcp server）</li>
           <li><code>max_reflect_rounds</code> 默认 1（硬顶 ≤2）</li>
-          <li>SOP 写明：只能改调允许列表，禁止再造工具名</li>
+          <li>SOP：只许改调白名单，禁止再造工具名</li>
         </ul>
       </section>
     </div>
@@ -124,13 +123,13 @@
       <h2>和「工具不可用」区分</h2>
       <ul>
         <li><code>TOOL_NOT_FOUND</code>：名字就不存在（幻觉/写错）→ 反思或话术</li>
-        <li><code>TOOL_UNAVAILABLE</code>：工具有，但本机能力不够 → 引导升级/降级</li>
+        <li><code>TOOL_UNAVAILABLE</code>：工具有，但当前不可用（端裁剪 / MCP 未连接）→ 引导或降级</li>
         <li><code>TOOL_SCHEMA_INVALID</code>：工具有，参数错 → 按 schema 纠错</li>
       </ul>
     </section>
 
     <div class="note">
-      <strong>要点：</strong>标识要机器可分支；话术由产品提供；反思有预算；收口必须结束本轮技能路径。
+      <strong>要点：</strong>通道不同，契约相同；标识可分支；话术产品提供；反思有预算；收口必须结束本轮。
     </div>
     <footer>详见 docs/skill-tool-not-found-handling.md</footer>
   </div>

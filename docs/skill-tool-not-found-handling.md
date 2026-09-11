@@ -1,7 +1,7 @@
 # 工具不存在（幻觉调用）异常处理与模型反思规范
 
-> 背景：模型按 Skill 调度工具时可能幻觉出不存在的工具并下发到端；端已有“工具不存在”错误返回。  
-> 目标：**明确错误标识 → Skill 内产品话术兜底 → 有限次模型反思纠错 → 禁止空转 Loop。**
+> 背景：模型按 Skill 调度工具时可能幻觉出不存在的工具名。覆盖范围不仅是**端意图工具**，也包括**端 CLI**、**云 MCP**、以及其它 Runtime 可调出口（如 ArkTS 封装工具）。  
+> 目标：**各类工具统一错误标识 → Skill 内产品话术兜底 → 有限次模型反思纠错 → 禁止空转 Loop。**
 
 ---
 
@@ -9,23 +9,35 @@
 
 | 问题 | 要求 |
 |------|------|
-| 幻觉工具名 / 错误 tool_id | 执行链路给出**机器可识别**的“找不到工具”标识 |
+| 幻觉工具名 / 错误 tool_id | 执行链路给出**机器可识别**的“找不到工具”标识（与通道无关） |
 | 用户侧体验 | Skill 内有**产品提供的**异常处理与话术，不可静默失败或乱编 |
 | 模型可纠错 | 支持反思后改调合法工具 / 改参数；次数有上限 |
 | 防 Loop | 反思失败后必须落到固定话术并结束本轮技能路径 |
 
+**适用范围（全部纳入同一套契约）：**
+
+| 通道 `tool_kind` | 典型形态 | 最终解析方 |
+|------------------|----------|------------|
+| `intent` | 端意图 / 端侧工具接口 | 云预检 + **端**执行器 |
+| `cli` | 端 CLI 命令/工具 | 云预检 + **端 CLI** 运行时 |
+| `mcp` | 云侧 MCP Server 工具 | **云 MCP Gateway/Client**（一般不下发端） |
+| `arkts` / `local` | Skill 内联或本地封装出口 | 云预检 + 对应执行器 |
+
+> **结论：上面方案包含 CLI、MCP 等；不是只针对意图工具。**  
+> 差异只在「谁做 resolve / 谁执行」；对模型与 Skill 暴露的仍是同一 `TOOL_NOT_FOUND` + 同一套反思/话术。
+
 **分层原则：**
 
-1. **能拦则先拦（云侧预检）**：下发前用「本 Skill 允许工具集 ∩ 设备 capabilities ∩ ToMP 目录」校验。  
-2. **端侧仍是最终真相**：预检漏过或动态不可用时，端返回同一错误码。  
-3. **错误码统一**：云预检失败与端执行失败对 Runtime/模型暴露同一语义。  
+1. **能拦则先拦（通道感知预检）**：调用前用「本 Skill 允许工具集 ∩ 该通道目录/会话可用集」校验。  
+2. **最终真相在执行器**：意图/CLI 在端；MCP 在云 Gateway；预检漏过时执行器返回同一错误码。  
+3. **错误码统一**：各通道失败映射到同一语义，Runtime/模型不感知通道细节也能分支。  
 4. **话术归产品，策略归平台**：文案可配置；重试次数、是否允许反思由平台/Skill 策略约束。
 
 ---
 
 ## 二、错误标识（执行结果契约）
 
-工具执行（含云侧预检失败模拟的执行结果）统一返回：
+工具执行（含预检失败合成的结果）统一返回：
 
 ```json
 {
@@ -35,44 +47,84 @@
   "retryable": true,
   "reflectable": true,
   "tool": {
-    "requested": "gallery.openAlbumX",
-    "normalized": "gallery.openAlbumX"
+    "kind": "mcp",
+    "requested": "browser.flyToMoon",
+    "normalized": "browser.flyToMoon",
+    "server": "mcp.browser"
   },
   "hint": {
-    "allowed_tools": ["gallery.search", "gallery.open_album"],
-    "suggestions": ["gallery.open_album"]
+    "allowed_tools": [
+      "intent:gallery.search",
+      "cli:media.list",
+      "mcp:browser.navigate"
+    ],
+    "allowed_tools_by_kind": {
+      "intent": ["gallery.search"],
+      "cli": ["media.list"],
+      "mcp": ["browser.navigate"]
+    },
+    "suggestions": ["mcp:browser.navigate"]
   },
-  "message": "tool not found on device",
-  "source": "device"  
+  "message": "tool not found",
+  "source": "mcp_gateway"
 }
 ```
 
 | 字段 | 说明 |
 |------|------|
-| `error_code` | 固定：`TOOL_NOT_FOUND`（对外稳定标识） |
-| `error_class` | `tool_resolution`，便于 Runtime 路由到“解析失败”分支，区别于业务失败 |
-| `retryable` | 是否允许再调工具（一般为 true） |
-| `reflectable` | 是否允许进入模型反思（见第四节策略） |
+| `error_code` | 固定：`TOOL_NOT_FOUND`（对外稳定标识，**全通道共用**） |
+| `error_class` | `tool_resolution`，便于 Runtime 路由到“解析失败”分支 |
+| `tool.kind` | `intent` \| `cli` \| `mcp` \| `arkts` … |
 | `tool.requested` | 模型原始点名 |
-| `hint.allowed_tools` | **本 Skill 当前可调白名单**（强烈建议回传，供反思） |
-| `hint.suggestions` | 可选：基于编辑距离/别名表的相近工具 |
-| `source` | `cloud_precheck` \| `device` \| `runtime` |
+| `tool.server` | MCP 时填写 server 名；其它通道可空 |
+| `hint.allowed_tools` | **本 Skill 当前可调白名单**（建议带 kind 前缀，供反思） |
+| `hint.suggestions` | 可选：同 kind 内相近工具 |
+| `source` | `cloud_precheck` \| `device` \| `device_cli` \| `mcp_gateway` \| `runtime` |
 
-**端侧要求：**  
-实际工具不存在时，必须返回可解析的 `TOOL_NOT_FOUND`（或平台映射到该码），禁止只回模糊字符串导致模型无法分支。
+**各通道要求：**
+
+| 通道 | 必须 |
+|------|------|
+| 端意图 | 工具不存在 → 返回/映射为 `TOOL_NOT_FOUND` |
+| 端 CLI | CLI 名不存在、未注册 → 同上，`source=device_cli` |
+| 云 MCP | server 无此 tool、未连接、未授权到该 tool → 映射为 `TOOL_NOT_FOUND` 或 `TOOL_UNAVAILABLE`（见下），禁止只回 MCP 原始模糊报错给模型 |
 
 **相近但不同的码（勿混用）：**
 
-| error_code | 含义 |
-|------------|------|
-| `TOOL_NOT_FOUND` | 名字/ID 不存在（幻觉或写错） |
-| `TOOL_UNAVAILABLE` | 工具登记存在，但本机不可用（权限/裁剪/capabilities 无） |
-| `TOOL_DEPRECATED` | 已废弃，应换 `replace_by` |
-| `TOOL_SCHEMA_INVALID` | 工具在，参数不合 schema |
-| `TOOL_EXEC_FAILED` | 工具在，执行业务失败 |
+| error_code | 含义 | 典型场景 |
+|------------|------|----------|
+| `TOOL_NOT_FOUND` | 名字/ID 在目录中不存在（幻觉或写错） | 编造意图名 / 编造 CLI / 编造 MCP tool |
+| `TOOL_UNAVAILABLE` | 工具登记存在，但当前不可用 | 端无能力、CLI 被裁剪、MCP server 未连接/未授权 |
+| `TOOL_DEPRECATED` | 已废弃，应换 `replace_by` | 各通道下线中的工具 |
+| `TOOL_SCHEMA_INVALID` | 工具在，参数不合 schema | 意图/CLI/MCP 均适用 |
+| `TOOL_EXEC_FAILED` | 工具在，执行业务失败 | 各通道执行期错误 |
 
-Skill 话术与反思策略可按 `error_code` 分别配置；**本需求主路径是 `TOOL_NOT_FOUND`。**
+Skill 话术与反思策略可按 `error_code` 分别配置；**幻觉瞎生成工具名的主路径是 `TOOL_NOT_FOUND`。**
 
+### 2.1 分通道预检与执行（同一套上层策略）
+
+```text
+tool_call(kind, name, args)
+        │
+        ▼
+Runtime 预检（按 kind 选目录）
+  intent → ToMP/intent 目录 ∩ Skill.allowed ∩ device.capabilities
+  cli    → ToMP/cli 目录    ∩ Skill.allowed ∩ device.cli_caps
+  mcp    → 会话已挂载 MCP tools ∩ Skill.allowed ∩ 授权集
+        │
+        ├─ 失败 → 合成 TOOL_NOT_FOUND / TOOL_UNAVAILABLE → 反思/话术
+        └─ 通过 → 分发执行器
+              intent/cli → 端
+              mcp        → 云 MCP Gateway
+                    │
+                    └─ 执行器仍找不到 → 同一 error_code → 反思/话术
+```
+
+**MCP 特别说明：**
+
+- 幻觉常发生在：server 名错、tool 名错、把未挂载 server 的工具当可用。  
+- 预检应以**当前会话实际 list_tools 结果**为准，而不是只查静态文档。  
+- server 挂了但临时断开：优先 `TOOL_UNAVAILABLE`（可重试连接策略另议），不要和“名字编造”混成一种用户话术（除非产品故意合并）。
 ---
 
 ## 三、Skill 内异常处理与话术（产品提供）
@@ -84,30 +136,46 @@ skill_name: gallery.search
 skill_version: 2.1.0
 requires:
   - tool: gallery.search
+    kind: intent
     version: ">=2.0.0"
-  - tool: gallery.open_album
+  - tool: media.list
+    kind: cli
+    version: "^1.0.0"
+  - tool: browser.navigate
+    kind: mcp
+    server: mcp.browser
     version: "^1.0.0"
 
-# 本 Skill 运行时允许模型调用的工具白名单（默认 = requires ∪ optional）
+# 运行时允许模型调用的白名单（默认 = requires ∪ optional；建议带 kind）
 allowed_tools:
-  - gallery.search
-  - gallery.open_album
+  - kind: intent
+    name: gallery.search
+  - kind: cli
+    name: media.list
+  - kind: mcp
+    server: mcp.browser
+    name: browser.navigate
 
 exception_handlers:
   TOOL_NOT_FOUND:
-    # 产品提供
+    # 产品提供（可全通道共用一份默认话术）
     user_utterance: "抱歉，我这边暂时没法完成这个操作，你可以换种方式说说看，或者稍后再试。"
-    # 可选：更细场景
+    # 可选：按通道覆盖
+    by_kind:
+      mcp:
+        user_utterance: "相关云端能力暂时不可用，请稍后再试。"
+      cli:
+        user_utterance: "当前设备还不支持这个操作。"
     variants:
       - when: "after_reflect_exhausted"
-        user_utterance: "我没能找到对应的功能入口，建议你打开图库手动试一下，或升级系统后再试。"
-    # 平台策略（可默认，产品可覆盖上限内参数）
+        user_utterance: "我没能找到对应的功能入口，建议你换个说法，或稍后再试。"
     policy:
       allow_reflect: true
       max_reflect_rounds: 1          # 推荐 1；全局硬顶建议 ≤2
       on_exhaust: speak_and_end      # speak_and_end | degrade_peer | escalate
 ```
 
+> 产品可只提供**一份默认话术**覆盖 intent/cli/mcp；若体验需要再按 `by_kind` 细分。上层反思策略不必按通道各写一套。
 ### 3.2 Skill 正文（md / SOP）约定写法
 
 Skill 说明中增加固定章节，供模型与 Runtime 共同遵守，例如：
@@ -166,11 +234,14 @@ Skill 说明中增加固定章节，供模型与 Runtime 共同遵守，例如�
 ```text
 [System/ToolResult]
 error_code=TOOL_NOT_FOUND
-requested=gallery.openAlbumX
-allowed_tools=["gallery.search","gallery.open_album"]
-suggestions=["gallery.open_album"]
-instruction: 上一工具不存在。你只能从 allowed_tools 中选择一个重试，或结束并使用 Skill 配置的用户话术。禁止创造新的工具名。剩余反思次数=0。
+tool.kind=mcp
+requested=browser.flyToMoon
+allowed_tools=["intent:gallery.search","cli:media.list","mcp:browser.navigate"]
+suggestions=["mcp:browser.navigate"]
+instruction: 上一工具不存在。你只能从 allowed_tools 中选择一个重试（保持正确 kind），或结束并使用 Skill 配置的用户话术。禁止创造新的工具名。剩余反思次数=0。
 ```
+
+> 反思时**不得跨造通道**：例如不得把失败的 mcp 名改写成未授权的新 mcp 名；只能选白名单里已有项。
 
 ### 4.2 防 Loop 硬约束（Runtime）
 
@@ -192,21 +263,33 @@ instruction: 上一工具不存在。你只能从 allowed_tools 中选择一个�
 
 ---
 
-## 五、云侧预检（强烈建议，减少端空跑）
-
-在下发端之前：
+## 五、通道感知预检（强烈建议）
 
 ```text
 resolve(tool_call):
-  if tool_id not in ToMP:           return TOOL_NOT_FOUND
-  if tool_id not in skill.allowed:  return TOOL_NOT_FOUND
-  if tool_id not in device.caps:    return TOOL_UNAVAILABLE  # 或 NOT_FOUND，若产品希望统一话术可映射
-  validate schema                   return TOOL_SCHEMA_INVALID if fail
-  else dispatch to device
+  kind = tool_call.kind   # intent | cli | mcp | ...
+  if kind not in supported:              return TOOL_NOT_FOUND
+  if not in skill.allowed(kind, name):   return TOOL_NOT_FOUND
+
+  switch kind:
+    intent:
+      if not in ToMP.intent:             return TOOL_NOT_FOUND
+      if not in device.capabilities:     return TOOL_UNAVAILABLE
+      dispatch → device intent runtime
+    cli:
+      if not in ToMP.cli:                return TOOL_NOT_FOUND
+      if not in device.cli_caps:         return TOOL_UNAVAILABLE
+      dispatch → device CLI runtime
+    mcp:
+      if server not mounted in session:  return TOOL_UNAVAILABLE
+      if tool not in session.list_tools: return TOOL_NOT_FOUND
+      if not authorized:                 return TOOL_UNAVAILABLE
+      dispatch → cloud MCP gateway
+
+  validate schema → TOOL_SCHEMA_INVALID if fail
 ```
 
-预检失败也走同一套 `exception_handlers` + 反思策略，用户无感差异；`source` 仅用于监控。
-
+预检失败与执行器失败都走同一套 `exception_handlers` + 反思策略；`source` / `tool.kind` 用于监控与（可选）话术分流。
 ---
 
 ## 六、监控与治理
@@ -227,26 +310,27 @@ resolve(tool_call):
 
 | 角色 | 职责 |
 |------|------|
-| 产品 | 提供各 Skill（或全局默认）`TOOL_NOT_FOUND` 用户话术与变体 |
-| 端 | 工具不存在时返回明确 `TOOL_NOT_FOUND`（或可映射码） |
-| 云 Runtime / skillGate | 预检、统一错误契约、反思轮次控制、话术收口 |
-| Skill 作者 | 写清允许工具与异常 SOP；填写 handlers |
-| 平台 | 上架校验 handlers；监控幻觉与反思效果 |
-| 模型侧 | 遵守反思指令；禁止白名单外造工具 |
+| 产品 | 提供默认/`by_kind` 的 `TOOL_NOT_FOUND` 话术 |
+| 端（意图 / CLI） | 不存在时返回明确码或可映射码 |
+| 云 MCP Gateway | 将 unknown tool / 未挂载映射为统一错误契约 |
+| 云 Runtime | 通道感知预检、反思轮次、话术收口 |
+| Skill 作者 | `allowed_tools` 含 kind；异常 SOP |
+| ToMP | intent/cli/mcp（及 arkts）统一登记与扫描 |
+| 模型侧 | 遵守白名单；禁止白名单外造工具名 |
 
 ---
 
 ## 八、验收标准
 
-1. 端或云对“工具不存在”均能产出稳定 `error_code=TOOL_NOT_FOUND`。  
-2. Skill（或全局默认）有产品话术；用尽反思后用户听到/看到该话术并结束，无 10 轮空转。  
-3. 反思时模型能拿到 `allowed_tools`（及可选 suggestions），且 Runtime 拒绝白名单外二次幻觉。  
-4. 监控可区分：预检拦截 vs 端返回；反思成功 vs 话术收口。
+1. **intent / cli / mcp** 任一通道出现瞎生成工具名时，均能产出稳定 `error_code=TOOL_NOT_FOUND`（含 kind/source）。  
+2. Skill（或全局默认）有产品话术；用尽反思后用户收到话术并结束，无空转 Loop。  
+3. 反思能拿到带 kind 的 `allowed_tools`；Runtime 拒绝白名单外二次幻觉。  
+4. MCP 以会话实际 `list_tools` 预检；监控可区分通道与预检/执行来源。
 
 ---
 
 ## 九、与配套治理文档的关系
 
 - 配套/版本问题：解决「该不该有这个工具」。  
-- 本文：解决「模型仍点了不存在工具时怎么标识、纠错、收口」。  
-- 二者互补：Gate 降低概率；本机制兜住剩余幻觉与体验。
+- 本文：解决「模型仍点了不存在工具时怎么标识、纠错、收口」——**对意图、CLI、MCP 一视同仁**。  
+- 二者互补：Gate/目录降低概率；本机制兜住剩余幻觉与体验。
