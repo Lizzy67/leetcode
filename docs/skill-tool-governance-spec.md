@@ -590,13 +590,28 @@ Gate: peer 也必须可被 load
 | P2 | 多版本选型 + fallback 旧全量版 | Gate |
 | P3 | Tool 补 min_rom/app；Skill 范围推导；legacy_scope 退役 | ToMP 元数据 |
 | P3 | 联动 needs_peer | Gate + 平台 |
+| P1 | 统一 `TOOL_NOT_FOUND` 错误码；Skill 产品话术；有限次反思收口 | 端 + Runtime + 开放平台 |
 
 ---
 
-## 十五、总纲
+## 十五、工具幻觉调用兜底（摘要）
+
+模型可能编造不存在的 tool 并下发到端。配套 Gate 降低概率；剩余必须靠执行契约兜住：
+
+1. **统一标识：** `error_code=TOOL_NOT_FOUND`（云预检与端返回同语义）。  
+2. **Skill 配置：** 产品提供 `exception_handlers.TOOL_NOT_FOUND` 话术；上架可校验。  
+3. **有限反思：** 回传 `allowed_tools` / suggestions，默认反思 **1** 次，超限播报话术并结束，禁止 Loop。  
+4. **云侧预检：** 下发前校验 ∈ Skill 白名单 ∩ capabilities ∩ ToMP。
+
+详见：[skill-tool-not-found-handling.md](./skill-tool-not-found-handling.md)
+
+---
+
+## 十六、总纲
 
 **先** Skill 声明依赖 + 端能力门闩 + 独立放量，把配套从「人填 ROM」改为「运行时对齐」；  
 **再** 补齐工具平台元数据与变更管控，把生效范围收回自动推导；  
-**全程** 用 skillGate 保证不配套也可控（拒答 / 降级 / fallback，禁止长 Loop）。
+**全程** 用 skillGate 保证不配套也可控（拒答 / 降级 / fallback，禁止长 Loop）；  
+**幻觉调用** 用统一 `TOOL_NOT_FOUND` + 产品话术 + 有限反思收口。
 
 > 可以有配套关系，但消灭版本配套表的维护；出问题体验落在可接纳范围内；靠规则和自动化让人写对，而不是靠加人。

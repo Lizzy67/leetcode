@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TOOL_NOT_FOUND · 幻觉调用处理一页说明</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a2332;
+      --muted: #5a6577;
+      --line: #d5dbe6;
+      --bg: #f3f6fa;
+      --accent: #0b6e4f;
+      --accent-soft: #e6f4ef;
+      --hard: #1e4d8c;
+      --warn: #9a5b00;
+      --warn-soft: #fff4e5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Noto Sans SC", "DM Sans", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(800px 400px at 0% 0%, #dce9f5 0%, transparent 55%),
+        radial-gradient(600px 320px at 100% 10%, #d9efe6 0%, transparent 50%),
+        var(--bg);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+    .page { max-width: 920px; margin: 0 auto; padding: 40px 24px 56px; }
+    .eyebrow {
+      font-family: "DM Sans", sans-serif;
+      font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--accent); font-weight: 600; margin-bottom: 8px;
+    }
+    h1 { font-size: clamp(24px, 4vw, 32px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; }
+    .lead { margin-top: 10px; color: var(--muted); font-size: 15px; max-width: 40em; }
+    section {
+      margin-top: 16px; background: rgba(255,255,255,.9); border: 1px solid var(--line);
+      border-radius: 14px; padding: 18px;
+    }
+    h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; }
+    .chip {
+      border: 1px solid var(--line); background: #fff; padding: 8px 12px; border-radius: 10px; font-weight: 500;
+    }
+    .chip.hard { background: #eef4fb; color: var(--hard); border-color: #c5d6ea; }
+    .chip.warn { background: var(--warn-soft); color: var(--warn); border-color: #f0d7a8; }
+    .chip.ok { background: var(--accent-soft); color: var(--accent); border-color: #b7dccb; }
+    .arrow { color: var(--muted); }
+    ul { list-style: none; display: grid; gap: 8px; font-size: 13.5px; }
+    li { padding-left: 14px; position: relative; }
+    li::before {
+      content: ""; position: absolute; left: 0; top: .55em; width: 6px; height: 6px;
+      border-radius: 50%; background: var(--accent); opacity: .7;
+    }
+    .grid { display: grid; gap: 16px; }
+    @media (min-width: 780px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+    code {
+      font-family: "DM Sans", ui-monospace, monospace; font-size: 12.5px;
+      background: #eef2f7; padding: 1px 6px; border-radius: 4px;
+    }
+    .note {
+      margin-top: 16px; padding: 14px 16px; border-left: 3px solid var(--accent);
+      background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 14px;
+    }
+    footer { margin-top: 16px; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="eyebrow">Runtime · Exception · Reflect</div>
+    <h1>找不到工具时怎么处理</h1>
+    <p class="lead">模型幻觉出不存在的工具时：统一错误标识 → 有限次反思纠错 → 产品话术收口，禁止空转 Loop。</p>
+
+    <section>
+      <h2>主流程</h2>
+      <div class="flow">
+        <span class="chip">tool_call</span>
+        <span class="arrow">→</span>
+        <span class="chip hard">云预检</span>
+        <span class="arrow">→</span>
+        <span class="chip">端执行</span>
+        <span class="arrow">→</span>
+        <span class="chip warn">TOOL_NOT_FOUND</span>
+        <span class="arrow">→</span>
+        <span class="chip">反思 ≤1</span>
+        <span class="arrow">→</span>
+        <span class="chip ok">产品话术结束</span>
+      </div>
+      <ul>
+        <li>预检与端返回使用同一语义：<code>error_code = TOOL_NOT_FOUND</code></li>
+        <li>结果带回 <code>allowed_tools</code>（及可选 suggestions），供模型改调</li>
+        <li>超次或再次点名白名单外工具 → 立即话术收口</li>
+      </ul>
+    </section>
+
+    <div class="grid two">
+      <section>
+        <h2>端 / 云要给的标识</h2>
+        <ul>
+          <li>稳定码：<code>TOOL_NOT_FOUND</code></li>
+          <li><code>reflectable</code> / <code>retryable</code></li>
+          <li><code>tool.requested</code> 原始点名</li>
+          <li><code>hint.allowed_tools</code> 本 Skill 白名单</li>
+          <li><code>source</code>：cloud_precheck 或 device</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Skill / 产品要配的</h2>
+        <ul>
+          <li><code>exception_handlers.TOOL_NOT_FOUND.user_utterance</code></li>
+          <li>可选：反思用尽后的变体话术</li>
+          <li><code>max_reflect_rounds</code> 默认 1（硬顶 ≤2）</li>
+          <li>SOP 写明：只能改调允许列表，禁止再造工具名</li>
+        </ul>
+      </section>
+    </div>
+
+    <section>
+      <h2>和「工具不可用」区分</h2>
+      <ul>
+        <li><code>TOOL_NOT_FOUND</code>：名字就不存在（幻觉/写错）→ 反思或话术</li>
+        <li><code>TOOL_UNAVAILABLE</code>：工具有，但本机能力不够 → 引导升级/降级</li>
+        <li><code>TOOL_SCHEMA_INVALID</code>：工具有，参数错 → 按 schema 纠错</li>
+      </ul>
+    </section>
+
+    <div class="note">
+      <strong>要点：</strong>标识要机器可分支；话术由产品提供；反思有预算；收口必须结束本轮技能路径。
+    </div>
+    <footer>详见 docs/skill-tool-not-found-handling.md</footer>
+  </div>
+</body>
+</html>
