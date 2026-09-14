@@ -19,8 +19,8 @@
   .sub { color:var(--muted); font-size:14px; margin:0 0 18px; }
   .sub b { color:var(--teal-d); }
   h2 { font-size:15px; font-weight:800; margin:26px 0 10px; padding-left:10px; border-left:4px solid var(--teal); }
+  h2 small { font-weight:400; color:var(--muted); font-size:12px; margin-left:8px; }
 
-  /* flow diagram primitives */
   .flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .node { padding:7px 12px; border:1.5px solid var(--ink); border-radius:6px; background:#fff; font-size:12.5px; white-space:nowrap; }
   .node small { display:block; font-size:10.5px; color:var(--muted); white-space:normal; }
@@ -31,10 +31,12 @@
   .node.good  { border-color:var(--good); background:var(--goodbg); }
   .arr { color:var(--muted); font-size:16px; }
   .arr.bad { color:var(--bad); font-weight:800; }
-  .lane { display:grid; grid-template-columns:76px 1fr; align-items:center; gap:10px; margin:6px 0; }
+  .arr.good { color:var(--good); font-weight:800; }
+  .lane { display:grid; grid-template-columns:90px 1fr; align-items:center; gap:10px; margin:6px 0; }
   .lane .lbl { font-size:11px; color:var(--muted); letter-spacing:.06em; text-align:right; }
 
-  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
   .card { border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
   .card h3 { margin:0 0 8px; font-size:13.5px; font-weight:800; display:flex; align-items:center; gap:8px; }
   .tag { font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:3px; }
@@ -43,23 +45,29 @@
   .t-good { color:var(--good); background:var(--goodbg); }
   .card .flowv { display:flex; flex-direction:column; align-items:flex-start; gap:4px; margin:6px 0 10px; }
   .card .flowv .arr { padding-left:18px; line-height:1; }
-  .card p { margin:0; font-size:12.5px; color:var(--muted); }
-  .card p b { color:var(--ink); }
+  .card p, .card li { margin:0; font-size:12.5px; color:var(--muted); }
+  .card ul { margin:4px 0 0; padding-left:16px; }
+  .card li { margin:3px 0; }
+  .card b { color:var(--ink); }
   .card.final { border-color:var(--good); background:#f7fbf8; }
 
   .stage { border:1px solid var(--line); border-radius:8px; padding:16px 18px; background:#fff; }
-  .row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
-  .row .box { padding:10px 12px; border-radius:6px; background:var(--wash); font-size:12.5px; }
-  .row .box .h { font-weight:800; color:var(--teal-d); font-size:12px; margin-bottom:4px; }
+  .box { padding:10px 12px; border-radius:6px; background:var(--wash); font-size:12.5px; }
+  .box .h { font-weight:800; color:var(--teal-d); font-size:12px; margin-bottom:4px; }
+  .box.risk .h { color:var(--warn); }
   code { font:11.5px ui-monospace,Menlo,Consolas,monospace; background:#eef3f1; padding:1px 5px; border-radius:3px; }
   .ref { color:var(--teal-d); font-weight:700; }
+
+  /* loop diagram */
+  .loop { position:relative; display:inline-flex; align-items:center; gap:8px; padding:14px 16px 26px; border:1.5px dashed var(--teal); border-radius:10px; background:#fbfdfc; }
+  .loop .cap { position:absolute; left:14px; bottom:6px; font-size:11px; color:var(--teal-d); font-weight:700; }
+  .loop .back { position:absolute; right:14px; bottom:6px; font-size:11px; color:var(--muted); }
 
   table { width:100%; border-collapse:collapse; font-size:12.5px; }
   th, td { padding:6px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
   th { background:var(--wash); color:var(--teal-d); font-size:12px; }
   td:first-child { color:var(--muted); font-weight:700; white-space:nowrap; }
   .ok { color:var(--good); font-weight:700; } .no { color:var(--bad); font-weight:700; } .so { color:var(--warn); font-weight:700; }
-  td.final { background:#f2f9f5; }
 
   .foot { margin-top:20px; padding-top:12px; border-top:1px solid var(--line); display:flex; gap:28px; font-size:12.5px; }
   .foot b { color:var(--teal-d); } .foot span { color:var(--muted); }
@@ -69,8 +77,8 @@
 <body>
 <main class="page">
 
-  <h1>「把所有猫猫照片建一个相册」怎么接进现有编排</h1>
-  <p class="sub">搜索 Skill 默认一次 500 张；2 万张要翻 40 页。问题只有一个：<b>这 40 次翻页放在哪一层</b>。</p>
+  <h1>「把所有猫猫照片建一个相册」：全量整理方案</h1>
+  <p class="sub">搜索 Skill 一次 500 张，2 万张要 40 轮。核心问题是<b>这 40 轮循环放在哪一层、靠什么保证不重、不漏、能停</b>。最终方案以 SE 选型 2.1 为准：<b>模型循环调用「搜索 → 追加」，靠搜索侧排除 + 相册侧追加去重保证幂等</b>。</p>
 
   <!-- 问题 -->
   <h2>问题：现有链路只拿到第一页</h2>
@@ -78,114 +86,115 @@
     <div class="flow">
       <div class="node model">模型<small>「所有猫猫照片建相册」</small></div>
       <span class="arr">→</span>
-      <div class="node">搜索 Skill<small>默认 SOP · 500 / 页</small></div>
+      <div class="node">搜索 Skill<small>500 / 页</small></div>
       <span class="arr">→</span>
-      <div class="node mem">workmemory r1<small>merged_id_list（仅 500）· hasMore=true</small></div>
+      <div class="node mem">r1<small>merged_id_list（仅 500）</small></div>
       <span class="arr">→</span>
-      <div class="node model">模型<small>createAlbum(items=<span class="ref">${r1.merged_id_list}</span>)</small></div>
+      <div class="node model">createAlbum(items=<span class="ref">${r1…}</span>)</div>
       <span class="arr">→</span>
-      <div class="node bad">相册只有 500 张<small>剩余 19 500 张丢失</small></div>
+      <div class="node bad">相册只有 500 张<small>其余 19 500 张丢失</small></div>
     </div>
     <p style="margin:10px 0 0;font-size:12.5px;color:var(--muted)">
-      约束：① 2 万个 ID 不能进模型上下文　② 裸搜索 Tool 能力不完整，只有搜索 Skill 是完整的　③ 当前架构<b>不支持 Skill 调 Skill</b>
+      裸循环翻页会撞上三件事：重复拉入 / 重复建相册 / 模型「觉得够了」提前停。方案 2.1 就是针对这三点补能力。
     </p>
   </div>
 
-  <!-- 三个候选 -->
-  <h2>三个候选：翻页循环挂在谁下面</h2>
-  <div class="grid3">
-
-    <div class="card">
-      <h3>A · 模型自己翻页 <span class="tag t-bad">否决</span></h3>
-      <div class="flowv">
-        <div class="node model">模型</div><span class="arr bad">↓ ×40</span>
-        <div class="node">搜索 Skill · 第 1…40 页</div><span class="arr">↓</span>
-        <div class="node mem">r1 … r40</div><span class="arr bad">↓ 拼接?</span>
-        <div class="node bad">createAlbum</div>
+  <!-- 最终方案 -->
+  <h2>最终方案（SE 2.1）：模型循环「搜索 → 追加」，每轮 500 张<small>搜索工具独立，引导模型引用搜索 / 新建相册 Skill</small></h2>
+  <div class="stage">
+    <div class="lane"><div class="lbl">第 1 轮</div>
+      <div class="flow">
+        <div class="node model">模型 · search(query="猫猫", page=500)</div>
+        <span class="arr">→</span>
+        <div class="node mem">r1 · 500 ids（mask）· remaining=19 500</div>
+        <span class="arr">→</span>
+        <div class="node model">createAlbum(name="猫猫", items=<span class="ref">${r1.ids}</span>)</div>
+        <span class="arr">→</span>
+        <div class="node mem">r2 · albumId</div>
       </div>
-      <p><b>41 次调用</b>，语音场景直接超时；<code>${rN}</code> 没有跨结果拼接语义；模型可能中途「够了」提前停，漏图无法察觉。</p>
+    </div>
+    <div class="lane"><div class="lbl">第 2…N 轮</div>
+      <div class="loop">
+        <div class="node model">search(query="猫猫", <b>exclude_album=</b><span class="ref">${r2.albumId}</span>)<small>【非】排除已在相册的照片 → 总是返回「还没进去的前 500」</small></div>
+        <span class="arr">→</span>
+        <div class="node mem">rN · 500 ids · remaining ↓</div>
+        <span class="arr">→</span>
+        <div class="node model"><b>appendToAlbum</b>(album=<span class="ref">${r2.albumId}</span>, items=<span class="ref">${rN.ids}</span>)<small>追加模式，不再新建；追加侧自动去重</small></div>
+        <span class="cap">Agent 感知未完成 → 自动进入下一轮</span>
+        <span class="back">remaining = 0 / 本轮为空 → 停止</span>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>B · 相册 Skill 内部去搜 <span class="tag t-warn">当前做不对</span></h3>
-      <div class="flowv">
-        <div class="node model">模型 · createAlbum(query="猫猫")</div><span class="arr">↓</span>
-        <div class="node warn">相册 Skill 执行层<small>loop 搜索 <b>Tool</b> ×40 → 建相册</small></div>
-        <span class="arr">↓</span>
-        <div class="node">相册</div>
-      </div>
-      <p>只调 1 次很诱人，但相册内只能调<b>不完整的 Tool</b>（结果和搜索 Skill 不一致），要补齐就得复制一套搜索逻辑；想改成委托搜索 Skill 的 SOP，就是 <b>Skill 调 Skill，当前不支持</b>。且相册变成「搜+建」复合体，入参变胖、只服务建相册。</p>
-    </div>
-
-    <div class="card final">
-      <h3>C · 搜索 Skill 加全量 SOP <span class="tag t-good">采用</span></h3>
-      <div class="flowv">
-        <div class="node model">模型 · fetch_all_search("猫猫")</div><span class="arr">↓</span>
-        <div class="node good">搜索 Skill 执行层<small>内部翻 40 页攒齐 → 一个结果</small></div>
-        <span class="arr">↓</span>
-        <div class="node mem">r1 · 20 000 ids（mask）</div><span class="arr">↓</span>
-        <div class="node model">模型 · createAlbum(<span class="ref">${r1…}</span>)</div>
-      </div>
-      <p>全量 / 默认是<b>同一搜索能力的两种规格</b>，放在搜索 Skill 最自然。模型仍是 2 次调用，相册 Skill 零改动，拼图 / 笔记也能复用同一个全量结果。</p>
+    <div class="grid3" style="margin-top:14px">
+      <div class="box"><div class="h">搜索 Skill 扩展</div>【非】排除逻辑（排除目标相册已有照片）、分页参数；多轮整理描述能力说明（含分页）。</div>
+      <div class="box"><div class="h">新建相册 Skill 扩展</div>多轮场景说明：首轮新建，后续<b>追加</b>不重复建相册；追加时自动去重。每轮上限固定 500。</div>
+      <div class="box"><div class="h">模型层</div>引导搜索 Skill 与相册 Skill 相互引用（<span class="ref">${r.albumId}</span> / <span class="ref">${r.ids}</span>）；感知任务未完成即循环分批追加。</div>
     </div>
   </div>
 
-  <!-- 最终方案 -->
-  <h2>最终方案：搜索 Skill 双 SOP，模型按意图选，相册只消费引用</h2>
-  <div class="stage">
-    <div class="lane"><div class="lbl">模型</div>
-      <div class="flow">
-        <div class="node model">意图路由<small>「几张猫猫看看」→ default　「全部 / 都 / 建相册 / 整理」→ fetch_all</small></div>
-        <span class="arr">→</span>
-        <div class="node model">fetch_all_search(query="猫猫")</div>
-        <span class="arr">→ … →</span>
-        <div class="node model">createAlbum(name="猫猫", items=<span class="ref">"${r1.merged_id_list}"</span>)</div>
+  <!-- 为什么能成立 + 风险 -->
+  <h2>为什么模型循环这次能成立，以及必须钉死的点</h2>
+  <div class="grid2">
+    <div class="card final">
+      <h3>成立的关键：每一轮都是幂等的 <span class="tag t-good">设计要点</span></h3>
+      <div class="flowv">
+        <div class="node good">search(…, exclude_album=X)<small>不依赖 offset / cursor，永远返回「未入册」的前 500</small></div>
+        <span class="arr good">↓</span>
+        <div class="node good">appendToAlbum(X, ids)<small>追加去重，重放无副作用</small></div>
+        <span class="arr good">↓ 重复直到本轮为空</span>
       </div>
+      <ul>
+        <li><b>不重</b>：搜索侧排除 + 追加侧去重，两层兜底。</li>
+        <li><b>可续</b>：任一轮失败 / 用户打断，下一轮从「还没进去的」继续，无需记页码。</li>
+        <li><b>不重复建相册</b>：首轮 create，之后只 append，albumId 走引用。</li>
+        <li>与现有 workmemory / mask / <code>${…}</code> 回填机制完全兼容。</li>
+      </ul>
     </div>
-    <div class="lane"><div class="lbl">搜索 Skill</div>
-      <div class="flow">
-        <div class="node">default_search<small>500 / 页 · hasMore（保持不变）</small></div>
-        <div class="node good">fetch_all_search<small>page 1→N 攒齐（可并行）· 返回 total / truncated / summary</small></div>
-        <span class="arr">→</span>
-        <div class="node mem">r1<small>merged_id_list → mask 成 <span class="ref">${r1.merged_id_list}</span>；summary、total 可见</small></div>
-      </div>
-    </div>
-    <div class="lane"><div class="lbl">Runtime</div>
-      <div class="flow">
-        <div class="node">resolve <span class="ref">${r1…}</span><small>→ 2 万个真值 id</small></div>
-        <span class="arr">→</span>
-        <div class="node">beforeHook<small>list → [{file_id}]（现有机制）</small></div>
-        <span class="arr">→</span>
-        <div class="node">相册 Tool<small>按 API 上限内部分批写入，对模型仍是 1 次</small></div>
-        <span class="arr">→</span>
-        <div class="node good">相册 · 20 000 张</div>
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:14px">
-      <div class="box"><div class="h">要改的</div>搜索 Skill 新增 <code>fetch_all_search</code> SOP + Skill 说明里的路由规则；mask policy 放行 <code>summary / total</code>。</div>
-      <div class="box"><div class="h">不改的</div>相册 Skill 入参仍只有 <code>items</code> 引用；workmemory / mask / beforeHook 全部沿用。</div>
-      <div class="box"><div class="h">兜底</div><code>total</code> 超阈值先确认；硬上限时 <code>truncated=true</code> 进 summary；语音侧进度播报 / 可取消。</div>
+    <div class="card">
+      <h3>残余风险与护栏 <span class="tag t-warn">落地必须</span></h3>
+      <ul>
+        <li><b>终止条件来自工具返回</b>（<code>remaining</code> / <code>hasMore</code> / 本轮为空），不能只靠模型「感知未完成」；否则漏图或死循环都察觉不到。</li>
+        <li><b>硬性 max_rounds + 可取消</b>：2 万张 = 40 轮 LLM loop，时延与 Token 是主成本；语音侧需进度播报「已整理 3000 / 约 20000」。</li>
+        <li><b>ID 永不进上下文</b>：每轮 500 个 id 仍 mask，模型只看 summary / remaining。</li>
+        <li><b>排除条件的一致性</b>：exclude_album 要以相册实时内容为准，避免追加尚未落库就发起下一轮导致重复命中。</li>
+        <li><b>后续优化口</b>：契约不变的前提下，可在搜索 Skill 内做 fetch_all 把 40 轮压回 1 轮（模型侧无感）。</li>
+      </ul>
     </div>
   </div>
 
   <!-- 对比 -->
-  <h2>为什么是 C</h2>
+  <h2>与其他路线的对比</h2>
   <table>
-    <tr><th></th><th>A 模型翻页</th><th>B 相册内调搜索 Tool</th><th>C 搜索 Skill 双 SOP</th></tr>
-    <tr><td>tool call</td><td><span class="no">41</span></td><td><span class="ok">1</span></td><td class="final"><span class="ok">2</span>（同现有链路）</td></tr>
-    <tr><td>翻页循环在哪</td><td><span class="no">LLM loop</span></td><td>相册 Skill</td><td class="final"><span class="ok">搜索 Skill 执行层</span></td></tr>
-    <tr><td>搜索能力完整</td><td>是</td><td><span class="no">绕开 Skill 调裸 Tool / 复制逻辑</span></td><td class="final"><span class="ok">是，默认 / 全量共用一套</span></td></tr>
-    <tr><td>需要 Skill 调 Skill</td><td>否</td><td><span class="so">做对就需要（当前不支持）</span></td><td class="final"><span class="ok">否</span></td></tr>
-    <tr><td>职责 / 复用</td><td>模型负担过重</td><td><span class="no">相册 = 搜+建，只服务建相册</span></td><td class="final"><span class="ok">搜管找、相册管建、Runtime 管传；结果可复用</span></td></tr>
-    <tr><td>改动量</td><td>—</td><td>相册 Skill 大改</td><td class="final"><span class="ok">搜索 Skill 加 1 个 SOP</span></td></tr>
-    <tr><td>残余风险</td><td>—</td><td>—</td><td class="final"><span class="so">模型选错 SOP</span> → Skill 说明 + 意图词收敛；B 可等平台支持 Skill 调 Skill 后作为增强</td></tr>
+    <tr><th></th><th>裸模型翻页（offset）</th><th>相册 Skill 内调搜索 Tool</th><th>搜索 Skill 内 fetch_all</th><th>SE 2.1 · 模型循环 + 排除 / 追加去重</th></tr>
+    <tr><td>tool call</td><td><span class="no">41</span></td><td><span class="ok">1</span></td><td><span class="ok">2</span></td><td><span class="so">~81</span>（40 搜 + 40 追加）</td></tr>
+    <tr><td>重复 / 漏页</td><td><span class="no">靠模型记页码，易错</span></td><td>Skill 内保证</td><td>Skill 内保证</td><td><span class="ok">排除 + 去重，天然幂等</span></td></tr>
+    <tr><td>中断可续</td><td><span class="no">否</span></td><td>否</td><td>否</td><td><span class="ok">是</span>（下一轮自动从「未入册」继续）</td></tr>
+    <tr><td>依赖 Skill 调 Skill</td><td>否</td><td><span class="no">是（当前不支持）</span></td><td>否</td><td><span class="ok">否</span></td></tr>
+    <tr><td>搜索能力完整</td><td>是</td><td><span class="no">绕开 Skill 调裸 Tool</span></td><td>是</td><td><span class="ok">是</span></td></tr>
+    <tr><td>改动量</td><td>—</td><td>相册 Skill 大改</td><td>搜索 Skill 加 SOP</td><td>搜索加排除 / 分页；相册加追加模式；Skill 说明补多轮</td></tr>
+    <tr><td>主成本</td><td>不可控</td><td>架构耦合</td><td>单次长耗时</td><td><span class="so">多轮时延 / Token</span> → 靠护栏 + 后续 fetch_all 优化</td></tr>
   </table>
 
+  <!-- 预留 -->
+  <h2>能力预留：人像 Picker</h2>
+  <div class="stage">
+    <div class="flow">
+      <div class="node model">「把我家人的照片建一个相册」</div>
+      <span class="arr">→</span>
+      <div class="node warn">Query 含人物关系？<small>是 → 优先调人像 Picker Tool</small></div>
+      <span class="arr">→</span>
+      <div class="node">人像 Picker（独立 Tool）<small>人物关系 → 人物 id / 关键词</small></div>
+      <span class="arr">→</span>
+      <div class="node">搜索 Skill<small>改写 Query，支持人物关键词检索</small></div>
+      <span class="arr">→</span>
+      <div class="node good">复用上面的循环追加流程</div>
+    </div>
+  </div>
+
   <div class="foot">
-    <div><b>全量搜是搜索的规格</b><span>　不是相册的私有逻辑</span></div>
-    <div><b>翻页不进模型</b><span>　模型只见 summary / total 和一个引用</span></div>
-    <div><b>相册只消费引用</b><span>　分批写入在 Tool 内完成</span></div>
+    <div><b>幂等是前提</b><span>　排除 + 追加去重，让模型循环不重不漏可续</span></div>
+    <div><b>停止靠工具不靠感觉</b><span>　remaining / 本轮为空 + max_rounds</span></div>
+    <div><b>ID 永不进模型</b><span>　albumId、照片 id 都走引用</span></div>
   </div>
 </main>
 </body>
