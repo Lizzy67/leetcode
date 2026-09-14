@@ -100,9 +100,9 @@
       <h3>搜索 Skill</h3>
       <pre>search({
   <span class="k">query</span>:          "猫猫",
-  <span class="k">mode</span>:           browse | <b>organize</b>,   <span class="dim"># organize：不出卡、ids mask、返回 cursor</span>
-  <span class="k">cursor</span>?:        <span class="ref">${r.nextCursor}</span>,      <span class="dim"># 同一任务内续页；续页请求工具侧自动不出卡</span>
-  <span class="k">exclude_album</span>?: "萌宠" | <span class="ref">${r.albumId}</span>  <span class="dim"># 排除已在目标相册内的照片（名或 id）</span>
+  <span class="k">mode</span>:           browse | <b>organize</b>,   <span class="dim"># organize = 不出卡 + 返回 cursor + filter(不在目标相册中) + ids mask</span>
+  <span class="k">cursor</span>?:        <span class="ref">${r.nextCursor}</span>,      <span class="dim"># 同一任务内续页</span>
+  <span class="k">target_album</span>?:  "萌宠" | <span class="ref">${r.albumId}</span>  <span class="dim"># organize 的过滤目标：排除已在该相册内的照片（名或 id）</span>
 })
 <span class="dim">→ { ids(mask), nextCursor | null, total?, summary }</span></pre>
     </div>
@@ -152,10 +152,10 @@
   </div>
 
   <!-- 场景 2 -->
-  <h2>场景 2 · 接续整理<small>「把剩下的猫猫也整理到萌宠」「再搜下狗狗也整理到萌宠」— 用 exclude_album，不用 cursor</small></h2>
+  <h2>场景 2 · 接续整理<small>「把剩下的猫猫也整理到萌宠」「再搜下狗狗也整理到萌宠」— 靠 organize 的相册过滤，不用 cursor</small></h2>
   <div class="stage">
     <div class="flow">
-      <div class="node model">search(狗狗 | 猫猫, mode=organize, <b>exclude_album="萌宠"</b>)<small>不在萌宠相册里的，就是「剩下的」/「新的」</small></div>
+      <div class="node model">search(狗狗 | 猫猫, mode=organize, <b>target_album="萌宠"</b>)<small>organize 自动过滤：不在萌宠相册里的，就是「剩下的」/「新的」</small></div>
       <span class="arr">→</span>
       <div class="node mem">r1 · 增量 ids · nextCursor</div>
       <span class="arr">→</span>
@@ -164,7 +164,7 @@
       <div class="node good">增量移入<small>超 500 → 叠加场景 1 的 cursor 循环</small></div>
     </div>
     <div class="grid2" style="margin-top:12px">
-      <div class="box"><div class="h">为什么接续不用 cursor</div>接续可能隔几分钟也可能隔天：cursor 会过期，期间新拍照片会打乱顺序。exclude_album 无状态、天然去重、重放安全；cursor 只在同一任务的循环内用。</div>
+      <div class="box"><div class="h">为什么接续不用 cursor</div>接续可能隔几分钟也可能隔天：cursor 会过期，期间新拍照片会打乱顺序。按目标相册过滤是无状态的、天然去重、重放安全；cursor 只在同一任务的循环内用。</div>
       <div class="box"><div class="h">传相册名还是 albumId</div>模型侧传<b>名</b>（用户原话、短字面量）；同一会话刚建完有 <span class="ref">${r.albumId}</span> 就用引用。工具侧统一按名解析成 id；同名多相册短路让用户选，不静默猜。</div>
     </div>
   </div>
@@ -178,7 +178,7 @@
     </div>
     <div class="card final">
       <h3>搜索侧 <span class="tag t-good">✓</span></h3>
-      <p><code>mode=organize</code> 一次表达「不出卡 + ids mask + 返回 cursor」；带 <code>cursor</code> 的续页请求<b>工具侧自动不出卡</b>，不依赖模型遵从。浏览场景（默认 mode）照常出卡。</p>
+      <p><code>mode=organize</code> 一次表达「不出卡 + 返回 cursor + filter(不在目标相册中) + ids mask」，模型只需多传一个 mode 和目标相册；带 <code>cursor</code> 的续页请求<b>工具侧自动不出卡</b>，不依赖模型遵从。浏览场景（默认 mode）照常出卡。</p>
     </div>
     <div class="card final">
       <h3>相册侧 <span class="tag t-good">✓</span></h3>
@@ -190,7 +190,7 @@
   <h2>改动清单与护栏</h2>
   <table>
     <tr><th>处</th><th>改动</th></tr>
-    <tr><td>搜索 Skill</td><td>加 <code>mode</code> / <code>cursor</code> / <code>exclude_album</code>（名或 id）；返回 <code>nextCursor</code>；organize / 续页不出卡；说明里写循环规则</td></tr>
+    <tr><td>搜索 Skill</td><td>加 <code>mode</code> / <code>cursor</code> / <code>target_album</code>（名或 id）；organize = 不出卡 + 返回 <code>nextCursor</code> + 过滤已在目标相册的照片 + ids mask；续页不出卡；说明里写循环规则</td></tr>
     <tr><td>相册 Skill</td><td>create / append 为现有规格，不改接口；确认 target 可按名解析、append 去重（缺则补）；结束出汇总卡；说明里写「多轮用 append 不重复 create」</td></tr>
     <tr><td>模型 / Skill 说明</td><td>「有 nextCursor 就 append 后继续搜，null 即停」；max_rounds 上限；每轮进度播报、可取消</td></tr>
     <tr><td>护栏</td><td>终止靠 <code>nextCursor</code>（工具事实）不靠模型感觉；ids 全程 mask；cursor 不跨轮使用；exclude 以相册实时内容为准（append 落库后再发下一轮）</td></tr>
@@ -199,8 +199,8 @@
   </table>
 
   <div class="foot">
-    <div><b>两组原语</b><span>　search(mode / cursor / exclude_album)　album(create / append ≤500, 去重)</span></div>
-    <div><b>循环内用 cursor，接续用 exclude</b><span>　停止靠 nextCursor=null</span></div>
+    <div><b>两组原语</b><span>　search(mode=organize / cursor / target_album)　album(create / append ≤500, 去重)</span></div>
+    <div><b>循环内用 cursor，接续靠相册过滤</b><span>　停止靠 nextCursor=null</span></div>
     <div><b>只出一张卡</b><span>　搜索不出，相册结束出汇总</span></div>
   </div>
 </main>
