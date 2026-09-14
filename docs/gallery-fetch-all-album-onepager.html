@@ -75,7 +75,7 @@
 <main class="page">
 
   <h1>相册整理：全量搜索与接续追加</h1>
-  <p class="sub">现状：搜索一次 500 张、创建相册一次 ≤500 张，「把所有猫猫照片整理到萌宠相册」（2 万张）只能拿到第一页；也不支持接续说「再把狗狗的也整理进去」「把剩下的猫猫也整理进去」。方案：<b>钉住两组原语，用「边搜边 append」的循环覆盖两个场景</b>。</p>
+  <p class="sub">现状：搜索一次 500 张、相册一次 ≤500 张（已有 create / append），「把所有猫猫照片整理到萌宠相册」（2 万张）只能拿到第一页；也不支持接续说「再把狗狗的也整理进去」「把剩下的猫猫也整理进去」。方案：<b>钉住两组原语，用「边搜边 append」的循环覆盖两个场景</b>。</p>
 
   <!-- 问题 -->
   <h2>现状与边界</h2>
@@ -87,7 +87,7 @@
       <span class="arr">→</span>
       <div class="node mem">r1 · 500 ids</div>
       <span class="arr">→</span>
-      <div class="node">创建相册 Skill<small>一次 ≤500 张 · 只有 create</small></div>
+      <div class="node">创建相册 Skill<small>一次 ≤500 张 · 已支持 create / append</small></div>
       <span class="arr">→</span>
       <div class="node bad">相册 500 张，其余 19 500 丢失<small>接续指令无法表达「排除已在相册的」</small></div>
     </div>
@@ -107,9 +107,9 @@
 <span class="dim">→ { ids(mask), nextCursor | null, total?, summary }</span></pre>
     </div>
     <div class="card final">
-      <h3>相册 Skill</h3>
+      <h3>相册 Skill<span class="tag t-good">现有能力，基本不改</span></h3>
       <pre>album({
-  <span class="k">action</span>:  create | <b>append</b>,          <span class="dim"># append：不重复新建</span>
+  <span class="k">action</span>:  create | append,             <span class="dim"># 均为现有规格</span>
   <span class="k">target</span>:  "萌宠" | <span class="ref">${r.albumId}</span>,   <span class="dim"># 模型传名或引用，工具侧解析成 id；同名多相册短路让用户选</span>
   <span class="k">items</span>:   <span class="ref">${r.ids}</span>                  <span class="dim"># 单次 ≤500，追加去重</span>
 })
@@ -191,7 +191,7 @@
   <table>
     <tr><th>处</th><th>改动</th></tr>
     <tr><td>搜索 Skill</td><td>加 <code>mode</code> / <code>cursor</code> / <code>exclude_album</code>（名或 id）；返回 <code>nextCursor</code>；organize / 续页不出卡；说明里写循环规则</td></tr>
-    <tr><td>相册 Skill</td><td>加 <code>append</code>；target 接受名或 id，按名解析、去重、单次 ≤500；结束出汇总卡；说明里写「多轮用 append 不重复 create」</td></tr>
+    <tr><td>相册 Skill</td><td>create / append 为现有规格，不改接口；确认 target 可按名解析、append 去重（缺则补）；结束出汇总卡；说明里写「多轮用 append 不重复 create」</td></tr>
     <tr><td>模型 / Skill 说明</td><td>「有 nextCursor 就 append 后继续搜，null 即停」；max_rounds 上限；每轮进度播报、可取消</td></tr>
     <tr><td>护栏</td><td>终止靠 <code>nextCursor</code>（工具事实）不靠模型感觉；ids 全程 mask；cursor 不跨轮使用；exclude 以相册实时内容为准（append 落库后再发下一轮）</td></tr>
     <tr><td>不做</td><td>相册 Skill 运行时读搜索结果；攒齐 2 万再 create；模型记页码；Skill 调 Skill</td></tr>
