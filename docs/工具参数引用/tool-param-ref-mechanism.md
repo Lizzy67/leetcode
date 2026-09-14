@@ -509,6 +509,6 @@ ref:
 
 ## 10. 相关文档
 
-- 一页纸：`../workmemory-ref/workmemory-ref-onepager.html`  
-- 方案笔记：`../workmemory-ref/workmemory-ref-scheme.md`（若有）  
-- 专利草案：`../workmemory-ref/workmemory-ref-patent-draft.md`（建议同步补充语义实体引用实施例）
+- 一页纸：`../工作记忆引用/workmemory-ref-onepager.html`  
+- 方案笔记：`../工作记忆引用/workmemory-ref-scheme.md`（若有）  
+- 专利草案：`../工作记忆引用/workmemory-ref-patent-draft.md`（建议同步补充语义实体引用实施例）
