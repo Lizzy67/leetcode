@@ -100,63 +100,96 @@
   </div>
 
   <!-- 最终方案 -->
-  <h2>最终方案（SE 2.1）：模型循环「搜索 → 追加」，每轮 500 张<small>搜索工具独立，引导模型引用搜索 / 新建相册 Skill</small></h2>
+  <h2>最终方案（SE 2.1）：模型循环「搜索 → 相册整理」，每轮 500 张<small>搜索工具独立，引导模型引用搜索 / 新建相册 Skill；两个典型场景共用同一组原语</small></h2>
+
+  <!-- 场景 1 -->
   <div class="stage">
+    <div style="font-size:13px;font-weight:800;color:var(--teal-d);margin-bottom:8px">场景 1 · 一次指令，多轮接续找全（「目标对象」语义）　<span style="font-weight:400;color:var(--muted)">「帮我把猫咪的照片找到新建一个相册」</span></div>
     <div class="lane"><div class="lbl">第 1 轮</div>
       <div class="flow">
-        <div class="node model">模型 · search(query="猫猫", page=500)</div>
+        <div class="node model">search(query="猫咪", limit=500)</div>
         <span class="arr">→</span>
-        <div class="node mem">r1 · 500 ids（mask）· remaining=19 500</div>
+        <div class="node mem">r1 · 500 ids（mask）· cursor · hasMore</div>
         <span class="arr">→</span>
-        <div class="node model">createAlbum(name="猫猫", items=<span class="ref">${r1.ids}</span>)</div>
+        <div class="node model">createAlbum(name="猫咪精选", items=<span class="ref">${r1.ids}</span>)</div>
         <span class="arr">→</span>
-        <div class="node mem">r2 · albumId</div>
+        <div class="node warn">相册整理 Skill 判断<small>本轮返回 <b>= 500</b>（或 hasMore）→ 未找全，回 <code>need_more + next_cursor</code></small></div>
+        <span class="arr">→</span>
+        <div class="node">TTS<small>「正在查找照片，需要一些时间」</small></div>
       </div>
     </div>
     <div class="lane"><div class="lbl">第 2…N 轮</div>
       <div class="loop">
-        <div class="node model">search(query="猫猫", <b>exclude_album=</b><span class="ref">${r2.albumId}</span>)<small>【非】排除已在相册的照片 → 总是返回「还没进去的前 500」</small></div>
+        <div class="node model">search(query="猫咪", <b>cursor=</b><span class="ref">${r_prev.cursor}</span>)<small>全量搜续页</small></div>
         <span class="arr">→</span>
-        <div class="node mem">rN · 500 ids · remaining ↓</div>
+        <div class="node mem">rN · ≤500 ids · cursor</div>
         <span class="arr">→</span>
-        <div class="node model"><b>appendToAlbum</b>(album=<span class="ref">${r2.albumId}</span>, items=<span class="ref">${rN.ids}</span>)<small>追加模式，不再新建；追加侧自动去重</small></div>
-        <span class="cap">Agent 感知未完成 → 自动进入下一轮</span>
-        <span class="back">remaining = 0 / 本轮为空 → 停止</span>
+        <div class="node model"><b>appendToAlbum</b>(album=<span class="ref">${r2.albumId}</span>, items=<span class="ref">${rN.ids}</span>)<small>追加不新建；追加侧去重</small></div>
+        <span class="arr">→</span>
+        <div class="node warn">整理 Skill 判断<small>= 500 → need_more　<b>&lt; 500 → 结束</b></small></div>
+        <span class="cap">need_more → 模型自动再调一轮搜索</span>
+        <span class="back">&lt; 500 / hasMore=false → TTS「新增补充了 N 张照片」</span>
       </div>
     </div>
+    <p style="margin:8px 0 0;font-size:12px;color:var(--muted)">循环的「继续 / 停止」由相册整理 Skill 的返回值触发，模型只是照着 <code>need_more</code> 再调一次搜索——判断在工具侧，不靠模型感觉。</p>
+  </div>
 
-    <div class="grid3" style="margin-top:14px">
-      <div class="box"><div class="h">搜索 Skill 扩展</div>【非】排除逻辑（排除目标相册已有照片）、分页参数；多轮整理描述能力说明（含分页）。</div>
-      <div class="box"><div class="h">新建相册 Skill 扩展</div>多轮场景说明：首轮新建，后续<b>追加</b>不重复建相册；追加时自动去重。每轮上限固定 500。</div>
-      <div class="box"><div class="h">模型层</div>引导搜索 Skill 与相册 Skill 相互引用（<span class="ref">${r.albumId}</span> / <span class="ref">${r.ids}</span>）；感知任务未完成即循环分批追加。</div>
+  <!-- 场景 2 -->
+  <div class="stage" style="margin-top:12px">
+    <div style="font-size:13px;font-weight:800;color:var(--teal-d);margin-bottom:8px">场景 2 · 定期整理，新拍的移入已有相册（「增量」语义）　<span style="font-weight:400;color:var(--muted)">「把我上周新拍的猫咪照片整理到猫咪相册里」</span></div>
+    <div class="lane"><div class="lbl">首轮（早前）</div>
+      <div class="flow">
+        <div class="node model">search("猫咪")</div><span class="arr">→</span>
+        <div class="node model">createAlbum("猫咪精选")</div><span class="arr">→</span>
+        <div class="node mem">相册【猫咪精选】已存在</div>
+      </div>
     </div>
+    <div class="lane"><div class="lbl">追加指令</div>
+      <div class="flow">
+        <div class="node model">search(query="猫咪", time=上周, <b>exclude_album=</b>"猫咪精选")<small>【非】排除已在目标相册内的照片</small></div>
+        <span class="arr">→</span>
+        <div class="node mem">r1 · 增量 ids</div>
+        <span class="arr">→</span>
+        <div class="node model"><b>appendToAlbum</b>(album="猫咪精选", items=<span class="ref">${r1.ids}</span>)<small>按名解析到已有相册，不重复新建</small></div>
+        <span class="arr">→</span>
+        <div class="node good">增量移入<small>超 500 同样走场景 1 的 cursor 循环</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid3" style="margin-top:14px">
+    <div class="box"><div class="h">搜索 Skill 扩展</div>分页参数（<code>limit / cursor</code>，返回 <code>hasMore</code>）；【非】排除逻辑（<code>exclude_album</code>）；多轮整理 / 分页的能力说明。</div>
+    <div class="box"><div class="h">新建相册 Skill 扩展</div>首轮新建、后续按名 / id <b>追加</b>不重复新建；追加去重；返回 <code>need_more / next_cursor</code> 驱动下一轮；每轮上限 500。</div>
+    <div class="box"><div class="h">模型层 &amp; 播报</div>引用 <span class="ref">${r.albumId}</span> / <span class="ref">${r.cursor}</span> / <span class="ref">${r.ids}</span>；见 need_more 即再调搜索。工具说明 + 基模输出友好提示：「正在查找照片，需要一些时间」「新增补充了一些照片」。</div>
   </div>
 
   <!-- 为什么能成立 + 风险 -->
   <h2>为什么模型循环这次能成立，以及必须钉死的点</h2>
   <div class="grid2">
     <div class="card final">
-      <h3>成立的关键：每一轮都是幂等的 <span class="tag t-good">设计要点</span></h3>
+      <h3>成立的关键：两个原语 + 一个机械判断 <span class="tag t-good">设计要点</span></h3>
       <div class="flowv">
-        <div class="node good">search(…, exclude_album=X)<small>不依赖 offset / cursor，永远返回「未入册」的前 500</small></div>
+        <div class="node good">search(query, cursor | exclude_album)<small>场景 1 用 cursor 续页；场景 2 用排除做增量；可叠加</small></div>
         <span class="arr good">↓</span>
-        <div class="node good">appendToAlbum(X, ids)<small>追加去重，重放无副作用</small></div>
-        <span class="arr good">↓ 重复直到本轮为空</span>
+        <div class="node good">album(create | append, dedup)<small>首轮 create，之后 append；追加去重，重放无副作用</small></div>
+        <span class="arr good">↓</span>
+        <div class="node good">整理 Skill 返回 need_more<small>本轮 = 500 → 继续；&lt; 500 → 停</small></div>
       </div>
       <ul>
         <li><b>不重</b>：搜索侧排除 + 追加侧去重，两层兜底。</li>
-        <li><b>可续</b>：任一轮失败 / 用户打断，下一轮从「还没进去的」继续，无需记页码。</li>
-        <li><b>不重复建相册</b>：首轮 create，之后只 append，albumId 走引用。</li>
-        <li>与现有 workmemory / mask / <code>${…}</code> 回填机制完全兼容。</li>
+        <li><b>不漏 / 能停</b>：继续与否由整理 Skill 按「返回条数」机械判定，不是模型感觉。</li>
+        <li><b>不重复建相册</b>：首轮 create，之后按名 / id append。</li>
+        <li>不需要 Skill 调 Skill：整理 Skill 只是「回一个 need_more」，真正再调搜索的仍是模型。</li>
       </ul>
     </div>
     <div class="card">
       <h3>残余风险与护栏 <span class="tag t-warn">落地必须</span></h3>
       <ul>
-        <li><b>终止条件来自工具返回</b>（<code>remaining</code> / <code>hasMore</code> / 本轮为空），不能只靠模型「感知未完成」；否则漏图或死循环都察觉不到。</li>
+        <li><b>「= 500 继续 / &lt; 500 停」要写对方向</b>，并优先用搜索返回的 <code>hasMore</code> 兜底：恰好命中 500 的整数倍时，仅靠条数会多跑一轮空搜索（可接受），但方向写反会只整理一页。</li>
+        <li><b>终止条件来自工具返回</b>（need_more / hasMore），不能只靠模型「感知未完成」；否则漏图或死循环都察觉不到。</li>
         <li><b>硬性 max_rounds + 可取消</b>：2 万张 = 40 轮 LLM loop，时延与 Token 是主成本；语音侧需进度播报「已整理 3000 / 约 20000」。</li>
         <li><b>ID 永不进上下文</b>：每轮 500 个 id 仍 mask，模型只看 summary / remaining。</li>
-        <li><b>排除条件的一致性</b>：exclude_album 要以相册实时内容为准，避免追加尚未落库就发起下一轮导致重复命中。</li>
+        <li><b>cursor 与排除的一致性</b>：cursor 需在多轮间稳定（新拍照片插入不应打乱续页）；exclude_album 要以相册实时内容为准，避免追加未落库就发起下一轮。</li>
         <li><b>后续优化口</b>：契约不变的前提下，可在搜索 Skill 内做 fetch_all 把 40 轮压回 1 轮（模型侧无感）。</li>
       </ul>
     </div>
