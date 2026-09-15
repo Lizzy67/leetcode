@@ -118,19 +118,17 @@ flowchart TD
   B -->|否 · 场景2 幻觉| C[Load Skill + notion 给模型<br/>提示从工具集内换工具]
   C --> D{模型再决策}
   D -->|改调合法工具| B
-  D -->|放弃 / 超次| E[产品话术收口结束]
+  D -->|放弃 / 超次| E[友好答复结束]
 
   B -->|是| F[下发端执行]
   F --> G{端返回结果}
 
   G -->|成功| H[继续 Skill 流程]
-  G -->|工具不存在错误码<br/>场景1| I[DM 追加 notion<br/>当前版本不支持 + 融合答引导]
-  I --> J[不重试换工具 · 用户侧收口]
+  G -->|工具不存在错误码<br/>场景1| I[DM 追加 notion<br/>提示用户当前版本不支持，结束]
   G -->|参数错误等其它码| K[按其它错误策略处理]
 
   style C fill:#fff4e5,stroke:#9a5b00,color:#1a2332
   style I fill:#fceef1,stroke:#8b2942,color:#1a2332
-  style J fill:#fceef1,stroke:#8b2942,color:#1a2332
   style H fill:#e6f4ef,stroke:#0b6e4f,color:#1a2332
   style E fill:#e6f4ef,stroke:#0b6e4f,color:#1a2332
         </pre>
