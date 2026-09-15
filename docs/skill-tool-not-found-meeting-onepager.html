@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
     :root {
       --ink: #1a2332;
@@ -50,10 +49,22 @@
       background: #fff;
       border: 1px solid var(--line);
       border-radius: 10px;
-      padding: 12px 8px 4px;
+      padding: 10px;
       overflow-x: auto;
     }
-    .mermaid { display: flex; justify-content: center; }
+    svg.flow { display: block; width: 100%; height: auto; min-width: 720px; font-family: inherit; }
+    svg.flow .lane-label text { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; }
+    svg.flow .n-text { font-size: 13px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; }
+    svg.flow .n-sub { font-size: 12px; font-weight: 400; fill: #3b4656; }
+    svg.flow .n-base { fill: #ffffff; stroke: #b9c6d8; stroke-width: 1.4; }
+    svg.flow .n-decision { fill: #eef4fb; stroke: #1e4d8c; stroke-width: 1.4; }
+    svg.flow .n-warn { fill: #fff4e5; stroke: #c98500; stroke-width: 1.4; }
+    svg.flow .n-bad { fill: #fceef1; stroke: #8b2942; stroke-width: 1.4; }
+    svg.flow .n-ok { fill: #e6f4ef; stroke: #0b6e4f; stroke-width: 1.4; }
+    svg.flow .n-muted { fill: #f3f6fa; stroke: #c9d2df; stroke-width: 1.2; stroke-dasharray: 4 3; }
+    svg.flow .edge-label rect { fill: #ffffff; stroke: #e4e9f1; }
+    svg.flow .edge-label text { font-size: 11px; fill: var(--muted); text-anchor: middle; dominant-baseline: middle; }
+    svg.flow .scene text { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; }
     .legend {
       display: flex; flex-wrap: wrap; gap: 10px 16px;
       margin-top: 12px; font-size: 12px; color: var(--muted);
@@ -111,27 +122,110 @@
     <section>
       <h2>主流程</h2>
       <div class="flow-wrap">
-        <pre class="mermaid">
-flowchart TD
-  A[模型生成 tool_call] --> B{DM：工具是否在<br/>当前 Skill 工具集内？}
+        <svg class="flow" viewBox="0 0 920 528" role="img" aria-label="工具调用异常处理流程泳道图">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#5a6577" />
+            </marker>
+            <filter id="shadow" x="-10%" y="-10%" width="120%" height="140%">
+              <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#1a2332" flood-opacity="0.10" />
+            </filter>
+          </defs>
 
-  B -->|否 · 场景2 幻觉| C[Load Skill + notion 给模型<br/>提示从工具集内换工具]
-  C --> D{模型再决策}
-  D -->|改调合法工具| B
-  D -->|放弃 / 超次| E[友好答复结束]
+          <!-- 泳道 -->
+          <rect x="70" y="16" width="846" height="150" rx="10" fill="#fbfcfe" stroke="#e4e9f1" />
+          <rect x="70" y="172" width="846" height="148" rx="10" fill="#f4f7fc" stroke="#e4e9f1" />
+          <rect x="70" y="326" width="846" height="196" rx="10" fill="#fbfcfe" stroke="#e4e9f1" />
 
-  B -->|是| F[下发端执行]
-  F --> G{端返回结果}
+          <g class="lane-label">
+            <rect x="8" y="16" width="52" height="150" rx="10" fill="#eef4fb" />
+            <text x="34" y="91" text-anchor="middle" dominant-baseline="middle" fill="#1e4d8c">模型</text>
+            <rect x="8" y="172" width="52" height="148" rx="10" fill="#e6f4ef" />
+            <text x="34" y="246" text-anchor="middle" dominant-baseline="middle" fill="#0b6e4f">DM</text>
+            <rect x="8" y="326" width="52" height="196" rx="10" fill="#f1efe6" />
+            <text x="34" y="424" text-anchor="middle" dominant-baseline="middle" fill="#6b5a1e">端</text>
+          </g>
 
-  G -->|成功| H[继续 Skill 流程]
-  G -->|工具不存在错误码<br/>场景1| I[DM 追加 notion<br/>提示用户当前版本不支持，结束]
-  G -->|参数错误等其它码| K[按其它错误策略处理]
+          <!-- 连线 -->
+          <g class="edges" fill="none" stroke="#5a6577" stroke-width="1.6" marker-end="url(#arr)">
+            <path d="M175,114 V245 H216" />
+            <path d="M380,245 H416" />
+            <path d="M505,218 V128" />
+            <path d="M425,89 H300 V201" />
+            <path d="M585,89 H656" />
+            <path d="M300,285 V376" />
+            <path d="M365,405 H386" />
+            <path d="M550,405 H596" />
+            <path d="M470,365 V340 H755 V280" />
+            <path d="M470,445 V466" />
+          </g>
 
-  style C fill:#fff4e5,stroke:#9a5b00,color:#1a2332
-  style I fill:#fceef1,stroke:#8b2942,color:#1a2332
-  style H fill:#e6f4ef,stroke:#0b6e4f,color:#1a2332
-  style E fill:#e6f4ef,stroke:#0b6e4f,color:#1a2332
-        </pre>
+          <!-- 连线标签 -->
+          <g class="edge-label">
+            <rect x="386" y="226" width="24" height="16" rx="4" />
+            <text x="398" y="238">否</text>
+            <rect x="322" y="70" width="84" height="16" rx="4" />
+            <text x="364" y="82">改调合法工具</text>
+            <rect x="588" y="70" width="64" height="16" rx="4" />
+            <text x="620" y="82">放弃 / 超次</text>
+            <rect x="306" y="322" width="24" height="16" rx="4" />
+            <text x="318" y="334">是</text>
+            <rect x="556" y="386" width="36" height="16" rx="4" />
+            <text x="574" y="398">成功</text>
+            <rect x="562" y="331" width="100" height="16" rx="4" />
+            <text x="612" y="343">工具不存在错误码</text>
+          </g>
+
+          <!-- 节点：模型 -->
+          <g filter="url(#shadow)">
+            <rect x="110" y="64" width="130" height="50" rx="10" class="n-base" />
+            <text x="175" y="89" class="n-text">生成 tool_call</text>
+
+            <polygon points="505,54 585,89 505,124 425,89" class="n-decision" />
+            <text x="505" y="89" class="n-text">模型再决策</text>
+
+            <rect x="660" y="64" width="150" height="50" rx="25" class="n-ok" />
+            <text x="735" y="89" class="n-text">友好答复结束</text>
+          </g>
+
+          <!-- 节点：DM -->
+          <g filter="url(#shadow)">
+            <polygon points="300,205 380,245 300,285 220,245" class="n-decision" />
+            <text x="300" y="239" class="n-text">在 Skill</text>
+            <text x="300" y="256" class="n-text">工具集内？</text>
+
+            <rect x="420" y="218" width="170" height="54" rx="10" class="n-warn" />
+            <text x="505" y="238" class="n-text">Load Skill + notion</text>
+            <text x="505" y="256" class="n-text n-sub">提示从工具集内换工具</text>
+
+            <rect x="640" y="214" width="230" height="62" rx="14" class="n-bad" />
+            <text x="755" y="237" class="n-text">DM 追加 notion</text>
+            <text x="755" y="257" class="n-text n-sub">提示用户当前版本不支持，结束</text>
+          </g>
+
+          <!-- 节点：端 -->
+          <g filter="url(#shadow)">
+            <rect x="235" y="380" width="130" height="50" rx="10" class="n-base" />
+            <text x="300" y="405" class="n-text">端执行工具</text>
+
+            <polygon points="470,365 550,405 470,445 390,405" class="n-decision" />
+            <text x="470" y="405" class="n-text">返回结果</text>
+
+            <rect x="600" y="380" width="130" height="50" rx="10" class="n-ok" />
+            <text x="665" y="405" class="n-text">继续 Skill 流程</text>
+
+            <rect x="400" y="470" width="140" height="40" rx="8" class="n-muted" />
+            <text x="470" y="490" class="n-text n-sub">其它错误 · 既有策略</text>
+          </g>
+
+          <!-- 场景标注 -->
+          <g class="scene">
+            <rect x="420" y="196" width="60" height="16" rx="8" fill="#c98500" />
+            <text x="450" y="204" text-anchor="middle" dominant-baseline="middle" fill="#fff">场景 2</text>
+            <rect x="640" y="192" width="60" height="16" rx="8" fill="#8b2942" />
+            <text x="670" y="200" text-anchor="middle" dominant-baseline="middle" fill="#fff">场景 1</text>
+          </g>
+        </svg>
       </div>
       <div class="legend">
         <span><i class="dot s2"></i>场景2：Skill 无 → 幻觉，可换工具</span>
@@ -184,23 +278,5 @@ flowchart TD
     </div>
     <footer>docs/skill-tool-not-found-meeting-onepager.html</footer>
   </div>
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: "base",
-      themeVariables: {
-        fontFamily: "Noto Sans SC, DM Sans, sans-serif",
-        fontSize: "14px",
-        primaryColor: "#eef4fb",
-        primaryTextColor: "#1a2332",
-        primaryBorderColor: "#1e4d8c",
-        lineColor: "#5a6577",
-        secondaryColor: "#e6f4ef",
-        tertiaryColor: "#f3f6fa",
-        edgeLabelBackground: "#ffffff"
-      },
-      flowchart: { curve: "basis", padding: 12, htmlLabels: true }
-    });
-  </script>
 </body>
 </html>
