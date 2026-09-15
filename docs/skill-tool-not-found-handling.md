@@ -1,336 +1,193 @@
-# 工具不存在（幻觉调用）异常处理与模型反思规范
+# 工具调用异常处理方案（按最新对齐纪要整理）
 
-> 背景：模型按 Skill 调度工具时可能幻觉出不存在的工具名。覆盖范围不仅是**端意图工具**，也包括**端 CLI**、**云 MCP**、以及其它 Runtime 可调出口（如 ArkTS 封装工具）。  
-> 目标：**各类工具统一错误标识 → Skill 内产品话术兜底 → 有限次模型反思纠错 → 禁止空转 Loop。**
-
----
-
-## 一、问题与原则
-
-| 问题 | 要求 |
-|------|------|
-| 幻觉工具名 / 错误 tool_id | 执行链路给出**机器可识别**的“找不到工具”标识（与通道无关） |
-| 用户侧体验 | Skill 内有**产品提供的**异常处理与话术，不可静默失败或乱编 |
-| 模型可纠错 | 支持反思后改调合法工具 / 改参数；次数有上限 |
-| 防 Loop | 反思失败后必须落到固定话术并结束本轮技能路径 |
-
-**适用范围（全部纳入同一套契约）：**
-
-| 通道 `tool_kind` | 典型形态 | 最终解析方 |
-|------------------|----------|------------|
-| `intent` | 端意图 / 端侧工具接口 | 云预检 + **端**执行器 |
-| `cli` | 端 CLI 命令/工具 | 云预检 + **端 CLI** 运行时 |
-| `mcp` | 云侧 MCP Server 工具 | **云 MCP Gateway/Client**（一般不下发端） |
-| `arkts` / `local` | Skill 内联或本地封装出口 | 云预检 + 对应执行器 |
-
-> **结论：上面方案包含 CLI、MCP 等；不是只针对意图工具。**  
-> 差异只在「谁做 resolve / 谁执行」；对模型与 Skill 暴露的仍是同一 `TOOL_NOT_FOUND` + 同一套反思/话术。
-
-**分层原则：**
-
-1. **能拦则先拦（通道感知预检）**：调用前用「本 Skill 允许工具集 ∩ 该通道目录/会话可用集」校验。  
-2. **最终真相在执行器**：意图/CLI 在端；MCP 在云 Gateway；预检漏过时执行器返回同一错误码。  
-3. **错误码统一**：各通道失败映射到同一语义，Runtime/模型不感知通道细节也能分支。  
-4. **话术归产品，策略归平台**：文案可配置；重试次数、是否允许反思由平台/Skill 策略约束。
+> 对齐口径：单 Skill 收编下，Runtime/DM 执行前校验 + 端错误码分流；幻觉可换工具，端不存在则不重试并友好引导。  
+> 覆盖：端意图、端 CLI、ArkTS、小艺封装工具；云工具（MCP 等）在「进一步」中统一 router 预检。
 
 ---
 
-## 二、错误标识（执行结果契约）
+## 一、现状
 
-工具执行（含预检失败合成的结果）统一返回：
+| 通道 | 现状 | 缺口 |
+|------|------|------|
+| 端意图 | 意图不存在会报 `-304 invalid_intent_error` | 需确认：**意图名不对**与**参数不对**是否都报同一错误；若是，**端需区分上报**（@陈科润） |
+| 端 CLI | **已支持**返回错误码（含工具不存在类） | 与 DM 错误码语义对齐、统一分流即可 |
+| ArkTS 脚本 | **已支持**工具不存在类错误 | 同上 |
+| 小艺封装工具 | 能力分散 | 考虑按需在平台管理配置（@张慧） |
+| 云工具 / MCP | 调用路径与端不完全一致 | 见「进一步」：router 先查是否支持 |
 
-```json
-{
-  "ok": false,
-  "error_code": "TOOL_NOT_FOUND",
-  "error_class": "tool_resolution",
-  "retryable": true,
-  "reflectable": true,
-  "tool": {
-    "kind": "mcp",
-    "requested": "browser.flyToMoon",
-    "normalized": "browser.flyToMoon",
-    "server": "mcp.browser"
-  },
-  "hint": {
-    "allowed_tools": [
-      "intent:gallery.search",
-      "cli:media.list",
-      "mcp:browser.navigate"
-    ],
-    "allowed_tools_by_kind": {
-      "intent": ["gallery.search"],
-      "cli": ["media.list"],
-      "mcp": ["browser.navigate"]
-    },
-    "suggestions": ["mcp:browser.navigate"]
-  },
-  "message": "tool not found",
-  "source": "mcp_gateway"
-}
-```
+**关键澄清（意图框架）：**
 
-| 字段 | 说明 |
-|------|------|
-| `error_code` | 固定：`TOOL_NOT_FOUND`（对外稳定标识，**全通道共用**） |
-| `error_class` | `tool_resolution`，便于 Runtime 路由到“解析失败”分支 |
-| `tool.kind` | `intent` \| `cli` \| `mcp` \| `arkts` … |
-| `tool.requested` | 模型原始点名 |
-| `tool.server` | MCP 时填写 server 名；其它通道可空 |
-| `hint.allowed_tools` | **本 Skill 当前可调白名单**（建议带 kind 前缀，供反思） |
-| `hint.suggestions` | 可选：同 kind 内相近工具 |
-| `source` | `cloud_precheck` \| `device` \| `device_cli` \| `mcp_gateway` \| `runtime` |
+- 若 `-304` 同时覆盖「名不存在」和「参数非法」，则无法正确走「换工具」vs「改参数/友好拒答」分支。  
+- 目标：端侧至少拆出（或可映射到 DM 的）两类语义——**工具不存在** vs **参数/校验失败**。
 
-**各通道要求：**
+---
 
-| 通道 | 必须 |
-|------|------|
-| 端意图 | 工具不存在 → 返回/映射为 `TOOL_NOT_FOUND` |
-| 端 CLI | CLI 名不存在、未注册 → 同上，`source=device_cli` |
-| 云 MCP | server 无此 tool、未连接、未授权到该 tool → 映射为 `TOOL_NOT_FOUND` 或 `TOOL_UNAVAILABLE`（见下），禁止只回 MCP 原始模糊报错给模型 |
+## 二、两个场景（先分清，再分流）
 
-**相近但不同的码（勿混用）：**
-
-| error_code | 含义 | 典型场景 |
-|------------|------|----------|
-| `TOOL_NOT_FOUND` | 名字/ID 在目录中不存在（幻觉或写错） | 编造意图名 / 编造 CLI / 编造 MCP tool |
-| `TOOL_UNAVAILABLE` | 工具登记存在，但当前不可用 | 端无能力、CLI 被裁剪、MCP server 未连接/未授权 |
-| `TOOL_DEPRECATED` | 已废弃，应换 `replace_by` | 各通道下线中的工具 |
-| `TOOL_SCHEMA_INVALID` | 工具在，参数不合 schema | 意图/CLI/MCP 均适用 |
-| `TOOL_EXEC_FAILED` | 工具在，执行业务失败 | 各通道执行期错误 |
-
-Skill 话术与反思策略可按 `error_code` 分别配置；**幻觉瞎生成工具名的主路径是 `TOOL_NOT_FOUND`。**
-
-### 2.1 分通道预检与执行（同一套上层策略）
+| 场景 | 含义 | 处理原则 |
+|------|------|----------|
+| **场景1** | Skill 工具集里**有**该工具，但**端不存在**/当前版本不支持 | **不重试换工具**；结合错误码给友好答复（当前版本不支持）+ 融合答引导语 |
+| **场景2** | Skill 工具集里**没有**该工具，属**模型幻觉** | 提示模型**换一个在 Skill 工具集内的工具**（已支持） |
 
 ```text
-tool_call(kind, name, args)
-        │
-        ▼
-Runtime 预检（按 kind 选目录）
-  intent → ToMP/intent 目录 ∩ Skill.allowed ∩ device.capabilities
-  cli    → ToMP/cli 目录    ∩ Skill.allowed ∩ device.cli_caps
-  mcp    → 会话已挂载 MCP tools ∩ Skill.allowed ∩ 授权集
-        │
-        ├─ 失败 → 合成 TOOL_NOT_FOUND / TOOL_UNAVAILABLE → 反思/话术
-        └─ 通过 → 分发执行器
-              intent/cli → 端
-              mcp        → 云 MCP Gateway
-                    │
-                    └─ 执行器仍找不到 → 同一 error_code → 反思/话术
+                    模型产出 tool_call
+                            │
+                            ▼
+              ┌─ 是否在当前 Skill 工具集内？ ─┐
+              │否（场景2 幻觉）     │是（候选真实依赖）
+              ▼                    ▼
+        给模型 notion：        下发端 / 对应执行器
+        换白名单内工具              │
+        （可有限次）                 ▼
+                            端返回「工具不存在」？
+                              │是 → 场景1
+                              ▼
+                        不重试；notion 引导
+                        「当前版本不支持」+ 融合答
 ```
-
-**MCP 特别说明：**
-
-- 幻觉常发生在：server 名错、tool 名错、把未挂载 server 的工具当可用。  
-- 预检应以**当前会话实际 list_tools 结果**为准，而不是只查静态文档。  
-- server 挂了但临时断开：优先 `TOOL_UNAVAILABLE`（可重试连接策略另议），不要和“名字编造”混成一种用户话术（除非产品故意合并）。
----
-
-## 三、Skill 内异常处理与话术（产品提供）
-
-### 3.1 Manifest 扩展
-
-```yaml
-skill_name: gallery.search
-skill_version: 2.1.0
-requires:
-  - tool: gallery.search
-    kind: intent
-    version: ">=2.0.0"
-  - tool: media.list
-    kind: cli
-    version: "^1.0.0"
-  - tool: browser.navigate
-    kind: mcp
-    server: mcp.browser
-    version: "^1.0.0"
-
-# 运行时允许模型调用的白名单（默认 = requires ∪ optional；建议带 kind）
-allowed_tools:
-  - kind: intent
-    name: gallery.search
-  - kind: cli
-    name: media.list
-  - kind: mcp
-    server: mcp.browser
-    name: browser.navigate
-
-exception_handlers:
-  TOOL_NOT_FOUND:
-    # 产品提供（可全通道共用一份默认话术）
-    user_utterance: "抱歉，我这边暂时没法完成这个操作，你可以换种方式说说看，或者稍后再试。"
-    # 可选：按通道覆盖
-    by_kind:
-      mcp:
-        user_utterance: "相关云端能力暂时不可用，请稍后再试。"
-      cli:
-        user_utterance: "当前设备还不支持这个操作。"
-    variants:
-      - when: "after_reflect_exhausted"
-        user_utterance: "我没能找到对应的功能入口，建议你换个说法，或稍后再试。"
-    policy:
-      allow_reflect: true
-      max_reflect_rounds: 1          # 推荐 1；全局硬顶建议 ≤2
-      on_exhaust: speak_and_end      # speak_and_end | degrade_peer | escalate
-```
-
-> 产品可只提供**一份默认话术**覆盖 intent/cli/mcp；若体验需要再按 `by_kind` 细分。上层反思策略不必按通道各写一套。
-### 3.2 Skill 正文（md / SOP）约定写法
-
-Skill 说明中增加固定章节，供模型与 Runtime 共同遵守，例如：
-
-```markdown
-## 异常处理：工具不存在（TOOL_NOT_FOUND）
-1. 若返回 TOOL_NOT_FOUND：仅允许从【本 Skill 允许工具列表】中改选工具重试，禁止再发明新工具名。
-2. 反思重试仍失败或次数用尽：向用户输出产品话术（见 exception_handlers），结束本技能，勿继续空转调用。
-3. 禁止向用户暴露内部 tool_id / 堆栈；使用配置话术。
-```
-
-### 3.3 上架门禁
-
-- 热门/全量 Skill：**`exception_handlers.TOOL_NOT_FOUND.user_utterance` 必填**（产品提供文案）。  
-- 未配置时平台默认话术（兜底），但上架流水线打黄灯/阻断（按规范等级）。  
-- `allowed_tools` 必须 ⊆ ToMP 已登记 tool；禁止 Skill 暗示未登记工具。
 
 ---
 
-## 四、模型反思优化流程
+## 三、修改一：单 Skill 收编 —— 执行前校验（Runtime / DM）
+
+**责任：** @夏捷（开发计划-遗留）、@曹辉、@汤继善  
+
+模型发出的工具调用指令，**Runtime 在执行前必须校验**：
+
+| 判定 | 结论 | 动作 |
+|------|------|------|
+| ① **不在** Skill 工具集 | 模型幻觉 | 给提示让模型换工具 —— **已支持** |
+| ② **在** Skill 工具集，但端上报「工具不存在」 | 版本/端能力不支持 | **不重试**；按错误码走友好答复（当前版本不支持）+ 融合答引导语 |
+
+### 3.1 流程图（DM 主路径）
+
+```mermaid
+flowchart TD
+  A[模型生成 tool_call] --> B{DM：工具是否在<br/>当前 Skill 工具集内？}
+  B -->|否 场景2 幻觉| C[Load Skill + notion 给模型<br/>提示从工具集内换工具]
+  C --> D{模型再决策}
+  D -->|合法工具| B
+  D -->|放弃/超次| E[产品话术收口结束]
+  B -->|是| F[下发端执行]
+  F --> G{端返回结果}
+  G -->|成功| H[继续 Skill]
+  G -->|工具不存在错误码<br/>场景1| I[DM 追加 notion 给模型<br/>提示：当前版本不支持该工具<br/>引导融合答 / 友好答复]
+  I --> J[不再换同名工具重试<br/>用户侧收口]
+  G -->|参数错误等其它码| K[按其它错误策略<br/>改参或说明]
+```
+
+### 3.2 文字步骤（与纪要一致）
+
+**Step1**  
+模型生成工具调用时，**DM 先判断**该工具是否在 Skill 的工具集内：
+
+- **有** → 下发端执行  
+- **无** → Load Skill 和对应 **notion** 给到模型（提示换工具，场景2）
+
+**Step2**  
+端返回工具执行结果；若不支持该工具，返回明确的「工具不存在 / 不支持」**错误码**。
+
+**Step3**  
+DM 基于端返回的错误码，**增加 notion 给模型**，提示给出用户引导（例：当前版本不支持该工具），走融合答；**不进入「再换一个工具重试」闭环**（场景1）。
+
+### 3.3 场景对照（执行策略）
+
+| | 场景2 幻觉 | 场景1 Skill 有、端无 |
+|--|------------|----------------------|
+| 校验位置 | DM 执行前（工具集） | 端执行后（错误码） |
+| 是否让模型换工具 | **是**（白名单内） | **否** |
+| 给模型的 notion | 工具不在 Skill 集，请改调 | 端不支持/当前版本不支持，请友好引导用户 |
+| 用户侧 | 尽量靠换合法工具完成任务 | 明确「当前版本不支持」类引导，避免空转 |
+
+### 3.4 错误码对齐要求（端）
+
+| 来源 | 要求 | 负责人 |
+|------|------|--------|
+| 意图框架 | 排查 `-304`；**新增或拆分「工具不存在」错误码**（与参数错误分离） | @李伟峰、@曹辉；确认现状 @陈科润 |
+| CLI | 已支持工具不存在错误码 → 与 DM 枚举对齐 | 已支持 |
+| ArkTS | 已支持工具不存在 → 与 DM 枚举对齐 | 已支持 |
+| 小艺封装工具 | 按需平台配置/登记，保证能报「不存在」 | @张慧 |
+
+**DM 侧建议映射（示例）：**
+
+| 端/通道语义 | DM 内部语义 | 走哪条分支 |
+|-------------|-------------|------------|
+| 工具名不存在 / 未注册 | `TOOL_NOT_FOUND_ON_DEVICE` | 场景1：不重试 + 版本不支持引导 |
+| 不在 Skill 工具集 | `TOOL_NOT_IN_SKILL` | 场景2：notion 换工具 |
+| 参数非法 | `TOOL_SCHEMA_INVALID` | 改参/说明，不走「版本不支持」 |
+| 其它执行失败 | `TOOL_EXEC_FAILED` | 既有失败策略 |
+
+---
+
+## 四、修改二：平台按 ROM 小版本配置 Skill（兜底）
+
+**责任：** @尹龙  
+
+| 项 | 说明 |
+|----|------|
+| 能力 | 迭代平台支持按 **ROM 小版本**配置对应 Skill |
+| 原则 | **ROM 小版本不支持多 Skill**；仅 **大版本**支持多 Skill |
+| 补充 | 当 ROM 不便比较大小时，平台用 **黑白名单**管理 |
+| 现状 | **已经支持** |
+| 节奏 | **先通过本方案（修改一）不阻塞过点**；修改二作配套兜底，不挡主路径 |
+
+与「Skill↔Tool 能力匹配 / 多版本」长期方案可并行；过点优先保证修改一的 DM 分流体验。
+
+---
+
+## 五、进一步（待定）
+
+| 项 | 说明 | 责任人 |
+|----|------|--------|
+| Router 预检 | DM 对模型决策的工具调用，**router（端工具 / 云工具，区分 invoke）要先检查对应工具是否支持**；当前可查意图框架 | @夏捷、@李阜 |
+| 端意图框架 | 新增「工具不存在」错误码，与参数错误区分 | @李伟峰、@曹辉 |
+| CLI & ArkTS | 已支持工具不存在，对齐 DM | — |
+| 小艺封装工具 | 按需在平台管理配置 | @张慧 |
+| 云 MCP 等 | 纳入同一 router 预检与错误码映射，避免只拦端、不拦云 | 随 router 方案一并定 |
+
+**待定目标形态：**
 
 ```text
-模型产生 tool_call
-        │
-        ▼
-云侧预检：tool ∈ allowed_tools ∩ capabilities ∩ ToMP ?
-   │否 → 合成 TOOL_NOT_FOUND (source=cloud_precheck)
-   │是 → 下发端执行
-        │
-        ▼
-端返回结果
-        │
-        ├─ OK → 继续 Skill
-        └─ TOOL_NOT_FOUND
-                │
-                ▼
-         reflectable && rounds < max ?
-                │是
-                ▼
-         注入结构化反思上下文给模型：
-         - error_code
-         - requested tool
-         - allowed_tools / suggestions
-         - 指令：只能改调白名单内工具或改为向用户澄清；禁止再幻觉新名
-                │
-                ▼
-         模型再决策（1 次为主）
-                │
-                ├─ 合法 tool_call → 再走预检/执行
-                ├─ 澄清/拒答 → 用产品话术或澄清话术结束
-                └─ 再次非法 / 超次 → on_exhaust：播报产品话术并结束
+模型 tool_call
+  → DM：是否在 Skill 工具集？（修改一①）
+  → Router：该 invoke 通道上工具是否支持？（端意图框架 / 云目录 / …）
+  → 执行
+  → 错误码分流（场景1 vs 其它）
 ```
 
-### 4.1 反思上下文（给模型的短消息，示例）
+---
 
-```text
-[System/ToolResult]
-error_code=TOOL_NOT_FOUND
-tool.kind=mcp
-requested=browser.flyToMoon
-allowed_tools=["intent:gallery.search","cli:media.list","mcp:browser.navigate"]
-suggestions=["mcp:browser.navigate"]
-instruction: 上一工具不存在。你只能从 allowed_tools 中选择一个重试（保持正确 kind），或结束并使用 Skill 配置的用户话术。禁止创造新的工具名。剩余反思次数=0。
-```
+## 六、Notion / 话术要点（产品可落文案）
 
-> 反思时**不得跨造通道**：例如不得把失败的 mcp 名改写成未授权的新 mcp 名；只能选白名单里已有项。
+| 触发 | 给模型的 notion 意图 | 用户侧期望 |
+|------|----------------------|------------|
+| 不在 Skill 工具集 | 指出非法工具名；列出/强调 Skill 内可用工具；请改调 | 尽量无感完成或短澄清 |
+| 端返回工具不存在 | 明确**不要再换工具重试**；请用融合答说明**当前版本不支持**并给可执行建议 | 友好、可理解、立即收口 |
 
-### 4.2 防 Loop 硬约束（Runtime）
-
-| 规则 | 建议默认 |
-|------|----------|
-| 单次用户请求、同一 Skill 内 `TOOL_NOT_FOUND` 反思次数 | **1**（全局硬顶 2） |
-| 连续两次点名不在 `allowed_tools` | 立即 `speak_and_end`，不再问模型 |
-| 反思轮次中禁止扩大工具集 | 只能用本 Skill `allowed_tools` |
-| 总工具调用步数 | 沿用现有 step budget；`TOOL_NOT_FOUND` 计入步数 |
-| 日志 | 记录 `requested`、是否预检拦截、反思次数、最终是否话术收口 |
-
-### 4.3 与“能力不匹配”的分工
-
-| 场景 | 处理 |
-|------|------|
-| Skill 未 Gate 住、工具本机无 | 更应走 `TOOL_UNAVAILABLE` / Compat；话术可引导升级 |
-| 模型编造从未登记的名字 | `TOOL_NOT_FOUND` + 反思/话术 |
-| 模型把 A 写成近似名 B | `TOOL_NOT_FOUND` + `suggestions` 辅助一次纠错 |
+（具体话术由产品提供；平台可配默认 + Skill 覆盖。）
 
 ---
 
-## 五、通道感知预检（强烈建议）
+## 七、过点清单（建议）
 
-```text
-resolve(tool_call):
-  kind = tool_call.kind   # intent | cli | mcp | ...
-  if kind not in supported:              return TOOL_NOT_FOUND
-  if not in skill.allowed(kind, name):   return TOOL_NOT_FOUND
+**修改一（过点必须）：**
 
-  switch kind:
-    intent:
-      if not in ToMP.intent:             return TOOL_NOT_FOUND
-      if not in device.capabilities:     return TOOL_UNAVAILABLE
-      dispatch → device intent runtime
-    cli:
-      if not in ToMP.cli:                return TOOL_NOT_FOUND
-      if not in device.cli_caps:         return TOOL_UNAVAILABLE
-      dispatch → device CLI runtime
-    mcp:
-      if server not mounted in session:  return TOOL_UNAVAILABLE
-      if tool not in session.list_tools: return TOOL_NOT_FOUND
-      if not authorized:                 return TOOL_UNAVAILABLE
-      dispatch → cloud MCP gateway
+- [ ] DM：Skill 工具集校验（①幻觉换工具）——已支持，回归确认  
+- [ ] DM：端「工具不存在」→ 不重试 + notion 引导（②场景1）——待开发/联调  
+- [ ] 端：意图「工具不存在」与参数错误可区分上报  
+- [ ] CLI / ArkTS 错误码与 DM 映射联调通过  
 
-  validate schema → TOOL_SCHEMA_INVALID if fail
-```
+**修改二（不阻塞）：**
 
-预检失败与执行器失败都走同一套 `exception_handlers` + 反思策略；`source` / `tool.kind` 用于监控与（可选）话术分流。
----
+- [ ] 沿用已支持的 ROM 小版本 / 黑白名单配置作兜底  
 
-## 六、监控与治理
+**进一步（排期）：**
 
-| 指标 | 用途 |
-|------|------|
-| `tool_not_found_rate`（按 Skill / 模型） | 发现幻觉热点、Skill 描述不清 |
-| `precheck_catch_ratio` | 预检是否挡住端空跑 |
-| `reflect_success_rate` | 反思是否值得保留 |
-| `exhaust_utterance_rate` | 最终靠产品话术收口占比 |
-| Top `requested` 幻觉名 | 反哺 Skill 文档 / 别名表 / 训练 |
-
-可选：对高频幻觉别名建 **tool alias → 正式 tool_id**（平台配置，慎用，避免掩盖 Skill 质量问题）。
+- [ ] Router 端/云 invoke 前支持性检查  
+- [ ] 封装工具平台化按需配置  
 
 ---
 
-## 七、分工
+## 八、一句话
 
-| 角色 | 职责 |
-|------|------|
-| 产品 | 提供默认/`by_kind` 的 `TOOL_NOT_FOUND` 话术 |
-| 端（意图 / CLI） | 不存在时返回明确码或可映射码 |
-| 云 MCP Gateway | 将 unknown tool / 未挂载映射为统一错误契约 |
-| 云 Runtime | 通道感知预检、反思轮次、话术收口 |
-| Skill 作者 | `allowed_tools` 含 kind；异常 SOP |
-| ToMP | intent/cli/mcp（及 arkts）统一登记与扫描 |
-| 模型侧 | 遵守白名单；禁止白名单外造工具名 |
-
----
-
-## 八、验收标准
-
-1. **intent / cli / mcp** 任一通道出现瞎生成工具名时，均能产出稳定 `error_code=TOOL_NOT_FOUND`（含 kind/source）。  
-2. Skill（或全局默认）有产品话术；用尽反思后用户收到话术并结束，无空转 Loop。  
-3. 反思能拿到带 kind 的 `allowed_tools`；Runtime 拒绝白名单外二次幻觉。  
-4. MCP 以会话实际 `list_tools` 预检；监控可区分通道与预检/执行来源。
-
----
-
-## 九、与配套治理文档的关系
-
-- 配套/版本问题：解决「该不该有这个工具」。  
-- 本文：解决「模型仍点了不存在工具时怎么标识、纠错、收口」——**对意图、CLI、MCP 一视同仁**。  
-- 二者互补：Gate/目录降低概率；本机制兜住剩余幻觉与体验。
+> **先看在不在 Skill 里：不在 → 幻觉，让模型换工具；在 → 才下发。端说没有 → 就是当前版本不支持，不重试，友好引导收口。** ROM 小版本配 Skill 作平台兜底，已支持且不挡修改一过点。

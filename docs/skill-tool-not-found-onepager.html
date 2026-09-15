@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TOOL_NOT_FOUND · 幻觉调用处理一页说明</title>
+  <title>工具调用异常处理 · 一页说明</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -18,6 +18,8 @@
       --hard: #1e4d8c;
       --warn: #9a5b00;
       --warn-soft: #fff4e5;
+      --danger: #8b2942;
+      --danger-soft: #fceef1;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -27,109 +29,144 @@
         radial-gradient(800px 400px at 0% 0%, #dce9f5 0%, transparent 55%),
         radial-gradient(600px 320px at 100% 10%, #d9efe6 0%, transparent 50%),
         var(--bg);
-      line-height: 1.55;
+      line-height: 1.5;
       min-height: 100vh;
     }
-    .page { max-width: 920px; margin: 0 auto; padding: 40px 24px 56px; }
+    .page { max-width: 960px; margin: 0 auto; padding: 36px 22px 48px; }
     .eyebrow {
       font-family: "DM Sans", sans-serif;
       font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--accent); font-weight: 600; margin-bottom: 8px;
     }
-    h1 { font-size: clamp(24px, 4vw, 32px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; }
-    .lead { margin-top: 10px; color: var(--muted); font-size: 15px; max-width: 42em; }
+    h1 { font-size: clamp(22px, 3.6vw, 30px); font-weight: 700; letter-spacing: -0.02em; }
+    .lead { margin-top: 8px; color: var(--muted); font-size: 14px; max-width: 46em; }
     section {
-      margin-top: 16px; background: rgba(255,255,255,.9); border: 1px solid var(--line);
-      border-radius: 14px; padding: 18px;
+      margin-top: 14px; background: rgba(255,255,255,.92); border: 1px solid var(--line);
+      border-radius: 12px; padding: 16px 16px 14px;
     }
-    h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
-    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; }
-    .chip {
-      border: 1px solid var(--line); background: #fff; padding: 8px 12px; border-radius: 10px; font-weight: 500;
+    h2 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+    .grid { display: grid; gap: 12px; }
+    @media (min-width: 800px) {
+      .grid.two { grid-template-columns: 1fr 1fr; }
+      .grid.three { grid-template-columns: 1.1fr 1fr 1fr; }
     }
-    .chip.hard { background: #eef4fb; color: var(--hard); border-color: #c5d6ea; }
-    .chip.warn { background: var(--warn-soft); color: var(--warn); border-color: #f0d7a8; }
-    .chip.ok { background: var(--accent-soft); color: var(--accent); border-color: #b7dccb; }
-    .arrow { color: var(--muted); }
-    ul { list-style: none; display: grid; gap: 8px; font-size: 13.5px; }
-    li { padding-left: 14px; position: relative; }
+    ul { list-style: none; display: grid; gap: 6px; font-size: 13px; }
+    li { padding-left: 12px; position: relative; }
     li::before {
-      content: ""; position: absolute; left: 0; top: .55em; width: 6px; height: 6px;
-      border-radius: 50%; background: var(--accent); opacity: .7;
+      content: ""; position: absolute; left: 0; top: .55em; width: 5px; height: 5px;
+      border-radius: 50%; background: var(--accent); opacity: .75;
     }
-    .grid { display: grid; gap: 16px; }
-    @media (min-width: 780px) { .grid.two { grid-template-columns: 1fr 1fr; } }
-    code {
-      font-family: "DM Sans", ui-monospace, monospace; font-size: 12.5px;
-      background: #eef2f7; padding: 1px 6px; border-radius: 4px;
+    .tag {
+      display: inline-block; font-family: "DM Sans", sans-serif; font-size: 11px; font-weight: 600;
+      padding: 2px 7px; border-radius: 5px; margin-right: 4px;
     }
+    .tag.ok { background: var(--accent-soft); color: var(--accent); }
+    .tag.warn { background: var(--warn-soft); color: var(--warn); }
+    .tag.hard { background: #eef4fb; color: var(--hard); }
+    .tag.bad { background: var(--danger-soft); color: var(--danger); }
+    .flow-box {
+      display: grid; gap: 8px; font-size: 12.5px;
+    }
+    .step {
+      display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: start;
+      padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
+    }
+    .step b {
+      font-family: "DM Sans", sans-serif; font-size: 11px; color: var(--hard);
+      background: #eef4fb; padding: 4px 0; text-align: center; border-radius: 6px;
+    }
+    .branch {
+      display: grid; gap: 8px; margin-top: 8px;
+    }
+    @media (min-width: 700px) {
+      .branch { grid-template-columns: 1fr 1fr; }
+    }
+    .card {
+      border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #fff; font-size: 12.5px;
+    }
+    .card h3 { font-size: 12px; margin-bottom: 6px; }
     .note {
-      margin-top: 16px; padding: 14px 16px; border-left: 3px solid var(--accent);
-      background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 14px;
+      margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--accent);
+      background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 13px;
     }
-    footer { margin-top: 16px; font-size: 12px; color: var(--muted); }
+    footer { margin-top: 14px; font-size: 12px; color: var(--muted); }
+    code { font-family: "DM Sans", monospace; font-size: 12px; background: #eef2f7; padding: 0 5px; border-radius: 4px; }
   </style>
 </head>
 <body>
   <div class="page">
-    <div class="eyebrow">Intent · CLI · MCP · Reflect</div>
-    <h1>找不到工具时怎么处理</h1>
-    <p class="lead">端意图、端 CLI、云 MCP 幻觉乱调时走同一套：统一错误码 → 有限反思 → 产品话术收口。差异只在谁解析、谁执行。</p>
-
-    <section>
-      <h2>主流程（全通道同一套）</h2>
-      <div class="flow">
-        <span class="chip">tool_call</span>
-        <span class="arrow">→</span>
-        <span class="chip hard">按 kind 预检</span>
-        <span class="arrow">→</span>
-        <span class="chip">执行器</span>
-        <span class="arrow">→</span>
-        <span class="chip warn">TOOL_NOT_FOUND</span>
-        <span class="arrow">→</span>
-        <span class="chip">反思 ≤1</span>
-        <span class="arrow">→</span>
-        <span class="chip ok">产品话术结束</span>
-      </div>
-      <ul>
-        <li><strong>包含</strong> intent / cli / mcp（及 arkts）：上层策略相同，不是只覆盖意图工具</li>
-        <li>统一 <code>error_code=TOOL_NOT_FOUND</code>，回传带 kind 的 <code>allowed_tools</code></li>
-        <li>超次或再次白名单外点名 → 立即话术收口，禁止 Loop</li>
-      </ul>
-    </section>
+    <div class="eyebrow">DM · Runtime · Device Error Codes</div>
+    <h1>工具调用异常处理 · 一页说明</h1>
+    <p class="lead">先判是否在 Skill 工具集：幻觉可换工具；在集内但端不存在则不重试，友好引导「当前版本不支持」。ROM 小版本配 Skill 作兜底，不挡过点。</p>
 
     <div class="grid two">
       <section>
-        <h2>分通道谁判“不存在”</h2>
+        <h2>现状</h2>
         <ul>
-          <li><code>intent</code>：ToMP ∩ 端能力 → <strong>端</strong>执行器</li>
-          <li><code>cli</code>：CLI 目录 ∩ 端能力 → <strong>端 CLI</strong></li>
-          <li><code>mcp</code>：会话 list_tools ∩ 授权 → <strong>云 Gateway</strong></li>
-          <li>MCP 未挂载/断开 → 宜用 <code>TOOL_UNAVAILABLE</code></li>
+          <li>意图不存在：<code>-304 invalid_intent_error</code>（名/参是否混报待确认，需端区分）</li>
+          <li>CLI / ArkTS：已支持返回「工具不存在」类错误码</li>
+          <li>封装工具：按需平台配置（后续）</li>
         </ul>
       </section>
       <section>
-        <h2>Skill / 产品要配的</h2>
+        <h2>两个场景</h2>
         <ul>
-          <li>默认话术可覆盖全通道；可选 <code>by_kind</code></li>
-          <li><code>allowed_tools</code> 标明 kind（及 mcp server）</li>
-          <li><code>max_reflect_rounds</code> 默认 1（硬顶 ≤2）</li>
-          <li>SOP：只许改调白名单，禁止再造工具名</li>
+          <li><span class="tag warn">场景2</span>Skill 无该工具 → <strong>模型幻觉</strong> → 提示换工具（已支持）</li>
+          <li><span class="tag bad">场景1</span>Skill 有、端无 → <strong>版本不支持</strong> → <strong>不重试</strong> + 友好引导</li>
         </ul>
       </section>
     </div>
 
     <section>
-      <h2>和「工具不可用」区分</h2>
-      <ul>
-        <li><code>TOOL_NOT_FOUND</code>：名字就不存在（幻觉/写错）→ 反思或话术</li>
-        <li><code>TOOL_UNAVAILABLE</code>：工具有，但当前不可用（端裁剪 / MCP 未连接）→ 引导或降级</li>
-        <li><code>TOOL_SCHEMA_INVALID</code>：工具有，参数错 → 按 schema 纠错</li>
-      </ul>
+      <h2>修改一流程（单 Skill 收编 · DM 校验）</h2>
+      <div class="flow-box">
+        <div class="step">
+          <b>Step1</b>
+          <div>模型生成 tool_call → DM 判断是否在 Skill 工具集内：<strong>有则下发端</strong>；<strong>无则</strong> Load Skill + notion，让模型换工具。</div>
+        </div>
+        <div class="step">
+          <b>Step2</b>
+          <div>端执行并返回结果；若不支持该工具，返回明确「工具不存在」错误码。</div>
+        </div>
+        <div class="step">
+          <b>Step3</b>
+          <div>DM 按错误码追加 notion → 提示模型做用户引导（例：当前版本不支持）+ 融合答；<strong>不再换工具重试</strong>。</div>
+        </div>
+      </div>
+      <div class="branch">
+        <div class="card">
+          <h3><span class="tag warn">① 不在工具集</span>幻觉</h3>
+          notion：换 Skill 内工具 → 可有限次再决策（已支持）
+        </div>
+        <div class="card">
+          <h3><span class="tag bad">② 在集内·端不存在</span></h3>
+          notion：当前版本不支持 → 友好答复收口，禁止空转
+        </div>
+      </div>
     </section>
 
+    <div class="grid two">
+      <section>
+        <h2>修改二 · 平台兜底</h2>
+        <ul>
+          <li>按 ROM <strong>小版本</strong>配置对应 Skill（已支持）</li>
+          <li>原则：小版本不支持多 Skill；大版本才支持多 Skill</li>
+          <li>不便比大小时：黑白名单</li>
+          <li><span class="tag ok">节奏</span>先走修改一过点，不阻塞</li>
+        </ul>
+      </section>
+      <section>
+        <h2>进一步 · 待定</h2>
+        <ul>
+          <li>Router（端/云 invoke）执行前查是否支持</li>
+          <li>意图框架新增「工具不存在」错误码</li>
+          <li>CLI/ArkTS 对齐 DM；封装工具平台化</li>
+        </ul>
+      </section>
+    </div>
+
     <div class="note">
-      <strong>要点：</strong>通道不同，契约相同；标识可分支；话术产品提供；反思有预算；收口必须结束本轮。
+      <strong>一句话：</strong>不在 Skill 里 → 幻觉，换工具；在 Skill 里但端说没有 → 当前版本不支持，不重试，把用户说明白。
     </div>
     <footer>详见 docs/skill-tool-not-found-handling.md</footer>
   </div>
