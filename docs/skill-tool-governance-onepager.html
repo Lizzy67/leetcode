@@ -354,22 +354,40 @@
       </section>
     </div>
 
+    <section style="margin-bottom: 16px;">
+      <h2><span class="n">7</span>工具幻觉：找不到工具时</h2>
+      <div class="flow" style="margin-bottom: 12px;">
+        <span class="chip">模型乱调 tool</span>
+        <span class="arrow">→</span>
+        <span class="chip hard">TOOL_NOT_FOUND</span>
+        <span class="arrow">→</span>
+        <span class="chip soft">反思≤1次</span>
+        <span class="arrow">→</span>
+        <span class="chip ok">产品话术收口</span>
+      </div>
+      <ul>
+        <li>端/云统一错误码 <strong>TOOL_NOT_FOUND</strong>，并回传本 Skill 允许工具列表</li>
+        <li>Skill 配产品话术；用尽反思后播报并结束，禁止空转 Loop</li>
+        <li>下发前云侧预检：白名单 ∩ 端能力 ∩ ToMP</li>
+      </ul>
+    </section>
+
     <section>
-      <h2><span class="n">7</span>落地节奏</h2>
+      <h2><span class="n">8</span>落地节奏</h2>
       <div class="phases">
         <div class="phase"><b>P0</b><span>发规范：三层配置 + Tool 冻结 + 拒答不 Loop</span></div>
-        <div class="phase"><b>P1</b><span>requires + capabilities + skillGate Compat；Release 放量拆出</span></div>
+        <div class="phase"><b>P1</b><span>requires + capabilities + Gate；Release 放量；TOOL_NOT_FOUND + 话术/反思</span></div>
         <div class="phase"><b>P2</b><span>ToMP 最小闭环 + ArkTS 收编 + 多版本 fallback</span></div>
         <div class="phase"><b>P3</b><span>Tool 补 ROM/App 元数据 → 推导生效范围 → 退役人肉表</span></div>
       </div>
     </section>
 
     <div class="note">
-      <strong>总纲：</strong>Skill 依赖 Tool，Gate 按端能力匹配；灰度走 Release；工具平台管契约与变更联动。人肉 Skill×ROM 配套表退出主路径。
+      <strong>总纲：</strong>Skill 依赖 Tool，Gate 按端能力匹配；灰度走 Release；找不到工具用统一错误码 + 产品话术 + 有限反思收口。人肉 Skill×ROM 配套表退出主路径。
     </div>
 
     <footer>
-      详见 docs/skill-tool-governance-spec.md
+      详见 docs/skill-tool-governance-spec.md · docs/skill-tool-not-found-handling.md
     </footer>
   </div>
 </body>
