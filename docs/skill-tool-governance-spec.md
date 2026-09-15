@@ -596,12 +596,13 @@ Gate: peer 也必须可被 load
 
 ## 十五、工具幻觉 / 端不存在调用兜底（摘要）
 
-单 Skill 收编下 DM 两分支（详见 [skill-tool-not-found-handling.md](./skill-tool-not-found-handling.md)）：
+单 Skill 收编下 DM 两原则（详见 [skill-tool-not-found-handling.md](./skill-tool-not-found-handling.md)）：
 
-1. **不在 Skill 工具集** → 模型幻觉 → notion 让模型换白名单内工具（已支持）。  
-2. **在 Skill 工具集，但端报工具不存在** → **不重试** → notion 引导「当前版本不支持」+ 融合答。  
-3. 意图 `-304` 需与参数错误区分；CLI/ArkTS 已有错误码，对齐 DM。  
-4. 平台按 ROM 小版本配 Skill 作兜底（已支持，不挡修改一过点）。
+1. **原则①** 不在 Skill 工具集 → 模型幻觉 → 重新 Load Skill + notion 提示换工具（已支持）。  
+2. **原则②** 在 Skill 工具集，但端报工具不存在 → **不重试** → 追加 notion 引导友好答复（如当前版本不支持）。  
+3. 意图框架端工具需新增「工具不存在」错误码；CLI 已支持。  
+4. **原则③** 平台仅按 ROM 大版本配 Skill；小版本靠版本白名单快速干预（已支持，不阻塞过点）。  
+5. 后续：封装工具 / CLI / MCP 按版本在平台配置管理，供 DM 执行前检查。
 
 ---
 

@@ -116,8 +116,8 @@
 <body>
   <div class="page">
     <div class="eyebrow">DM · Runtime · Device</div>
-    <h1>工具调用异常处理 · 流程图</h1>
-    <p class="lead">模型按 Skill 调度工具时，可能幻觉出工具集外的名称，或调用了 Skill 有、但当前端版本不存在的工具。DM 先校验工具集，再按端错误码分流：幻觉可换工具；端不存在则不重试并友好引导。</p>
+    <h1>工具调用异常处理方案</h1>
+    <p class="lead">语音助手按 Skill 调度工具时，模型可能生成不存在或不匹配端侧能力的工具调用：一类是<strong>模型幻觉</strong>（工具集之外的名字），一类是<strong>版本 / 端能力缺口</strong>（Skill 有声明，当前 ROM / 应用上不存在）。DM 先校验工具集，再按端错误码分流。</p>
 
     <section>
       <h2>主流程</h2>
@@ -195,12 +195,12 @@
             <text x="300" y="256" class="n-text">工具集内？</text>
 
             <rect x="420" y="218" width="170" height="54" rx="10" class="n-warn" />
-            <text x="505" y="238" class="n-text">Load Skill + notion</text>
-            <text x="505" y="256" class="n-text n-sub">提示从工具集内换工具</text>
+            <text x="505" y="238" class="n-text">重新 Load Skill + notion</text>
+            <text x="505" y="256" class="n-text n-sub">提示模型换个工具</text>
 
             <rect x="640" y="214" width="230" height="62" rx="14" class="n-bad" />
             <text x="755" y="237" class="n-text">DM 追加 notion</text>
-            <text x="755" y="257" class="n-text n-sub">提示用户当前版本不支持，结束</text>
+            <text x="755" y="257" class="n-text n-sub">引导模型友好答复：当前版本不支持</text>
           </g>
 
           <!-- 节点：端 -->
@@ -221,60 +221,61 @@
           <!-- 场景标注 -->
           <g class="scene">
             <rect x="420" y="196" width="60" height="16" rx="8" fill="#c98500" />
-            <text x="450" y="204" text-anchor="middle" dominant-baseline="middle" fill="#fff">场景 2</text>
+            <text x="450" y="204" text-anchor="middle" dominant-baseline="middle" fill="#fff">原则 ①</text>
             <rect x="640" y="192" width="60" height="16" rx="8" fill="#8b2942" />
-            <text x="670" y="200" text-anchor="middle" dominant-baseline="middle" fill="#fff">场景 1</text>
+            <text x="670" y="200" text-anchor="middle" dominant-baseline="middle" fill="#fff">原则 ②</text>
           </g>
         </svg>
       </div>
       <div class="legend">
-        <span><i class="dot s2"></i>场景2：Skill 无 → 幻觉，可换工具</span>
-        <span><i class="dot s1"></i>场景1：Skill 有、端无 → 不重试</span>
+        <span><i class="dot s2"></i>原则①：不在 Skill 工具集 → 幻觉 → 提示换工具（已支持）</span>
+        <span><i class="dot s1"></i>原则②：在工具集、端报不存在 → 不重试 → 友好答复</span>
         <span><i class="dot ok"></i>成功 / 正常收口</span>
       </div>
     </section>
 
     <section>
-      <h2>与纪要对齐的三步</h2>
+      <h2>方案一：单 Skill 收编（Runtime / DM 执行前校验）</h2>
       <div class="steps">
         <div class="step">
           <b>Step1</b>
-          <div>DM 判断是否在 Skill 工具集：有则下发端；无则 Load Skill + notion 让模型换工具</div>
-          <span class="owner">@夏捷</span>
+          <div>DM 判断工具是否在 Skill 工具集：有则下发端；无则重新 Load Skill + notion，提示模型换个工具</div>
+          <span class="owner">DM</span>
         </div>
         <div class="step">
           <b>Step2</b>
-          <div>端返回不支持/工具不存在错误码（意图框架需新增「工具不存在」错误码）</div>
-          <span class="owner">@李伟峰</span>
+          <div>收到执行指令后，端返回不支持 / 工具不存在错误码（意图框架端工具需新增「工具不存在」错误码；CLI 已支持）</div>
+          <span class="owner">端</span>
         </div>
         <div class="step">
           <b>Step3</b>
-          <div>DM 按错误码追加 notion，引导模型说明「当前版本不支持」等（场景1 不重试）</div>
-          <span class="owner">@夏捷</span>
+          <div>DM 收到端返回的错误码后追加 notion，引导模型做友好答复</div>
+          <span class="owner">DM</span>
         </div>
       </div>
     </section>
 
     <div class="grid two">
       <section>
-        <h2>现状</h2>
+        <h2>方案二：平台兜底（不阻塞过点）</h2>
         <ul>
-          <li>CLI &amp; ArkTS 已支持上报「工具不存在」错误码</li>
-          <li>IDS 已支持查询应用级意图框架接口能力是否存在</li>
+          <li><span class="tag ok">原则③</span>仅按 ROM <strong>大版本</strong>配置 Skill</li>
+          <li>需要快速干预时才用<strong>白名单</strong></li>
+          <li>平台已支持 Skill 配置版本白名单，支撑 ROM 小版本场景</li>
         </ul>
       </section>
       <section>
-        <h2>结论</h2>
+        <h2>后续（待定）</h2>
         <ul>
-          <li><span class="tag warn">场景2</span>幻觉 → 换工具（已支持）</li>
-          <li><span class="tag bad">场景1</span>端不存在 → 不重试 + 友好引导</li>
-          <li>ROM 小版本配 Skill 作兜底，不挡过点</li>
+          <li>意图框架工具已可在 IDS 查询端版本是否具备该能力</li>
+          <li>小艺封装工具、CLI、MCP 等按需在平台基于版本配置管理</li>
+          <li>用于 DM 执行工具调度前检查工具是否存在（前移拦截）</li>
         </ul>
       </section>
     </div>
 
     <div class="note">
-      <strong>一句话：</strong>先看在不在 Skill 里——不在就换工具；在但端说没有，就是当前版本不支持，说明白就结束，别空转。
+      <strong>一句话：</strong>不在 Skill 工具集就提示换工具；在工具集但端报不存在就不重试，按错误码友好答复「当前版本不支持」。
     </div>
     <footer>docs/skill-tool-not-found-meeting-onepager.html</footer>
   </div>
