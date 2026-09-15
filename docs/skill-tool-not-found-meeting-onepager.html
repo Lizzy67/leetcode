@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>工具调用异常处理 · 会议纪要一页</title>
+  <title>工具调用异常处理 · 流程与纪要</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
     :root {
       --ink: #1a2332;
@@ -32,19 +33,36 @@
       line-height: 1.5;
       min-height: 100vh;
     }
-    .page { max-width: 960px; margin: 0 auto; padding: 36px 22px 48px; }
+    .page { max-width: 980px; margin: 0 auto; padding: 36px 22px 48px; }
     .eyebrow {
       font-family: "DM Sans", sans-serif;
       font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--accent); font-weight: 600; margin-bottom: 8px;
     }
     h1 { font-size: clamp(22px, 3.6vw, 30px); font-weight: 700; letter-spacing: -0.02em; }
-    .lead { margin-top: 8px; color: var(--muted); font-size: 14px; max-width: 46em; }
+    .lead { margin-top: 8px; color: var(--muted); font-size: 14px; max-width: 48em; }
     section {
-      margin-top: 14px; background: rgba(255,255,255,.92); border: 1px solid var(--line);
-      border-radius: 12px; padding: 16px;
+      margin-top: 14px; background: rgba(255,255,255,.94); border: 1px solid var(--line);
+      border-radius: 12px; padding: 16px 18px;
     }
-    h2 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+    h2 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+    .flow-wrap {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 8px 4px;
+      overflow-x: auto;
+    }
+    .mermaid { display: flex; justify-content: center; }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px 16px;
+      margin-top: 12px; font-size: 12px; color: var(--muted);
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+    .dot.s2 { background: #c98500; }
+    .dot.s1 { background: #8b2942; }
+    .dot.ok { background: #0b6e4f; }
     .grid { display: grid; gap: 12px; }
     @media (min-width: 800px) {
       .grid.two { grid-template-columns: 1fr 1fr; }
@@ -61,9 +79,8 @@
     }
     .tag.ok { background: var(--accent-soft); color: var(--accent); }
     .tag.warn { background: var(--warn-soft); color: var(--warn); }
-    .tag.hard { background: #eef4fb; color: var(--hard); }
     .tag.bad { background: var(--danger-soft); color: var(--danger); }
-    .steps { display: grid; gap: 8px; }
+    .steps { display: grid; gap: 8px; margin-top: 4px; }
     .step {
       display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: start;
       padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
@@ -77,57 +94,57 @@
       font-family: "DM Sans", sans-serif; font-size: 11px; color: var(--muted);
       white-space: nowrap; padding-top: 2px;
     }
-    .branch { display: grid; gap: 8px; margin-top: 10px; }
-    @media (min-width: 700px) { .branch { grid-template-columns: 1fr 1fr; } }
-    .card {
-      border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #fff; font-size: 12.5px;
-    }
-    .card h3 { font-size: 12px; margin-bottom: 6px; }
     .note {
       margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--accent);
       background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 13px;
     }
     footer { margin-top: 14px; font-size: 12px; color: var(--muted); }
-    .meta { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .meta { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
   </style>
 </head>
 <body>
   <div class="page">
-    <div class="eyebrow">Meeting Notes · Tool Call Exception</div>
-    <h1>工具幻觉 / 端不存在 · 会议纪要</h1>
-    <p class="lead">先保证：幻觉可换工具；端不存在不重试并友好引导。ROM 小版本配 Skill 作已有兜底，不挡过点。</p>
-
-    <div class="grid two">
-      <section>
-        <h2>现状</h2>
-        <ul>
-          <li>CLI &amp; ArkTS 已支持上报「工具不存在」错误码</li>
-          <li>IDS 已支持查询判断<strong>应用级意图框架接口能力</strong>是否存在</li>
-        </ul>
-      </section>
-      <section>
-        <h2>场景划分</h2>
-        <ul>
-          <li><span class="tag bad">场景1</span>Skill 有、端没有 → 当前版本不支持</li>
-          <li><span class="tag warn">场景2</span>Skill 无、模型幻觉 → 非法工具调用</li>
-        </ul>
-      </section>
-    </div>
+    <div class="eyebrow">DM · Runtime · Device</div>
+    <h1>工具调用异常处理 · 流程图</h1>
+    <p class="lead">模型按 Skill 调度工具时，可能幻觉出工具集外的名称，或调用了 Skill 有、但当前端版本不存在的工具。DM 先校验工具集，再按端错误码分流：幻觉可换工具；端不存在则不重试并友好引导。</p>
 
     <section>
-      <h2>修改一：单 Skill 收编（Runtime / DM 执行前校验）</h2>
-      <p class="meta">责任：@Liweifeng @xiajie(D) · 遗留开发计划 @caohui @Tangjishan</p>
-      <div class="branch">
-        <div class="card">
-          <h3><span class="tag warn">① 不在工具集</span>幻觉</h3>
-          提示模型换工具 — <span class="tag ok">已支持</span>
-        </div>
-        <div class="card">
-          <h3><span class="tag bad">② 在集内 · 端不存在</span></h3>
-          <strong>不重试</strong>；友好答复（当前版本不支持）+ 融合答引导
-        </div>
+      <h2>主流程</h2>
+      <div class="flow-wrap">
+        <pre class="mermaid">
+flowchart TD
+  A[模型生成 tool_call] --> B{DM：工具是否在<br/>当前 Skill 工具集内？}
+
+  B -->|否 · 场景2 幻觉| C[Load Skill + notion 给模型<br/>提示从工具集内换工具]
+  C --> D{模型再决策}
+  D -->|改调合法工具| B
+  D -->|放弃 / 超次| E[产品话术收口结束]
+
+  B -->|是| F[下发端执行]
+  F --> G{端返回结果}
+
+  G -->|成功| H[继续 Skill 流程]
+  G -->|工具不存在错误码<br/>场景1| I[DM 追加 notion<br/>当前版本不支持 + 融合答引导]
+  I --> J[不重试换工具 · 用户侧收口]
+  G -->|参数错误等其它码| K[按其它错误策略处理]
+
+  style C fill:#fff4e5,stroke:#9a5b00,color:#1a2332
+  style I fill:#fceef1,stroke:#8b2942,color:#1a2332
+  style J fill:#fceef1,stroke:#8b2942,color:#1a2332
+  style H fill:#e6f4ef,stroke:#0b6e4f,color:#1a2332
+  style E fill:#e6f4ef,stroke:#0b6e4f,color:#1a2332
+        </pre>
       </div>
-      <div class="steps" style="margin-top: 12px;">
+      <div class="legend">
+        <span><i class="dot s2"></i>场景2：Skill 无 → 幻觉，可换工具</span>
+        <span><i class="dot s1"></i>场景1：Skill 有、端无 → 不重试</span>
+        <span><i class="dot ok"></i>成功 / 正常收口</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>与纪要对齐的三步</h2>
+      <div class="steps">
         <div class="step">
           <b>Step1</b>
           <div>DM 判断是否在 Skill 工具集：有则下发端；无则 Load Skill + notion 让模型换工具</div>
@@ -135,12 +152,12 @@
         </div>
         <div class="step">
           <b>Step2</b>
-          <div>端返回不支持/工具不存在错误码（意图框架需<strong>新增「工具不存在」错误码</strong>）</div>
+          <div>端返回不支持/工具不存在错误码（意图框架需新增「工具不存在」错误码）</div>
           <span class="owner">@李伟峰</span>
         </div>
         <div class="step">
           <b>Step3</b>
-          <div>DM 按错误码追加 notion，引导模型做用户说明（如当前版本不支持）</div>
+          <div>DM 按错误码追加 notion，引导模型说明「当前版本不支持」等（场景1 不重试）</div>
           <span class="owner">@夏捷</span>
         </div>
       </div>
@@ -148,27 +165,44 @@
 
     <div class="grid two">
       <section>
-        <h2>修改二：平台兜底</h2>
-        <p class="meta">责任：@尹龙 · 先按该方案，不阻塞过点</p>
+        <h2>现状</h2>
         <ul>
-          <li>按 ROM <strong>小版本</strong>配置 Skill — <span class="tag ok">已支持</span></li>
-          <li>原则：小版本不支持多 Skill；仅大版本支持多 Skill</li>
-          <li>快速干预时用<strong>白名单</strong></li>
+          <li>CLI &amp; ArkTS 已支持上报「工具不存在」错误码</li>
+          <li>IDS 已支持查询应用级意图框架接口能力是否存在</li>
         </ul>
       </section>
       <section>
-        <h2>进一步（待定）</h2>
+        <h2>结论</h2>
         <ul>
-          <li>DM router（端/云 invoke）执行前检查是否支持（可查意图框架）— @夏捷、@李阜</li>
-          <li>小艺封装工具：按需平台配置 — @张慧</li>
+          <li><span class="tag warn">场景2</span>幻觉 → 换工具（已支持）</li>
+          <li><span class="tag bad">场景1</span>端不存在 → 不重试 + 友好引导</li>
+          <li>ROM 小版本配 Skill 作兜底，不挡过点</li>
         </ul>
       </section>
     </div>
 
     <div class="note">
-      <strong>结论：</strong>先落地「幻觉可换工具、端不存在不重试并友好引导」；意图错误码新增与 router 预检继续排期；ROM 小版本配 Skill 作已有兜底。
+      <strong>一句话：</strong>先看在不在 Skill 里——不在就换工具；在但端说没有，就是当前版本不支持，说明白就结束，别空转。
     </div>
-    <footer>会议纪要一页说明 · 可直接投屏 / 转发</footer>
+    <footer>docs/skill-tool-not-found-meeting-onepager.html</footer>
   </div>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      themeVariables: {
+        fontFamily: "Noto Sans SC, DM Sans, sans-serif",
+        fontSize: "14px",
+        primaryColor: "#eef4fb",
+        primaryTextColor: "#1a2332",
+        primaryBorderColor: "#1e4d8c",
+        lineColor: "#5a6577",
+        secondaryColor: "#e6f4ef",
+        tertiaryColor: "#f3f6fa",
+        edgeLabelBackground: "#ffffff"
+      },
+      flowchart: { curve: "basis", padding: 12, htmlLabels: true }
+    });
+  </script>
 </body>
 </html>
