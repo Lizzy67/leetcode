@@ -594,16 +594,14 @@ Gate: peer 也必须可被 load
 
 ---
 
-## 十五、工具幻觉调用兜底（摘要）
+## 十五、工具幻觉 / 端不存在调用兜底（摘要）
 
-模型可能编造不存在的 tool 并下发到端。配套 Gate 降低概率；剩余必须靠执行契约兜住：
+单 Skill 收编下 DM 两分支（详见 [skill-tool-not-found-handling.md](./skill-tool-not-found-handling.md)）：
 
-1. **统一标识：** `error_code=TOOL_NOT_FOUND`（云预检与端返回同语义）。  
-2. **Skill 配置：** 产品提供 `exception_handlers.TOOL_NOT_FOUND` 话术；上架可校验。  
-3. **有限反思：** 回传 `allowed_tools` / suggestions，默认反思 **1** 次，超限播报话术并结束，禁止 Loop。  
-4. **云侧预检：** 下发前校验 ∈ Skill 白名单 ∩ capabilities ∩ ToMP。
-
-详见：[skill-tool-not-found-handling.md](./skill-tool-not-found-handling.md)
+1. **不在 Skill 工具集** → 模型幻觉 → notion 让模型换白名单内工具（已支持）。  
+2. **在 Skill 工具集，但端报工具不存在** → **不重试** → notion 引导「当前版本不支持」+ 融合答。  
+3. 意图 `-304` 需与参数错误区分；CLI/ArkTS 已有错误码，对齐 DM。  
+4. 平台按 ROM 小版本配 Skill 作兜底（已支持，不挡修改一过点）。
 
 ---
 
@@ -612,6 +610,6 @@ Gate: peer 也必须可被 load
 **先** Skill 声明依赖 + 端能力门闩 + 独立放量，把配套从「人填 ROM」改为「运行时对齐」；  
 **再** 补齐工具平台元数据与变更管控，把生效范围收回自动推导；  
 **全程** 用 skillGate 保证不配套也可控（拒答 / 降级 / fallback，禁止长 Loop）；  
-**幻觉调用** 用统一 `TOOL_NOT_FOUND` + 产品话术 + 有限反思收口。
+**工具乱调** 按「是否在 Skill 集 / 端是否存在」分流：幻觉可换工具，端不存在则友好收口不重试。
 
 > 可以有配套关系，但消灭版本配套表的维护；出问题体验落在可接纳范围内；靠规则和自动化让人写对，而不是靠加人。
