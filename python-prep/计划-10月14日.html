@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>科目一保过计划 · 考到 10/14</title>
+  <style>
+    :root {
+      --bg: #f6f1e8;
+      --ink: #1c1915;
+      --muted: #5c564c;
+      --card: #fffdf8;
+      --line: #e2d8c8;
+      --today: #0f6b5c;
+      --today-soft: #d8f0ea;
+      --accent: #b45309;
+      --ok: #166534;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, #f0e2cc 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 100% 0%, #dceee8 0%, transparent 45%),
+        var(--bg);
+      line-height: 1.55;
+    }
+    main {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    h1 {
+      font-family: "IBM Plex Serif", "Noto Serif SC", serif;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-weight: 600;
+      margin: 0 0 0.35rem;
+      letter-spacing: -0.02em;
+    }
+    .sub {
+      color: var(--muted);
+      margin: 0 0 1.5rem;
+      font-size: 0.98rem;
+    }
+    .today {
+      background: var(--today-soft);
+      border: 2px solid var(--today);
+      border-radius: 14px;
+      padding: 1.25rem 1.35rem;
+      margin-bottom: 1.75rem;
+    }
+    .today .tag {
+      display: inline-block;
+      background: var(--today);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      margin-bottom: 0.6rem;
+    }
+    .today h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.25rem;
+      color: var(--today);
+    }
+    .today ol {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+    .today li { margin: 0.35rem 0; }
+    .today .path {
+      margin-top: 0.9rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    .principles, .week, .templates {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1.1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+    h3 {
+      margin: 0 0 0.7rem;
+      font-size: 1.05rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 0.55rem 0.4rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+    tr.today-row {
+      background: #eef8f5;
+      font-weight: 600;
+    }
+    tr.today-row td:first-child::before {
+      content: "▶ ";
+      color: var(--today);
+    }
+    ul { margin: 0.3rem 0 0; padding-left: 1.15rem; }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    .grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 720px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+    footer {
+      margin-top: 2rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    code {
+      background: #efe8db;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>科目一保过冲刺</h1>
+    <p class="sub">考试日 2026-10-14 · 今日起约 28 天 · 题型训练为主，不啃原题</p>
+
+    <section class="today" id="today">
+      <div class="tag">TODAY · 9/16 · Day 1</div>
+      <h2>今天做什么</h2>
+      <ol>
+        <li>打开 <code>python-prep/exam-drills/README.md</code>，看清 A/B/C 三类题型。</li>
+        <li>手写一个最小类，练熟 <code>__init__</code> 和实例属性（约 20 分钟）：</li>
+      </ol>
+      <pre style="background:#12352f;color:#e8fff8;padding:0.9rem 1rem;border-radius:10px;overflow:auto;font-size:0.85rem;">class Counter:
+    def __init__(self):
+        self.n = 0
+    def add(self, x):
+        self.n += x
+    def value(self):
+        return self.n
+
+c = Counter()
+c.add(3)
+print(c.value())  # 3</pre>
+      <ol start="3">
+        <li>若还有时间：预读 <code>A-类模拟.md</code> 里的 <strong>A1 停车场</strong>题面（明天正式限时写）。</li>
+        <li>打卡：在 <code>progress.md</code> 勾选 Day1。</li>
+      </ol>
+      <p class="path">路径：python-prep/exam-drills/　·　计划：04-十月十四保过计划.md</p>
+    </section>
+
+    <section class="principles">
+      <h3>总原则</h3>
+      <ul>
+        <li><strong>exam-drills 题型训练 = 主线</strong>，modules 语法题 = 补丁</li>
+        <li>每天必须写出能跑的代码</li>
+        <li>单题卡 40 分钟：看思路 → 合上重写</li>
+        <li>每周至少 1 场限时模考（最后两周每周 2 场）</li>
+        <li>工作日 1.5～2h，周末 3～4h</li>
+      </ul>
+    </section>
+
+    <section class="principles">
+      <h3>四周总览</h3>
+      <table>
+        <thead>
+          <tr><th>周次</th><th>日期</th><th>主题</th><th>目标</th></tr>
+        </thead>
+        <tbody>
+          <tr class="today-row"><td>第1周</td><td>9/16–9/22</td><td>题型锚定 A/B/C</td><td>类状态 + 窗口能写；迷你机入门</td></tr>
+          <tr><td>第2周</td><td>9/23–9/29</td><td>中等主干</td><td>数组/哈希/双指针独立写</td></tr>
+          <tr><td>第3周</td><td>9/30–10/6</td><td>搜索/树/入门DP</td><td>困难题会拿部分分</td></tr>
+          <tr><td>第4周</td><td>10/7–10/14</td><td>模考收束</td><td>节奏固定；10/13 停新题</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="week">
+      <h3>第1周日程（当前周）</h3>
+      <table>
+        <thead>
+          <tr><th>Day</th><th>日期</th><th>任务</th></tr>
+        </thead>
+        <tbody>
+          <tr class="today-row"><td>1</td><td>9/16</td><td>读 exam-drills；练类 __init__ 最小例子</td></tr>
+          <tr><td>2</td><td>9/17</td><td><strong>A1 停车场</strong>：限时写 → 对答案 → 重写</td></tr>
+          <tr><td>3</td><td>9/18</td><td><strong>B1 密集度</strong>：分段 + 滑动窗口</td></tr>
+          <tr><td>4</td><td>9/19</td><td>A2 限流 或 A3 分卷写入（先做一题）</td></tr>
+          <tr><td>5</td><td>9/20</td><td>做完另一题；复盘类状态怎么存</td></tr>
+          <tr><td>6</td><td>9/21</td><td><strong>C1 迷你机</strong> 样例1、2</td></tr>
+          <tr><td>7</td><td>9/22</td><td>模考A：限时 A1+B1+C1；复盘</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="grid grid-2">
+      <section class="week">
+        <h3>第2周 · 中等主干</h3>
+        <ul>
+          <li>Day8–9：数组 / 模拟 / 字符串</li>
+          <li>Day10–11：哈希</li>
+          <li>Day12–13：双指针 / 滑动窗口</li>
+          <li>Day14：模考B（2中+1稍难）</li>
+        </ul>
+      </section>
+      <section class="week">
+        <h3>第3周 · 拉开差距</h3>
+        <ul>
+          <li>Day15–16：BFS / DFS / 回溯</li>
+          <li>Day17–18：二叉树基础</li>
+          <li>Day19–20：入门 DP + 贪心</li>
+          <li>Day21：模考C（含1难）</li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="week">
+      <h3>第4周 · 考场化</h3>
+      <ul>
+        <li>Day22–23：只补模考弱项</li>
+        <li>Day24：模考D 全真 → Day25 复盘重写</li>
+        <li>Day26：模考E 全真</li>
+        <li>Day27：模板默写 + 轻量热手</li>
+        <li>Day28（10/13）：停新题，早睡</li>
+        <li>10/14 考试：先易后难，25–30 分钟换题</li>
+      </ul>
+    </section>
+
+    <section class="templates">
+      <h3>考前必会模板</h3>
+      <ul>
+        <li>一行多整数读入 / 多行读入</li>
+        <li>字典计数、两数之和</li>
+        <li>滑动窗口（无重复子串 / 定长最大和）</li>
+        <li>二分、BFS/DFS、简单 DP 壳子</li>
+        <li>类：<code>__init__</code> + 改状态的方法</li>
+        <li><code>int(hex_str, 16)</code> 拆字节（指令题）</li>
+      </ul>
+    </section>
+
+    <section class="principles">
+      <h3>训练题入口</h3>
+      <ul>
+        <li><code>exam-drills/A-类模拟.md</code> — 停车场 / 限流 / 分卷写入</li>
+        <li><code>exam-drills/B-数组窗口.md</code> — 密集度同构题</li>
+        <li><code>exam-drills/C-指令模拟.md</code> — 迷你机</li>
+        <li><code>exam-drills/题型训练-参考答案.md</code> — 先写再看</li>
+      </ul>
+    </section>
+
+    <footer>
+      打开方式：浏览器打开本文件即可。今天只完成 Day1，不要提前焦虑第4周。
+    </footer>
+  </main>
+</body>
+</html>
