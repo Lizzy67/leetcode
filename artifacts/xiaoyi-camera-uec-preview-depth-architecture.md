@@ -2,7 +2,8 @@
 
 > 用途：和相机 / HAL / 框架同事对齐架构与接口。  
 > 状态：讨论稿（含待拍板争议点）  
-> 范围：小艺 Tab 嵌入相机 App；预览流获取与三路分发；实时运动 meta；按需深度；拍摄取图。
+> 范围：小艺 Tab 嵌入相机 App；预览流获取（双 Surface）与分发；实时运动 meta；按需深度；拍摄取图。
+> 更新：HAL 侧确认显示路 Surface 由 RS 直接消费，应用层无处理机会，预览须配「显示 + 分析」两路 Output（见 2.0）。
 
 ---
 
@@ -45,17 +46,20 @@
 │   ┌─────────────────┐     预览 Buffer / Capture / Depth       │          │
 │   │   Camera HAL    │────────────────────────────────────────┘          │
 │   │  Sensor / ISP   │   （深度经 HDI 上行；应用不直连 HDI）                 │
-│   └─────────────────┘                                                    │
+│   └────────┬────────┘                                                    │
+│            │ 同一帧同时投两路 Output（timestamp 一致）                       │
+│            ├─► Surface A（显示路）──► RS 合成上屏（应用层不经手）             │
+│            └─► Surface B（分析路）──► 小艺进程消费者（ImageReceiver）        │
 └──────────────────────────────────────────────────────────────────────────┘
-                    │ surfaceId / Buffer / fd·handle / metadata
+                    │ surfaceId ×2 / Buffer / fd·handle / metadata
                     │（跨进程）
                     ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ 小艺 UEC 进程                                                              │
 │                                                                          │
-│   预览消费 ──┬──► 显示（fork 路①，是否 XComponent：待验证）                  │
-│             ├──► 感知 / 端侧大模型（路②，降频，稳定帧触发）                  │
-│             └──► AR 空间建模（路③，自有帧率/分辨率）                         │
+│   Surface A → 显示（XComponent 绑定；放宿主还是 UEC：争议 G）                │
+│   Surface B → 分析路消费 ──┬──► 感知 / 端侧大模型（降频，稳定帧触发）         │
+│                          └──► AR 空间建模（同进程分发；尺寸不同则第三路）     │
 │                                                                          │
 │   实时 motion meta ──► StableFrameDetector ──► 推理门控                    │
 │                                                                          │
@@ -63,6 +67,26 @@
 │                      └──► 分发服务 ──► 规则 ──► chips ──► 点击执行         │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
+
+### 2.0 为什么必须两个 Surface（HAL 侧结论）
+
+Surface 本质是**生产者 → 消费者的 Buffer 队列，且一个 Surface 只有一个消费者**。
+
+```text
+Camera HAL（生产者）──► Surface（BufferQueue）──► 唯一消费者
+```
+
+- 若 Surface 绑在 XComponent 上，消费者就是 **RS（Render Service）**：HAL flush 一帧 → RS 立刻 acquire 合成上屏 → release 还给 HAL。整条链路在 HAL 与 RS 之间闭环，**应用层不在队列上**，小艺既截不到 Buffer，也无法在 RS 之前插入处理。
+- 因此「一路预览、小艺 fork 三份」不成立，必须由相机 Session **配两路 Output**：
+
+| 路 | 消费者 | 用途 | 配置建议 |
+|----|--------|------|----------|
+| Surface A（显示路） | RS | 用户所见预览 | 全分辨率、30fps，谁都不碰 |
+| Surface B（分析路） | 小艺进程（ImageReceiver / native 消费者） | 门控、感知、模型、AR | 可降分辨率、降帧率；小艺 acquire/release 自控节奏 |
+
+- 同一帧同时投两路，**timestamp 一致**，对齐天然成立。
+- 不推荐「小艺先消费再转发到显示」：多一次拷贝 + 至少一帧延迟，预览拖尾。
+- AR 若需不同尺寸/格式，再加第三路 Output；否则与 B 共用，在小艺进程内分发。
 
 ### 2.1 和「BT709_FULL」的关系（写进契约）
 
@@ -83,15 +107,18 @@
 小艺 UEC onSessionCreate / TabShow
     │
     ▼
-[争议A] 谁创建 Surface？
-    ├─ A1: 小艺建 Surface，把 surfaceId 交给相机 App
-    └─ A2: 相机 App 建，再把可消费端交给小艺
+[争议A] 谁创建 Surface？（两路都要定）
+    ├─ Surface A（显示）：XComponent 所在进程创建，消费者 = RS
+    └─ Surface B（分析）：小艺创建 ImageReceiver，消费者 = 小艺
     │
     ▼
-小艺 → 相机: StartPreviewForXiaoyi(size, format=BT709_FULL, fps, needMotionMeta)
+小艺 → 相机: StartPreviewForXiaoyi([
+              {surfaceId=A, size=全分辨率, fps=30, role=DISPLAY},
+              {surfaceId=B, size=小图, fps=1~5, role=ANALYSIS, format=BT709_FULL}
+            ], needMotionMeta)
     │
     ▼
-相机 App 调整 Session（可能让出主预览 / 增加 Output）
+相机 App 调整 Session（可能让出主预览 / 增加两路 Output）
     │
     ▼
 Framework → HDI → HAL 配流并 start
@@ -100,10 +127,10 @@ Framework → HDI → HAL 配流并 start
 相机 → 小艺: OnPreviewStarted(actualConfig)
     │
     ▼
-连续: OnPreviewFrame / Surface 出图 + OnPreviewMetadata(motion, 同 timestamp)
+连续: Surface A 直达 RS 上屏；Surface B 出帧到小艺 + OnPreviewMetadata(motion, 同 timestamp)
     │
     ▼
-小艺内部分发（显示 / 模型队列 / AR）—— 必须限流，非满帧三路裸拷
+小艺在 Surface B 上 acquire → 门控 / 模型队列 / AR → release —— 处理不过来就丢帧，别堆积
 ```
 
 ### 3.2 稳定帧 → 模型推理（不拍深度也可）
@@ -207,14 +234,14 @@ OnPreviewStopped → 小艺可销毁 Surface
 | # | 接口 | 方向 | 关键参数 / 返回 | 说明 |
 |---|------|------|-----------------|------|
 | C1 | `QueryCameraCapability` | 小艺→相机 | — | 进 Tab 前或首次连接 |
-| C2 | `QueryCameraCapabilityResult` | 相机→小艺 | 预览 sizes；formats（是否 BT709_FULL）；fps；多 Output；实时 motion meta；按需深度；深度类型；能否 Pause；热限流策略 | 能力位 |
+| C2 | `QueryCameraCapabilityResult` | 相机→小艺 | 预览 sizes；formats（是否 BT709_FULL）；fps；**最大并发 Output 数及允许的分辨率组合**；实时 motion meta；按需深度；深度类型；能否 Pause；热限流策略 | 能力位 |
 
 ### 4.2 预览会话（B 类）
 
 | # | 接口 | 方向 | 关键字段 | 说明 |
 |---|------|------|----------|------|
-| P1 | `ProvideSurface` / `CreatePreviewSurface` | 双向之一 | `surfaceId` | **争议A：谁创建** |
-| P2 | `StartPreviewForXiaoyi` | 小艺→相机 | size, format, fps, needMotionMeta, rotation | 请求起流 |
+| P1 | `ProvideSurfaces` | 双向之一 | `[{surfaceId, role: DISPLAY \| ANALYSIS}]` | **两路 Surface**；显示路消费者为 RS，分析路消费者为小艺（争议 A：各由谁创建） |
+| P2 | `StartPreviewForXiaoyi` | 小艺→相机 | `outputs: [{surfaceId, size, format, fps, role}]`, needMotionMeta, rotation | 一次请求配多路 Output；同一帧 timestamp 一致 |
 | P3 | `OnPreviewStarted` | 相机→小艺 | actual size/format/fps | 以实配为准 |
 | P4 | `StopPreviewForXiaoyi` | 小艺→相机 | reason | Tab 切走等 |
 | P5 | `OnPreviewStopped` | 相机→小艺 | — | 确认可拆 Surface |
@@ -310,7 +337,7 @@ motionMeta?
 | ID | 议题 | 选项 / 问题 | 影响 |
 |----|------|-------------|------|
 | **A** | Surface 谁创建？ | 小艺创建并交 surfaceId vs 相机创建再下发 | 生命周期、销毁顺序、黑屏责任 |
-| **B** | 「fork 三份」怎么做？ | ① Session 多 Output（显示/模型/AR 各一路，可不同分辨率）② 小艺收一路再应用内拷贝分发 | 功耗、带宽、接口复杂度 |
+| **B** | 「fork 三份」怎么做？ | **已收敛：Session 多 Output 为基线**（显示路 A 消费者是 RS，应用层截不到帧，单路 fork 不成立）。待定：AR 是否需第三路 Output，还是与分析路 B 共用后在小艺进程内分发 | HAL 并发 Output 上限、带宽、功耗 |
 | **C** | 拍深度时是否停预览？ | 允许短暂停 vs 不停只降帧 vs 并行 | 体感闪一下 vs 深度质量/算力 |
 | **D** | 拍摄 RGB 用预览帧还是高质量 Still？ | 预览级抓帧 vs 正式拍照输出 | 画质、时延、与深度对齐难度 |
 | **E** | 第二个小艺相机 UEC 怎么跳？ | 宿主切换 vs UEC 内嵌套拉起 | 嵌套跨进程、抢摄像头 |

@@ -325,7 +325,7 @@ def build():
         bullets(s, x + 0.25, 2.0, 3.45, 1.5, items, size=11, marker_color=c)
 
     panel(s, 0.6, 4.05, 12.13, 2.75, "核心能力链路", ACCENT, fill=PANEL)
-    chain = [("预览流", "相机配流\n小艺消费", CAM, CAM_SOFT), ("运动 meta", "随帧实时\n上传应用层", CAM, CAM_SOFT),
+    chain = [("预览流", "双 Surface\n显示 + 分析", CAM, CAM_SOFT), ("运动 meta", "随帧实时\n上传应用层", CAM, CAM_SOFT),
              ("稳定帧门控", "独立模块\n判定触发", XY, XY_SOFT), ("感知 + 端侧模型", "内容识别\n推荐分析", XY, XY_SOFT),
              ("分发 / chips", "规则弹出\n点击执行", XY, XY_SOFT), ("拍摄 RGB+深度", "按需单次\n时间戳对齐", DEP, DEP_SOFT)]
     for i, (t, d, c, sf) in enumerate(chain):
@@ -351,7 +351,7 @@ def build():
     n3 = rrect(s, lx, 4.05, lw, 0.5, fill=GREY_SOFT, line=GREY, line_w=0.75, dashed=True)
     fill_text(n3, "HDI ─ 框架 ↔ HAL 硬件接口层（应用不直连）", size=10, bold=True, color=MUTED)
     n4 = node(s, lx, 4.85, lw, 1.55, "Camera HAL · Sensor / ISP",
-              "连续：预览 Buffer + 运动 metadata（同 timestamp）\n按需：单次深度计算 + 对齐 RGB，可控停流", CAM, CAM_SOFT)
+              "同一帧投两路 Output：Surface A（显示→RS）/ Surface B（分析→小艺）\n连续：预览 Buffer + 运动 meta（同 ts）；按需：单次深度 + 对齐 RGB", CAM, CAM_SOFT)
     mid = lx + lw / 2
     connector(s, mid, 2.7, mid, 3.0, color=CAM, head=True, tail=True)
     connector(s, mid, 3.75, mid, 4.05, color=CAM, head=True, tail=True)
@@ -363,17 +363,26 @@ def build():
     # 小艺进程容器
     panel(s, 7.4, 1.5, 5.33, 5.2, "小艺 UEC 进程（Tab）", XY, fill=XY_PANEL)
     rx = 7.7
-    top = node(s, rx, 1.85, 4.75, 0.7, "预览消费 + 三路分发（限流）", "Surface / ImageReceiver 收帧；按用途降采样", XY, XY_SOFT)
-    # 分叉总线
+    # 两路 Surface 入口
+    sa = rrect(s, rx, 1.85, 1.65, 0.7, fill=GREY_SOFT, line=GREY, line_w=1.0)
+    fill_text(sa, [("Surface A · 显示路", 10, True, INK), ("消费者 = RS 直达屏幕", 8, False, MUTED)], spacing=0)
+    sb = rrect(s, rx + 1.75, 1.85, 3.0, 0.7, fill=XY_SOFT, line=XY, line_w=1.0)
+    fill_text(sb, [("Surface B · 分析路（ImageReceiver）", 10, True, INK),
+                   ("消费者 = 小艺；小图低帧率；acquire→处理→release", 8, False, MUTED)], spacing=0)
+    # 显示直下
+    connector(s, rx + 1.45 / 2, 2.55, rx + 1.45 / 2, 3.15, color=GREY)
+    # 分析路分叉总线
     bus_y = 2.85
-    connector(s, rx + 4.75 / 2, 2.55, rx + 4.75 / 2, bus_y, color=XY, head=False)
-    connector(s, rx + 0.75, bus_y, rx + 4.0, bus_y, color=XY, head=False)
-    kids = [("显示", "用户所见画面", rx, 1.45), ("稳定帧门控", "独立模块 · motion meta", rx + 1.6, 1.55),
-            ("AR 空间建模", "自有帧率 / 分辨率", rx + 3.3, 1.45)]
-    for t, d, kx, kw in kids:
-        connector(s, kx + kw / 2, bus_y, kx + kw / 2, 3.15, color=XY)
-        n = rrect(s, kx, 3.15, kw, 0.75, fill=WHITE, line=XY, line_w=1.0)
-        fill_text(n, [(t, 11, True, INK), (d, 8.5, False, MUTED)], spacing=0)
+    connector(s, rx + 1.75 + 3.0 / 2, 2.55, rx + 1.75 + 3.0 / 2, bus_y, color=XY, head=False)
+    connector(s, rx + 1.6 + 1.55 / 2, bus_y, rx + 3.3 + 1.45 / 2, bus_y, color=XY, head=False)
+    kids = [("显示 XComponent", "宿主还是 UEC：争议 G", rx, 1.45, GREY),
+            ("稳定帧门控", "独立模块 · motion meta", rx + 1.6, 1.55, XY),
+            ("AR 空间建模", "共用 B 或第三路 Output", rx + 3.3, 1.45, XY)]
+    for t, d, kx, kw, c in kids:
+        if c is XY:
+            connector(s, kx + kw / 2, bus_y, kx + kw / 2, 3.15, color=XY)
+        n = rrect(s, kx, 3.15, kw, 0.75, fill=WHITE, line=c, line_w=1.0)
+        fill_text(n, [(t, 10.5, True, INK), (d, 8.5, False, MUTED)], spacing=0)
     # 门控 → 感知/模型 → 分发
     connector(s, rx + 1.6 + 1.55 / 2, 3.9, rx + 1.6 + 1.55 / 2, 4.2, color=XY)
     n = rrect(s, rx + 1.1, 4.2, 2.55, 0.65, fill=WHITE, line=XY, line_w=1.0)
@@ -386,9 +395,10 @@ def build():
     fill_text(cap, [("拍摄按钮 → CaptureAt(ts) → RGB + 深度(fd) + meta", 10.5, True, INK),
                     ("对齐校验后送模型 / AR；显示层 XComponent 可用性待实测", 8.5, False, MUTED)], spacing=0)
 
-    # 跨进程连线：预览流（接口层 → 小艺）
-    connector(s, lx + lw, 2.0, rx, 2.0, color=CAM, width=1.75)
-    edge_label(s, 6.65, 1.72, 1.9, "预览 Buffer + meta", color=CAM, bg=WHITE)
+    # 跨进程连线：预览流两路（接口层 → 小艺；显示路为灰、分析路为蓝）
+    connector(s, lx + lw, 1.95, rx, 1.95, color=GREY, width=1.5)
+    connector(s, lx + lw, 2.15, rx + 1.75, 2.15, color=CAM, width=1.75)
+    edge_label(s, 6.65, 1.68, 2.2, "A 显示 / B 分析 + meta", color=CAM, bg=WHITE)
     # 拍摄请求：小艺拍摄框 → 接口层（所有跨进程调用都进接口层，不直达 HAL）
     connector(s, rx, 6.2, 6.3, 6.2, color=DEP, width=1.5, head=False)
     connector(s, 6.3, 6.2, 6.3, 2.3, color=DEP, width=1.5, head=False)
@@ -405,11 +415,11 @@ def build():
 
     # ------------------------------------------------------------ 4 关键设计①
     s = blank(prs)
-    header(s, "关键设计 ①｜预览流获取与三路分发", "小艺提供 / 消费 Surface；配流由相机 App → 框架 → HAL 完成", 4)
+    header(s, "关键设计 ①｜预览流获取：显示 + 分析双 Surface", "一个 Surface 只有一个消费者；显示路被 RS 直接消费，应用层截不到帧 → 必须两路 Output", 4)
 
-    flow = [("进 Tab", "UEC 拉起", GREY, GREY_SOFT), ("交换 Surface", "surfaceId · 尺寸\nBT709_FULL · fps", XY, XY_SOFT),
-            ("相机配流", "Session 增加\n小艺 Output", CAM, CAM_SOFT), ("HAL 出图", "预览 Buffer +\n运动 meta 同 ts", CAM, CAM_SOFT),
-            ("小艺分发", "显示 / 模型 / AR", XY, XY_SOFT)]
+    flow = [("进 Tab", "UEC 拉起", GREY, GREY_SOFT), ("交换两路 Surface", "A：显示（XComponent）\nB：分析（ImageReceiver）", XY, XY_SOFT),
+            ("相机配流", "Session 加两路 Output\n各自 size / fps", CAM, CAM_SOFT), ("HAL 出图", "同一帧投 A、B\n运动 meta 同 ts", CAM, CAM_SOFT),
+            ("小艺消费 B", "门控 / 模型 / AR", XY, XY_SOFT)]
     for i, (t, d, c, sf) in enumerate(flow):
         x = 0.7 + i * 2.45
         n = rrect(s, x, 1.4, 2.0, 1.1, fill=sf, line=c, line_w=1.0)
@@ -418,20 +428,27 @@ def build():
         if i < len(flow) - 1:
             connector(s, x + 2.0, 1.95, x + 2.45, 1.95, color=GREY)
 
-    # 左：分叉图
-    panel(s, 0.6, 3.0, 6.6, 3.8, "三路分发（待拍板 B）", ACCENT, fill=PANEL)
-    src = rrect(s, 0.9, 4.15, 1.7, 0.9, fill=CAM_SOFT, line=CAM, line_w=1.0)
-    fill_text(src, [("预览流", 12, True, INK), ("HAL → Surface", 9, False, MUTED)], spacing=0)
-    connector(s, 2.6, 4.6, 3.1, 4.6, color=CAM, head=False, width=1.5)
-    connector(s, 3.1, 3.55, 3.1, 5.65, color=CAM, head=False, width=1.5)
-    outs = [("显示", "全分辨率 · 30fps", 3.55), ("模型", "小图 · 1～5fps · 稳定帧触发", 4.6), ("AR", "按算法需求单独约定", 5.65)]
-    for t, d, yy in outs:
-        connector(s, 3.1, yy, 3.5, yy, color=CAM, width=1.5)
-        n = rrect(s, 3.5, yy - 0.33, 2.2, 0.66, fill=WHITE, line=XY, line_w=1.0)
-        fill_text(n, [(t, 11, True, INK), (d, 8.5, False, MUTED)], spacing=0)
-    text(s, 5.85, 3.3, 1.25, 1.2, [("B1 多 Output", 10, True, CAM), ("相机一次出三路，各路独立分辨率；少拷贝，接口复杂", 8.5, False, MUTED)], spacing=1)
-    text(s, 5.85, 4.75, 1.25, 1.4, [("B2 单路 fork", 10, True, XY), ("小艺收一路后分发；接口简单先跑通，需应用内降采样", 8.5, False, MUTED)], spacing=1)
-    text(s, 0.9, 6.25, 6.0, 0.45, "禁止：三路全帧率全分辨率裸拷贝（功耗 / 发热 / 拖垮预览）", size=10, bold=True, color=RISK)
+    # 左：双 Surface 图（生产者 → 队列 → 唯一消费者）
+    panel(s, 0.6, 3.0, 6.6, 3.8, "双 Surface：为什么不能单路 fork（B 已收敛）", ACCENT, fill=PANEL)
+    src = rrect(s, 0.85, 4.35, 1.5, 1.0, fill=CAM_SOFT, line=CAM, line_w=1.0)
+    fill_text(src, [("Camera HAL", 11.5, True, INK), ("生产者", 9, False, MUTED), ("同一帧投两路", 8.5, False, MUTED)], spacing=0)
+    connector(s, 2.35, 4.85, 2.7, 4.85, color=CAM, head=False, width=1.5)
+    connector(s, 2.7, 3.85, 2.7, 5.85, color=CAM, head=False, width=1.5)
+    lanes4 = [
+        (3.85, "Surface A", "显示路 · 全分辨率 30fps", GREY, GREY_SOFT, "RS 合成上屏", "应用层不在队列上"),
+        (5.85, "Surface B", "分析路 · 小图 1～5fps", XY, XY_SOFT, "小艺 ImageReceiver", "acquire → 处理 → release"),
+    ]
+    for yy, t, d, c, sf, cons, cd in lanes4:
+        connector(s, 2.7, yy, 3.05, yy, color=CAM, width=1.5)
+        q = rrect(s, 3.05, yy - 0.38, 1.75, 0.76, fill=sf, line=c, line_w=1.0)
+        fill_text(q, [(t, 11, True, INK), (d, 8.5, False, MUTED)], spacing=0)
+        connector(s, 4.8, yy, 5.15, yy, color=c, width=1.5)
+        k = rrect(s, 5.15, yy - 0.38, 1.85, 0.76, fill=WHITE, line=c, line_w=1.0)
+        fill_text(k, [(cons, 10.5, True, INK), (cd, 8.5, False, MUTED)], spacing=0)
+    text(s, 3.05, 4.62, 3.95, 0.5, [("规则：一个 Surface 只有一个消费者", 9.5, True, ACCENT),
+                                    ("HAL flush → RS 立刻 acquire → 上屏，小艺没有插手机会", 8.5, False, MUTED)], spacing=0, align=PP_ALIGN.CENTER)
+    text(s, 0.85, 6.3, 6.1, 0.45, "不做：小艺先消费 B 再转发到显示（多一次拷贝 + ≥1 帧延迟）；AR 尺寸不同再加第三路 Output",
+         size=9.5, bold=True, color=RISK)
 
     # 右：契约
     panel(s, 7.45, 3.0, 5.28, 3.8, "格式与元数据契约", DEP, fill=PANEL)
@@ -440,8 +457,9 @@ def build():
         ("需写死", "：实际像素格式（RGB / NV12…）、位深、stride、旋转责任方"),
         ("运动 meta", "：随预览每帧上传 gyro / accel / 对焦 / 曝光"),
         ("硬约束", "：meta.timestamp 与 frame.timestamp 可对齐；meta 缺失不得判稳"),
-        ("Surface 归属（A）", "：谁创建、谁销毁、切 Tab 时谁先停"),
-    ], size=10.5, spacing=7, marker_color=DEP)
+        ("Surface 归属（A）", "：A 由 XComponent 所在进程建、B 由小艺建；切 Tab 时谁先停"),
+        ("能力协商", "：HAL 最大并发 Output 数、各路允许的分辨率组合"),
+    ], size=10.5, spacing=6, marker_color=DEP)
 
     # ------------------------------------------------------------ 5 关键设计②
     s = blank(prs)
@@ -547,8 +565,9 @@ def build():
     s = blank(prs)
     header(s, "接口清单（小艺 ↔ 相机 App）", "五组接口；命名可改，语义保留；应用不直接调 HDI", 7)
     groups = [
-        ("能力协商", CAM, [("QueryCameraCapability", "→ sizes / formats / fps / 多 Output / motion meta / 按需深度 / 可否 Pause")]),
-        ("预览会话", XY, [("ProvideSurface", "surfaceId 交换（争议 A）"), ("StartPreviewForXiaoyi", "size · format · fps · needMotionMeta"),
+        ("能力协商", CAM, [("QueryCameraCapability", "→ sizes / formats / fps / 最大并发 Output 数 / motion meta / 按需深度 / 可否 Pause")]),
+        ("预览会话", XY, [("ProvideSurfaces", "[{surfaceId, role: DISPLAY | ANALYSIS}] 两路（争议 A：各由谁建）"),
+                       ("StartPreviewForXiaoyi", "outputs: [{surfaceId, size, format, fps, role}] · needMotionMeta"),
                        ("OnPreviewStarted / Stopped", "以实配为准；Stopped 后可拆 Surface"), ("Pause / ResumePreview", "拍摄取深度时短暂停")]),
         ("帧 + 运动 meta", XY, [("OnPreviewFrame", "或 Surface 隐式出帧：timestamp · buffer · transform"),
                             ("OnPreviewMetadata", "同 ts：gyro / accel / 对焦 / 曝光"), ("OnStableFrame(ts)", "小艺内部事件，非跨进程")]),
@@ -618,7 +637,7 @@ def build():
         ("F/M", "会话主人 & 主预览策略", "相机 App 握机（小艺消费）vs 小艺自 openCamera", "建议相机握机；进 Tab 停主预览或双 Output", ACCENT),
         ("A/G", "Surface 归属 & UEC 显示", "小艺建 vs 相机建；UEC 能否 XComponent", "先实测 G；不可用则宿主显示", RISK),
         ("J/I", "格式 & 运动 meta", "RGB vs YUV；meta 字段集与每帧保障", "写死 pixelFormat / stride / 旋转；meta 同 ts", DEP),
-        ("B/L", "三路分发 & 门控参数", "多 Output vs 单路 fork；阈值 / K 帧 / M ms", "先 B2 跑通，能力允许升 B1", XY),
+        ("B/L", "多路 Output & 门控参数", "B 已收敛双 Surface；AR 是否第三路待定；门控阈值", "确认 HAL 并发 Output 上限；门控参数样机调", XY),
         ("C/D/H/K", "拍摄路径", "停流否；预览帧 vs Still；δt 补偿；fd 所有权", "允许短暂停；对齐失败不喂模型", DEP),
         ("E", "跳第二个相机 UEC", "宿主切换 vs UEC 内嵌套", "宿主切换 + 先停当前流", CAM),
     ]
@@ -639,7 +658,7 @@ def build():
     s = blank(prs)
     header(s, "推进与验证计划", "先用样机验证两道硬门，再细化规则与交互", 10)
     phases = [
-        ("阶段 1", "技术预研（硬门）", ["UEC 进程能否稳定拿到并显示预览", "宿主握机 + 小艺 Output 共存", "运动 meta 每帧上传与 ts 对齐"], RISK, RISK_SOFT),
+        ("阶段 1", "技术预研（硬门）", ["双 Surface：显示路 + 小艺分析路并发出流", "UEC 内 XComponent 显示是否可用", "运动 meta 每帧上传与 ts 对齐"], RISK, RISK_SOFT),
         ("阶段 2", "闭环打通", ["稳定帧门控 → 感知 → 端侧模型", "chips 弹出与点击执行", "端到端时延 / 发热基线"], XY, XY_SOFT),
         ("阶段 3", "深度与拍摄", ["CaptureAt → RGB + 深度 fd 回传", "停流策略与对齐校验", "AR 建模接入"], DEP, DEP_SOFT),
         ("阶段 4", "体验打磨", ["UEC 冷启闪白消减", "chips 冷却 / 去重 / 阈值调优", "抢占、后台、异常恢复"], CAM, CAM_SOFT),
@@ -667,7 +686,7 @@ def build():
     s = blank(prs)
     header(s, "结论与请求", "方案可行；请评审拍板会话归属、显示位置与拍摄路径三项", 11)
     concl = [
-        ("架构", "相机 App 握相机 → 框架 → HDI → HAL；小艺 UEC 消费流、做感知与推荐；不直连 HAL / HDI。", CAM),
+        ("架构", "相机 App 握相机 → 框架 → HDI → HAL，配「显示 + 分析」两路 Surface；小艺消费分析路做感知与推荐，不直连 HAL / HDI。", CAM),
         ("门控", "稳定帧门控独立成模块，挂 Tab 业务层；感知 / 模型 / AR / 深度都订同一事件。", XY),
         ("拍摄", "点击拍摄 = 按 timestamp 触发一次带深度的 Capture；RGB / 深度 / meta 同 ts 对齐。", DEP),
     ]
