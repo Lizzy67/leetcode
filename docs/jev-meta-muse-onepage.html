@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jev 与 Meta Muse · 一页读懂</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #14201c;
+      --muted: #5a6b64;
+      --line: #c8d5ce;
+      --bg: #eef3ef;
+      --panel: rgba(255, 255, 255, 0.72);
+      --jev: #0f6b5c;
+      --jev-soft: #d7efe9;
+      --muse: #1f4f8a;
+      --muse-soft: #d9e7f7;
+      --accent: #c45c26;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 0% 0%, #cfe8df 0%, transparent 55%),
+        radial-gradient(ellipse 70% 45% at 100% 8%, #c5d8ef 0%, transparent 50%),
+        linear-gradient(180deg, #e8f0ea 0%, var(--bg) 40%, #e7ece8 100%);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 48px 22px 64px;
+    }
+
+    /* Hero: one composition — brand-level title + one line */
+    .hero {
+      margin-bottom: 40px;
+      animation: rise 0.55s ease both;
+    }
+
+    .hero h1 {
+      font-family: "Fraunces", "Noto Sans SC", serif;
+      font-size: clamp(2rem, 5.5vw, 3.1rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      max-width: 12em;
+    }
+
+    .hero h1 span.jev { color: var(--jev); }
+    .hero h1 span.muse { color: var(--muse); }
+
+    .hero .lead {
+      margin-top: 14px;
+      font-size: clamp(1rem, 2.4vw, 1.15rem);
+      color: var(--muted);
+      max-width: 32em;
+    }
+
+    .duo {
+      display: grid;
+      gap: 28px;
+      margin-bottom: 36px;
+    }
+
+    @media (min-width: 760px) {
+      .duo { grid-template-columns: 1fr 1fr; gap: 36px; }
+    }
+
+    .col {
+      animation: rise 0.6s ease both;
+      padding-top: 4px;
+      border-top: 3px solid transparent;
+    }
+
+    .col.jev { border-top-color: var(--jev); animation-delay: 0.08s; }
+    .col.muse { border-top-color: var(--muse); animation-delay: 0.14s; }
+
+    .col .who {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin: 14px 0 6px;
+    }
+
+    .col.jev .who { color: var(--jev); }
+    .col.muse .who { color: var(--muse); }
+
+    .col h2 {
+      font-family: "Fraunces", "Noto Sans SC", serif;
+      font-size: clamp(1.45rem, 3vw, 1.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+
+    .col .one-liner {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .col li {
+      font-size: 14px;
+      padding-left: 1.1em;
+      position: relative;
+    }
+
+    .col li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .col.jev li::before { background: var(--jev); }
+    .col.muse li::before { background: var(--muse); }
+
+    .col li strong { font-weight: 700; }
+
+    .compare {
+      animation: rise 0.65s ease both;
+      animation-delay: 0.2s;
+      margin-bottom: 32px;
+    }
+
+    .compare h2 {
+      font-family: "Fraunces", "Noto Sans SC", serif;
+      font-size: 1.35rem;
+      margin-bottom: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    th.jev-h { color: var(--jev); }
+    th.muse-h { color: var(--muse); }
+
+    td:first-child {
+      color: var(--muted);
+      white-space: nowrap;
+      width: 18%;
+    }
+
+    .takeaway {
+      animation: rise 0.7s ease both;
+      animation-delay: 0.28s;
+      padding: 20px 0 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .takeaway p {
+      font-family: "Fraunces", "Noto Sans SC", serif;
+      font-size: clamp(1.15rem, 2.8vw, 1.4rem);
+      font-weight: 500;
+      line-height: 1.4;
+      max-width: 28em;
+    }
+
+    .takeaway .hint {
+      margin-top: 10px;
+      font-family: "Noto Sans SC", sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 40em;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 12px;
+      color: var(--muted);
+      animation: rise 0.7s ease both;
+      animation-delay: 0.32s;
+    }
+
+    footer a { color: var(--muse); }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <h1><span class="jev">Jev</span> 与 <span class="muse">Meta Muse</span></h1>
+      <p class="lead">两个都常出现在 AI 编程场景里，但完全不是一类东西：一个做「快决策」，一个做「写代码、跑任务」。</p>
+    </header>
+
+    <div class="duo">
+      <article class="col jev">
+        <p class="who">TypeSafe AI · System One</p>
+        <h2>Jev</h2>
+        <p class="one-liner">给程序调用的「快速判断器」，不写长文、不写代码。</p>
+        <ul>
+          <li><strong>做什么：</strong>分类、打分、选一项、给是/否概率</li>
+          <li><strong>输出：</strong>结构化结果（choice / score / noul），带校准概率</li>
+          <li><strong>速度：</strong>大约几十到几百毫秒，比大模型快一到两个数量级</li>
+          <li><strong>典型用法：</strong>路由、筛选、验真、给 Agent 做分流</li>
+          <li><strong>不是：</strong>Chat 模型，不能当 Cursor 的 model 去写代码</li>
+        </ul>
+      </article>
+
+      <article class="col muse">
+        <p class="who">Meta · Muse Spark 1.3</p>
+        <h2>Meta Muse</h2>
+        <p class="one-liner">Meta 的旗舰编程 / Agent 模型，擅长长任务和工具调用。</p>
+        <ul>
+          <li><strong>做什么：</strong>写代码、调试、多步 Agent、读大仓库</li>
+          <li><strong>输出：</strong>自然语言 + 工具调用（可写文件、跑命令）</li>
+          <li><strong>上下文：</strong>约 300k，Max Mode 可达 1M tokens</li>
+          <li><strong>典型用法：</strong>Cursor / Muse Code 里当主模型干活</li>
+          <li><strong>定价印象：</strong>约 $1.25 / $4.25 每百万 token（标准档）</li>
+        </ul>
+      </article>
+    </div>
+
+    <section class="compare">
+      <h2>一张表看懂差别</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>维度</th>
+            <th class="jev-h">Jev</th>
+            <th class="muse-h">Meta Muse</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>角色</td>
+            <td>决策层 / 闸门</td>
+            <td>执行层 / 大脑</td>
+          </tr>
+          <tr>
+            <td>一句话</td>
+            <td>「这件事该怎么判？」</td>
+            <td>「帮我把这件事做完」</td>
+          </tr>
+          <tr>
+            <td>输出形态</td>
+            <td>类型固定的结构化答案</td>
+            <td>散文、代码、工具链</td>
+          </tr>
+          <tr>
+            <td>和谁配合</td>
+            <td>常挂在 Muse / Claude / Cursor 前面做分流</td>
+            <td>可自己完成长链路；也可被 Jev 路由后调用</td>
+          </tr>
+          <tr>
+            <td>类比</td>
+            <td>交通信号灯 + 验票员</td>
+            <td>能开长途的司机兼技工</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="takeaway">
+      <p>需要「快、准、可直接写进 if」→ 用 Jev；需要「写代码、改仓库、跑 Agent」→ 用 Meta Muse。</p>
+      <p class="hint">二者可叠加：Jev 先判断「要不要升级 / 走哪条路径」，再交给 Muse 执行重活。</p>
+    </section>
+
+    <footer>
+      资料整理自 TypeSafe AI（Jev / System One）与 Meta / Cursor 公开文档（Muse Spark 1.3）。仅作科普对照，参数以官方最新为准。
+      · <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">Jev 介绍</a>
+      · <a href="https://cursor.com/docs/models/muse-spark-1-3">Cursor · Muse Spark</a>
+      · <a href="https://developer.meta.com/ai/models/muse-spark/">Meta · Muse Spark</a>
+    </footer>
+  </main>
+</body>
+</html>
