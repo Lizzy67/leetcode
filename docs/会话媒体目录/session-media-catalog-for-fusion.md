@@ -1,7 +1,7 @@
 # 会话媒体目录：多图融合如何稳定拿到前置 Skill 图片
 
 > 状态：设计建议（可直接对齐现有 workmemory / `${resultId}` 管道）  
-> 关联：`tool-param-ref-mechanism.md`、`workmemory-ref-scheme.md`、拼图示例 `tool-param-ref-example.html`
+> 关联：`../工具参数引用/tool-param-ref-mechanism.md`、`../工作记忆引用/workmemory-ref-scheme.md`、拼图示例 `../工具参数引用/tool-param-ref-example.html`
 
 ---
 
