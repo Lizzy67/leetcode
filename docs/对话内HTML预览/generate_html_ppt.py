@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """图文并茂：对话内 HTML 渲染方案 PPT（7 节 + 封面）"""
 
+from pathlib import Path
+
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
@@ -14,7 +16,8 @@ prs = Presentation()
 prs.slide_width = W
 prs.slide_height = H
 
-ASSETS = "/workspace/docs/assets"
+_DOCS_DIR = Path(__file__).resolve().parent
+ASSETS = str(_DOCS_DIR / "assets")
 COVER = f"{ASSETS}/ppt-cover-health-chat.png"
 SCENARIO = f"{ASSETS}/ppt-scenario-flow.png"
 PIPELINE = f"{ASSETS}/ppt-capability-pipeline.png"
@@ -541,6 +544,6 @@ for i, (no, title, body) in enumerate(recs):
         if j:
             p.space_before = Pt(4)
 
-out = "/workspace/docs/agent_html_preview_proposal.pptx"
+out = str(_DOCS_DIR / "agent_html_preview_proposal.pptx")
 prs.save(out)
 print(f"Saved {out} slides={len(prs.slides)}")

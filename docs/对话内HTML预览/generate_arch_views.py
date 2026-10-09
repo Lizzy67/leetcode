@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """独立 PPT：逻辑架构图 + 运行视图（按已确认口径）"""
 
+from pathlib import Path
+
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
+_DOCS_DIR = Path(__file__).resolve().parent
 W, H = Inches(13.333), Inches(7.5)
 prs = Presentation()
 prs.slide_width = W
@@ -260,6 +263,6 @@ card(s, Inches(8.95), Inches(1.2), Inches(4.0), Inches(5.8), "流式 B/C 是什�
     "本独立 PPT 已按此省略。",
 ], AMBER_BG, GAP, GAP)
 
-out = "/workspace/docs/agent_html_arch_views.pptx"
+out = str(_DOCS_DIR / "agent_html_arch_views.pptx")
 prs.save(out)
 print(f"Saved {out} slides={len(prs.slides)}")

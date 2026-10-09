@@ -235,7 +235,7 @@
 ### 6.2 检索结果分析（选取相近公开）
 
 > 说明：以下基于公开专利/公开技术资料作区别分析；功能相似不视为保护点相同。详细法律评估以代理人正式检索报告为准。  
-> 完整对照表、检索式与未覆盖项见 `docs/patent-prior-art-search.md`（2026-08-27 预检索）。
+> 完整对照表、检索式与未覆盖项见 `patent-prior-art-search.md`（2026-08-27 预检索）。
 
 #### 相近文献 1：US20260111680A1（Shopify）《Methods and systems for managing function calls by a generative language model》（优先权 2024-10-22，公开 2026-04-23；同族 WO2026085601A1）
 

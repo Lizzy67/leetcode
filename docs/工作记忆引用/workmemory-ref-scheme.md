@@ -1,6 +1,6 @@
 # workmemory 工具结果引用方案
 
-> 一页纸：`docs/workmemory-ref-onepager.html` · 跨端对齐简报：`docs/issue-2520-ref-design.html`
+> 一页纸：`workmemory-ref-onepager.html` · 跨端对齐简报：`issue-2520-ref-design.html`
 
 ## 1. 目标
 
@@ -65,7 +65,7 @@ Runtime 改回（引用 → 真值）
 调用工具 B
 ```
 
-逻辑架构图：`docs/workmemory-logic-architecture.html`
+逻辑架构图：`workmemory-logic-architecture.html`
 
 ### 3.2 快慢系统结合后
 
@@ -83,7 +83,7 @@ DM 调用 MCP 工具
 Runtime 解析引用为真值 → 交 DM 执行
 ```
 
-跨端对齐简报：`docs/issue-2520-ref-design.html`
+跨端对齐简报：`issue-2520-ref-design.html`
 
 ---
 
