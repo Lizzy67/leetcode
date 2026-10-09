@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sync this repo's docs/ -> target repo collections/l00491999/
+# Sync this repo's docs/ -> target repo collections/liuqi/
 # (collections is a sibling of docs in the target repo)
 # Designed for repeated use (long-term sync).
 #
@@ -11,7 +11,7 @@
 # Optional env:
 #   TARGET_REPO_URL  default: https://7.192.174.176/git/xiaoyi/workspace
 #   TARGET_BRANCH    default: master (falls back to main)
-#   TARGET_PREFIX    default: collections/l00491999
+#   TARGET_PREFIX    default: collections/liuqi
 #   COMMIT_MSG       default: sync docs from source repo
 
 set -euo pipefail
@@ -20,7 +20,7 @@ SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE_DOCS="${SOURCE_ROOT}/docs"
 
 TARGET_REPO_URL="${TARGET_REPO_URL:-https://7.192.174.176/git/xiaoyi/workspace}"
-TARGET_PREFIX="${TARGET_PREFIX:-collections/l00491999}"
+TARGET_PREFIX="${TARGET_PREFIX:-collections/liuqi}"
 TARGET_BRANCH="${TARGET_BRANCH:-}"
 COMMIT_MSG="${COMMIT_MSG:-sync: update ${TARGET_PREFIX} from local docs}"
 if [[ ! -d "${SOURCE_DOCS}" ]]; then
