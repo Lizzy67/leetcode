@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>科目一 Python 打印小抄</title>
+  <style>
+    @page { size: A4; margin: 12mm; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+      font-size: 11.5px;
+      line-height: 1.35;
+      color: #111;
+    }
+    h1 { font-size: 18px; margin: 0 0 6px; }
+    h2 {
+      font-size: 13px;
+      margin: 10px 0 4px;
+      padding: 2px 6px;
+      background: #eef2ff;
+      border-left: 3px solid #3730a3;
+    }
+    h3 { font-size: 12px; margin: 6px 0 2px; }
+    .sub { color: #555; margin: 0 0 8px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+    ul { margin: 2px 0 4px; padding-left: 16px; }
+    li { margin: 1px 0; }
+    code, pre {
+      font-family: ui-monospace, "SF Mono", Consolas, monospace;
+      font-size: 10.5px;
+    }
+    pre {
+      background: #f6f6f8;
+      border: 1px solid #e5e5ea;
+      border-radius: 4px;
+      padding: 6px 8px;
+      margin: 3px 0 6px;
+      white-space: pre-wrap;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+    th, td { border: 1px solid #ddd; padding: 3px 5px; text-align: left; vertical-align: top; }
+    th { background: #f3f4f6; }
+    .note { color: #7c2d12; }
+    .ok { color: #14532d; }
+    @media print {
+      h2 { break-after: avoid; }
+      pre, table { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <h1>华为可信 · 科目一 Python 小抄（打印版）</h1>
+  <p class="sub">用途：天天扫一眼 · 不是押上次三题 · 覆盖语法 + 高频算法模板 · 考前默写框里的代码</p>
+
+  <div class="grid">
+    <section>
+      <h2>1. 输入输出</h2>
+<pre>n = int(input())
+a, b = map(int, input().split())
+nums = list(map(int, input().split()))
+# 多行 n 个数
+arr = [int(input()) for _ in range(n)]
+# 到 EOF
+import sys
+for line in sys.stdin:
+    ...
+print(*nums)                 # 空格输出
+print("".join(map(str, xs))) # 无缝输出</pre>
+
+      <h2>2. 列表 list</h2>
+      <table>
+        <tr><th>写法</th><th>改原列表？</th><th>返回</th></tr>
+        <tr><td>a.append(x)</td><td>是</td><td>None</td></tr>
+        <tr><td>a.extend(iterable)</td><td>是</td><td>None</td></tr>
+        <tr><td>a.insert(i,x)</td><td>是</td><td>None</td></tr>
+        <tr><td>a.pop() / pop(i)</td><td>是</td><td><b>元素</b></td></tr>
+        <tr><td>a.remove(x)</td><td>是</td><td>None（没有则报错）</td></tr>
+        <tr><td>del a[i]</td><td>是</td><td>语句无返回</td></tr>
+        <tr><td>a.sort()</td><td>是</td><td>None</td></tr>
+        <tr><td>sorted(a)</td><td>否</td><td>新列表</td></tr>
+        <tr><td>a.reverse()</td><td>是</td><td>None</td></tr>
+        <tr><td>a[::-1]</td><td>否</td><td>新列表</td></tr>
+        <tr><td>a.index(x) / count(x)</td><td>否</td><td>下标 / 次数</td></tr>
+      </table>
+      <p class="note">安全删：if x in a: a.remove(x)　·　拷贝：b=a[:] 不是 b=a</p>
+
+      <h2>3. 集合 set / 字典 dict</h2>
+      <ul>
+        <li>set：add / remove(没有报错) / discard(没有不报错) / pop()任意弹出；<b>不能 s[0]</b></li>
+        <li>list 用 append；set 用 add</li>
+        <li><code>x in d</code> 查的是<strong>键</strong>（= in d.keys()）</li>
+        <li><code>d.get(k, 0)</code>：没有返回默认值，<b>不写入</b></li>
+        <li><code>d.setdefault(k, [])</code>：没有则写入再返回</li>
+        <li>计数：<code>d[x]=d.get(x,0)+1</code></li>
+        <li>往 list 值里加：<code>d.setdefault(k, []).append(x)</code></li>
+      </ul>
+
+      <h2>4. 切片 / 字符串</h2>
+      <ul>
+        <li>左闭右开；<code>a[1:4]</code> 含1不含4</li>
+        <li>负下标：-1 最后，-2 倒数第二</li>
+        <li>切片越界<strong>不报错</strong> → 空或不越界部分</li>
+        <li><code>a[4:2] → []</code>（正步长走不到）</li>
+        <li>倒序下标：<code>range(len(a)-1, -1, -1)</code></li>
+        <li>列：用 <code>[v[j] for v in rows]</code>，不是 <code>rows[:][j]</code></li>
+        <li>strip 去两头空白；split() 按空白切且丢空段 → <code>["ab","cd"]</code></li>
+        <li>join：<code>" ".join(map(str, nums))</code>；元素必须是 str</li>
+        <li>字符串不可变，没有 append</li>
+      </ul>
+
+      <h2>5. 真假值 / 小坑</h2>
+      <ul>
+        <li>假：<code>0, "", [], {}, None, False</code></li>
+        <li><code>[0]</code> 为真（非空列表）</li>
+        <li><code>0 or 5 → 5</code>；<code>3 and 4 → 4</code>（返回操作数）</li>
+        <li>tuple 不可变，不能 append</li>
+        <li><code>enumerate(a)</code> → (下标, 元素)</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6. 高频算法模板（必默写）</h2>
+
+      <h3>两数之和 O(n)</h3>
+<pre>seen = {}
+for i, x in enumerate(nums):
+    need = target - x
+    if need in seen:
+        return seen[need], i
+    seen[x] = i</pre>
+
+      <h3>定长窗口最大和</h3>
+<pre>window = sum(a[:k]); best = window
+for i in range(k, len(a)):
+    window += a[i] - a[i-k]
+    best = max(best, window)</pre>
+
+      <h3>按 0 分段（密集度类）</h3>
+<pre>segs, cur = [], []
+for x in locs:
+    if x == 0:
+        if cur: segs.append(cur); cur=[]
+    else: cur.append(x)
+if cur: segs.append(cur)
+k = min(num, max(len(s) for s in segs))  # 别忘收尾</pre>
+
+      <h3>可变长窗口（至少 need 个 1）</h3>
+<pre>left = cnt = 0; ans = n+1
+for right, g in enumerate(good):
+    cnt += g
+    while cnt >= need:
+        ans = min(ans, right-left+1)
+        cnt -= good[left]; left += 1
+return -1 if ans==n+1 else ans</pre>
+
+      <h3>双指针（有序两数之和思想）</h3>
+<pre>i, j = 0, n-1
+while i < j:
+    s = a[i] + a[j]
+    if s == target: ...
+    elif s < target: i += 1
+    else: j -= 1</pre>
+
+      <h3>二分（左闭右开示例）</h3>
+<pre>lo, hi = 0, n
+while lo < hi:
+    mid = (lo+hi)//2
+    if a[mid] < x: lo = mid+1
+    else: hi = mid
+# lo 为插入位置/第一个 >= x</pre>
+
+      <h3>BFS 网格骨架</h3>
+<pre>from collections import deque
+q = deque([(sx,sy)]); vis={(sx,sy)}
+while q:
+    x,y = q.popleft()
+    for dx,dy in ((0,1),(0,-1),(1,0),(-1,0)):
+        nx,ny=x+dx,y+dy
+        if 合法 and (nx,ny) not in vis:
+            vis.add((nx,ny)); q.append((nx,ny))</pre>
+
+      <h3>DFS / 回溯骨架</h3>
+<pre>def dfs(i, path):
+    if 终点: res.append(path[:]); return
+    for 选择 in 选项:
+        path.append(选择)
+        dfs(下一状态, path)
+        path.pop()</pre>
+
+      <h3>入门 DP</h3>
+<pre># 爬楼梯
+dp0, dp1 = 1, 1
+for _ in range(2, n+1):
+    dp0, dp1 = dp1, dp0+dp1
+# 最大子数组和
+best = cur = a[0]
+for x in a[1:]:
+    cur = max(x, cur+x)
+    best = max(best, cur)</pre>
+
+      <h3>类模拟骨架</h3>
+<pre>class X:
+    def __init__(self, ...):
+        self.state = []      # 主数据
+        self.helper = {}     # 辅助：历史编号/计数
+    def op(self, ...):
+        # 1 非法检查  2 维护不变量(容量/窗口)
+        # 3 改状态    4 return 约定值(-1/长度/...)</pre>
+
+      <h3>hex 拆字节（指令题）</h3>
+<pre>op = int(raw[0:2], 16)
+reg = int(raw[2:4], 16)
+imm = int(raw[4:6], 16)</pre>
+
+      <h2>7. 题型地图（题库会变，类型相对稳）</h2>
+      <table>
+        <tr><th>类型</th><th>特征</th><th>练什么</th></tr>
+        <tr><td>模拟/设计</td><td>类、规则多、样例长</td><td>状态字段 + 分支清单</td></tr>
+        <tr><td>数组/模拟</td><td>按规则改数组</td><td>下标、边界</td></tr>
+        <tr><td>哈希</td><td>找配对/计数</td><td>dict / set</td></tr>
+        <tr><td>双指针/窗口</td><td>连续段极值</td><td>定长/变长窗口</td></tr>
+        <tr><td>搜索</td><td>地图/组合</td><td>BFS/DFS</td></tr>
+        <tr><td>DP入门</td><td>最优子结构</td><td>爬楼梯/最大子数组</td></tr>
+        <tr><td>栈/字符串</td><td>匹配、解码</td><td>stack</td></tr>
+      </table>
+
+      <h2>8. 考场策略</h2>
+      <ul>
+        <li>先扫 3 题：像窗口/哈希的先做</li>
+        <li>单题 25～30 分钟无清晰思路就换</li>
+        <li>先保证能跑 + 样例过，再优化</li>
+        <li>困难题先暴力/部分分</li>
+        <li>写前列 3～4 行伪代码分支</li>
+      </ul>
+    </section>
+  </div>
+
+  <h2>9. 近一周刷题菜单（别只押旧三题）</h2>
+  <p><b>每天 1～2 题精做</b>（写完能讲思路），不是刷完题库。</p>
+  <table>
+    <tr><th>天</th><th>必做</th><th>选做</th></tr>
+    <tr><td>D1</td><td>两数之和 + 有效字母异位词（哈希）</td><td>快乐数 / 存在重复</td></tr>
+    <tr><td>D2</td><td>定长窗口最大和 + 无重复字符最长子串</td><td>最小覆盖子串（难可只看思路）</td></tr>
+    <tr><td>D3</td><td>双指针：盛水最多 / 三数之和（能写双指针部分）</td><td>移动零</td></tr>
+    <tr><td>D4</td><td>栈：有效括号 + 字符串解码（中）</td><td>最小栈</td></tr>
+    <tr><td>D5</td><td>BFS：岛屿数量 或 矩阵最短路</td><td>二叉树层序</td></tr>
+    <tr><td>D6</td><td>类模拟 1 道（自己出规则/重写 A3）</td><td>简单计算器/设计哈希</td></tr>
+    <tr><td>D7</td><td>模考：限时 2 中 + 1 稍难</td><td>只复盘</td></tr>
+  </table>
+  <p class="ok">LeetCode 可搜题名；公司题库按「哈希/窗口/栈/BFS/模拟」标签挑，不追求数量。</p>
+
+  <p class="sub" style="margin-top:10px">打印建议：浏览器打开本文件 → 打印 → 边距最小 · 可双面。每天通勤/午休只看第 2～6 节。</p>
+</body>
+</html>
