@@ -110,18 +110,56 @@ print("".join(map(str, xs))) # 无缝输出</pre>
         <li>字符串不可变，没有 append</li>
       </ul>
 
-      <h2>5. 真假值 / 小坑</h2>
+      <h2>5. 字符判断小方法（常考）</h2>
+      <table>
+        <tr><th>方法</th><th>含义</th><th>例子</th></tr>
+        <tr><td>c.isalpha()</td><td>是否字母</td><td>'a'✓ '1'✗</td></tr>
+        <tr><td>c.isdigit()</td><td>是否数字字符</td><td>'3'✓ 'a'✗</td></tr>
+        <tr><td>c.isalnum()</td><td>字母或数字</td><td>'A1'✓ '#'✗</td></tr>
+        <tr><td>c.isupper()</td><td>是否大写字母</td><td>'B'✓ 'b'✗</td></tr>
+        <tr><td>c.islower()</td><td>是否小写字母</td><td>'b'✓ 'B'✗</td></tr>
+        <tr><td>c.isspace()</td><td>是否空白</td><td>' '✓ '\\t'✓</td></tr>
+        <tr><td>s.upper()/lower()</td><td>整串大小写转换</td><td>返回<strong>新串</strong></td></tr>
+      </table>
+<pre># 字符排序题常见：数字位/字母位分开
+if c.isdigit(): ...
+elif c.isalpha(): ...
+# 注意：是方法要加 ()；返回 bool，不是把 True 写进结果</pre>
+
+      <h2>6. lambda 与自定义排序</h2>
+      <p><b>lambda</b> = 匿名小函数：<code>lambda 参数: 表达式</code>，等价于一行 <code>def</code>。<br/>
+      <b>key</b> 只生成“排序钥匙”用来比较，<span class="note">最终列表仍是原元素</span>（True/False 不会进结果）。</p>
+<pre># 基本形
+sorted(a, key=lambda x: -x)           # 按 -x 比 → 类似逆序
+sorted(words, key=lambda s: len(s))   # 按长度
+sorted(pairs, key=lambda x: x[1])     # 按元组第2项
+
+# 多关键字：元组从左到右比；False&lt;True
+sorted(chars, key=lambda c: (c.isupper(), c))
+# → 小写(False)在前，大写(True)在后；同组再比字符
+
+# 分数降序、姓名升序
+students.sort(key=lambda s: (-s.score, s.name))
+
+# 不用 lambda 也可以
+def letter_key(c):
+    return (c.isupper(), c)
+sorted(chars, key=letter_key)</pre>
+      <p class="note">sort/sorted 的 reverse=True 是整体反转；和 key 可一起用。</p>
+
+      <h2>7. 真假值 / 小坑</h2>
       <ul>
         <li>假：<code>0, "", [], {}, None, False</code></li>
         <li><code>[0]</code> 为真（非空列表）</li>
         <li><code>0 or 5 → 5</code>；<code>3 and 4 → 4</code>（返回操作数）</li>
         <li>tuple 不可变，不能 append</li>
         <li><code>enumerate(a)</code> → (下标, 元素)</li>
+        <li><code>zip(a, b)</code> 配对；常和下标列表一起写回</li>
       </ul>
     </section>
 
     <section>
-      <h2>6. 高频算法模板（必默写）</h2>
+      <h2>8. 高频算法模板（必默写）</h2>
 
       <h3>两数之和 O(n)</h3>
 <pre>seen = {}
@@ -214,7 +252,7 @@ for x in a[1:]:
 reg = int(raw[2:4], 16)
 imm = int(raw[4:6], 16)</pre>
 
-      <h2>7. 题型地图（题库会变，类型相对稳）</h2>
+      <h2>9. 题型地图（题库会变，类型相对稳）</h2>
       <table>
         <tr><th>类型</th><th>特征</th><th>练什么</th></tr>
         <tr><td>模拟/设计</td><td>类、规则多、样例长</td><td>状态字段 + 分支清单</td></tr>
@@ -226,7 +264,7 @@ imm = int(raw[4:6], 16)</pre>
         <tr><td>栈/字符串</td><td>匹配、解码</td><td>stack</td></tr>
       </table>
 
-      <h2>8. 考场策略</h2>
+      <h2>10. 考场策略</h2>
       <ul>
         <li>先扫 3 题：像窗口/哈希的先做</li>
         <li>单题 25～30 分钟无清晰思路就换</li>
@@ -237,7 +275,7 @@ imm = int(raw[4:6], 16)</pre>
     </section>
   </div>
 
-  <h2>9. 近一周刷题菜单（别只押旧三题）</h2>
+  <h2>11. 近一周刷题菜单（别只押旧三题）</h2>
   <p><b>每天 1～2 题精做</b>（写完能讲思路），不是刷完题库。</p>
   <table>
     <tr><th>天</th><th>必做</th><th>选做</th></tr>
@@ -251,6 +289,6 @@ imm = int(raw[4:6], 16)</pre>
   </table>
   <p class="ok">LeetCode 可搜题名；公司题库按「哈希/窗口/栈/BFS/模拟」标签挑，不追求数量。</p>
 
-  <p class="sub" style="margin-top:10px">打印建议：浏览器打开本文件 → 打印 → 边距最小 · 可双面。每天通勤/午休只看第 2～6 节。</p>
+  <p class="sub" style="margin-top:10px">打印建议：浏览器打开本文件 → 打印 → 边距最小 · 可双面。每天重点看第 2～8 节（含 lambda / isalpha 等）。</p>
 </body>
 </html>
