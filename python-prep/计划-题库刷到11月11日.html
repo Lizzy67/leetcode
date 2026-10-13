@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>题库刷题表 · 考到 11/11</title>
+  <style>
+    :root {
+      --bg: #f7f4ef;
+      --ink: #1c1917;
+      --muted: #57534e;
+      --card: #fff;
+      --line: #e7e5e4;
+      --acc: #9a3412;
+      --soft: #ffedd5;
+      --ok: #14532d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "PingFang SC", "Noto Sans SC", sans-serif;
+      background:
+        radial-gradient(ellipse 60% 40% at 0% 0%, #fde68a55, transparent),
+        radial-gradient(ellipse 50% 35% at 100% 0%, #fed7aa66, transparent),
+        var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    main { max-width: 920px; margin: 0 auto; padding: 1.5rem 1.1rem 3rem; }
+    h1 { font-family: "IBM Plex Serif", "Noto Serif SC", serif; font-size: clamp(1.5rem, 3.5vw, 2rem); margin: 0 0 0.3rem; }
+    .sub { color: var(--muted); margin: 0 0 1rem; }
+    .banner {
+      background: var(--soft);
+      border: 2px solid var(--acc);
+      border-radius: 12px;
+      padding: 0.9rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+    h2 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+    h3 { font-size: 0.95rem; margin: 0.6rem 0 0.35rem; color: var(--acc); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { border-bottom: 1px solid var(--line); padding: 0.4rem 0.3rem; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 0.75rem; }
+    ul { margin: 0.2rem 0 0; padding-left: 1.1rem; }
+    .star { color: var(--acc); font-weight: 700; }
+    .muted { color: var(--muted); font-size: 0.88rem; }
+    code { background: #f5f5f4; padding: 0.05rem 0.3rem; border-radius: 3px; font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>题库刷题表 · 考到 11/11</h1>
+    <p class="sub">约 34 天 · 按题型跳着刷 · 不按 1→96 顺序 · 完整版见 <code>07-题库刷题表-考到11月11日.md</code></p>
+
+    <section class="banner">
+      <strong>说明：</strong>内网 3ms 链接我打不开；本表按你粘贴的题名编排。  
+      带 <span class="star">★</span> 的最像科目一（模拟 / 栈机 / 编辑 / 内存池 / 解析）。
+    </section>
+
+    <section class="card">
+      <h2>每周怎么做</h2>
+      <ul>
+        <li>每天 1 场（40～60min）；带娃日可改 25min 微场</li>
+        <li>每周 ≥ 5 场；陪娃/朋友局可空</li>
+        <li>流程：限时自己写 → 对答案 → 合上重写</li>
+        <li>小抄：<code>打印小抄-科目一.html</code> 天天看</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>优先刷（★ 主攻池）</h2>
+      <ul>
+        <li><span class="star">★</span> 88 文本编辑框 · 94 基于栈的虚拟机 · 3 简易内存池</li>
+        <li><span class="star">★</span> 81 文件系统 · 82 WriteBuffer · 92 页面置换</li>
+        <li><span class="star">★</span> 91 多窗口事件 · 95 画图2 · 16 DHCP</li>
+        <li>解析向：72 IP头 · 2 MAC · 66 信号解码 · 39 表达式 · 49 TLV(困)</li>
+        <li>窗口哈希：5/4 元音子串 · 28 公共字符 · 75 单词匹配 · 20 整数对最小和</li>
+        <li>调度：46 负载均衡 · 45 任务调度 · 96 虚拟机部署 · 76 容器资源</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>近五周菜单（摘要）</h2>
+      <table>
+        <thead><tr><th>阶段</th><th>日期</th><th>重点</th></tr></thead>
+        <tbody>
+          <tr><td>热身</td><td>10/8–10/12</td><td>简：元音/公共字符/排序；中：内存池、开始文本编辑框</td></tr>
+          <tr><td>模拟+解析</td><td>10/13–10/19</td><td>文本编辑框收口、栈虚拟机、IP/文件系统/页面置换</td></tr>
+          <tr><td>窗口+模拟</td><td>10/20–10/26</td><td>瑕疵元音、单词匹配、多窗口/画图、表达式；周末小模考</td></tr>
+          <tr><td>调度查漏</td><td>10/27–11/2</td><td>负载/调度/容器或虚拟机部署、路由匹配；错题日</td></tr>
+          <tr><td>拔高收束</td><td>11/3–11/11</td><td>TLV或空闲时段选1、★题限时重写、模考；11/10停新类型</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>今天就可以开始（10/8）</h2>
+      <ol>
+        <li>题库打开：<strong>5 最长元音子串</strong>（简单热手）</li>
+        <li>有余力：默写两数之和字典版</li>
+        <li>明天：<strong>28 公共字符</strong> + <strong>30 字符排序</strong></li>
+        <li>本周中等目标启动：<strong>3 简易内存池</strong></li>
+      </ol>
+      <p class="muted">详细到天的表在 Markdown 文件里，可对照题号在题库搜索。</p>
+    </section>
+
+    <section class="card">
+      <h2>时间不够时的砍法</h2>
+      <p>保 <span class="star">★ 模拟</span> + 解析 + 窗口哈希；调度/图论/困难往后扔。  
+      不要从序号 1 刷到 96。</p>
+    </section>
+  </main>
+</body>
+</html>
