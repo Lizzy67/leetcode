@@ -247,6 +247,53 @@ for x in a[1:]:
         # 1 非法检查  2 维护不变量(容量/窗口)
         # 3 改状态    4 return 约定值(-1/长度/...)</pre>
 
+      <h3>简易内存池 / 空闲块合并（必看）</h3>
+      <p class="note">题库标「简单」也常劝退：难在区间相邻合并，不在语法。</p>
+      <ul>
+        <li>用半开区间想：已分配/空闲都是 <code>[start, start+size)</code></li>
+        <li>两张表：<code>table: 起始→长度</code>（已分配）；<code>idle: 起始→长度</code>（空闲，可多段）</li>
+        <li><b>request</b>：按策略在 idle 里找一块 <code>free&gt;=size</code>
+          <ul>
+            <li>首次适应：地址从小到大 <code>sorted(idle)</code></li>
+            <li>最佳适应：选能装下的最小 free</li>
+            <li>切分：用掉 size，剩余 <code>idle[addr+size]=free-size</code></li>
+          </ul>
+        </li>
+        <li><b>release</b>：只能释放 <code>table</code> 里的起始地址（中间地址/二次释放 → False）</li>
+        <li>合并口诀：<b>放回 → 并右 → 并左</b>
+          <ul>
+            <li>右邻：存在起始 <code>addr+size</code></li>
+            <li>左邻：存在 <code>s+sz==addr</code>（结尾顶到我）</li>
+          </ul>
+        </li>
+        <li>别用「地址 in idle.values()」——values 是长度不是地址</li>
+        <li>缓存的 max_idle 易过时；宁可每次扫 idle，或改完就重算</li>
+      </ul>
+<pre># release 合并骨架
+size = table.pop(addr)
+idle[addr] = size
+# 并右
+right = addr + size
+if right in idle:
+    idle[addr] += idle.pop(right)
+# 并左
+for s, sz in list(idle.items()):
+    if s + sz == addr:          # size&gt;0 时不必写 s!=addr
+        idle[s] += idle.pop(addr)
+        break
+
+# request 首次适应骨架
+for addr in sorted(idle):
+    free = idle[addr]
+    if free &gt;= size:
+        del idle[addr]
+        if free &gt; size:
+            idle[addr+size] = free - size
+        table[addr] = size
+        return addr
+return -1</pre>
+      <p>同类「相邻合并」还可能出现在：磁盘空闲区间、时间段合并、页面/缓冲回收。</p>
+
       <h3>hex 拆字节（指令题）</h3>
 <pre>op = int(raw[0:2], 16)
 reg = int(raw[2:4], 16)
@@ -256,6 +303,7 @@ imm = int(raw[4:6], 16)</pre>
       <table>
         <tr><th>类型</th><th>特征</th><th>练什么</th></tr>
         <tr><td>模拟/设计</td><td>类、规则多、样例长</td><td>状态字段 + 分支清单</td></tr>
+        <tr><td>内存/区间模拟</td><td>申请释放、碎片</td><td>idle/table + 左右合并</td></tr>
         <tr><td>数组/模拟</td><td>按规则改数组</td><td>下标、边界</td></tr>
         <tr><td>哈希</td><td>找配对/计数</td><td>dict / set</td></tr>
         <tr><td>双指针/窗口</td><td>连续段极值</td><td>定长/变长窗口</td></tr>
@@ -271,6 +319,8 @@ imm = int(raw[4:6], 16)</pre>
         <li>先保证能跑 + 样例过，再优化</li>
         <li>困难题先暴力/部分分</li>
         <li>写前列 3～4 行伪代码分支</li>
+        <li>模拟题先画状态（数轴/表格），再写代码</li>
+        <li>内存池类必测：切分、释放合并、二次释放、中间地址、碎片后再申请</li>
       </ul>
     </section>
   </div>
@@ -289,6 +339,6 @@ imm = int(raw[4:6], 16)</pre>
   </table>
   <p class="ok">LeetCode 可搜题名；公司题库按「哈希/窗口/栈/BFS/模拟」标签挑，不追求数量。</p>
 
-  <p class="sub" style="margin-top:10px">打印建议：浏览器打开本文件 → 打印 → 边距最小 · 可双面。每天重点看第 2～8 节（含 lambda / isalpha 等）。</p>
+  <p class="sub" style="margin-top:10px">打印建议：浏览器打开本文件 → 打印 → 边距最小 · 可双面。每天看 §2～§8；内存池专项看「空闲块合并」小节，建议单独打一页。</p>
 </body>
 </html>
