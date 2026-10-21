@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>科目一 · 带娃版冲刺（22天）</title>
+  <style>
+    :root {
+      --bg: #f3f6f4;
+      --ink: #1a2420;
+      --muted: #5a6b63;
+      --card: #ffffff;
+      --line: #d5e0da;
+      --today: #0b6e4f;
+      --today-soft: #d9f2e8;
+      --warn: #9a3412;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 70% 45% at 0% 0%, #ddeee6, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 10%, #f0e6d8, transparent 50%),
+        var(--bg);
+      line-height: 1.55;
+    }
+    main { max-width: 900px; margin: 0 auto; padding: 1.75rem 1.2rem 3.5rem; }
+    h1 {
+      font-family: "IBM Plex Serif", "Noto Serif SC", serif;
+      font-size: clamp(1.7rem, 4vw, 2.2rem);
+      margin: 0 0 0.3rem;
+    }
+    .sub { color: var(--muted); margin: 0 0 1.25rem; }
+    .today {
+      background: var(--today-soft);
+      border: 2px solid var(--today);
+      border-radius: 14px;
+      padding: 1.15rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .tag {
+      display: inline-block;
+      background: var(--today);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+    .today h2 { margin: 0.5rem 0 0.6rem; color: var(--today); font-size: 1.2rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem 1.15rem;
+      margin-bottom: 0.9rem;
+    }
+    h3 { margin: 0 0 0.55rem; font-size: 1.02rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 0.5rem 0.35rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-size: 0.78rem; }
+    tr.now { background: #eef8f3; font-weight: 600; }
+    ul { margin: 0.25rem 0 0; padding-left: 1.15rem; }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    .grid { display: grid; gap: 0.9rem; }
+    @media (min-width: 740px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+    code { background: #e8efeB; padding: 0.08rem 0.32rem; border-radius: 4px; font-size: 0.86em; }
+    .bar {
+      display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.6rem 0 0;
+    }
+    .pill {
+      background: #fff; border: 1px solid var(--line);
+      border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.8rem;
+    }
+    .pill.done { background: #e7f6ee; border-color: #9dceb5; }
+    .pill.todo { background: #fff7ed; border-color: #fdba74; }
+    footer { margin-top: 1.5rem; color: var(--muted); font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>科目一 · 带娃版冲刺</h1>
+    <p class="sub">考试 2026-10-14 · 今天起约 22 天 · 午休/晚上短场 · 陪娃和朋友局允许空窗</p>
+
+    <section class="today">
+      <span class="tag">TODAY · 9/22</span>
+      <h2>今天做什么（一场就够）</h2>
+      <ol>
+        <li>打开 A3，只补：<code>if ind != -1 and ...</code></li>
+        <li>不看答案默写一遍 <code>write</code>，跑通两组样例</li>
+        <li>做完就收工陪娃；有余力再扫一眼 B1 题面</li>
+      </ol>
+      <p class="muted" style="margin:0.7rem 0 0">完整计划：<code>python-prep/05-带娃版22天冲刺.md</code></p>
+    </section>
+
+    <section class="card">
+      <h3>你的进度</h3>
+      <div class="bar">
+        <span class="pill done">Counter ✓</span>
+        <span class="pill done">A1 停车场 ✓</span>
+        <span class="pill done">A2 限流 ✓</span>
+        <span class="pill todo">A3 差 ind!=-1</span>
+        <span class="pill todo">B1 未做</span>
+        <span class="pill todo">C1 未做</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>时间规则（别和自己较劲）</h3>
+      <ul>
+        <li>单场 40～60 分钟；实在没空就 25 分钟微场（只默写模板）</li>
+        <li>工作日：午休或晚 9 点后二选一即可</li>
+        <li>周末外出：允许空 1 天</li>
+        <li><strong>每周最低 5 场</strong>——达到就算没有拖延</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h3>22 天日程菜单</h3>
+      <table>
+        <thead><tr><th>日期</th><th>做什么</th></tr></thead>
+        <tbody>
+          <tr class="now"><td>9/22</td><td>A3 收口 + 默写 write</td></tr>
+          <tr><td>9/23–24</td><td>B1 密集度：写通 → 次日盲写</td></tr>
+          <tr><td>9/25–26</td><td>B2 或定长窗口 + 两数之和</td></tr>
+          <tr><td>9/27–28</td><td>限时重写 A1+A2，或 A3+B1</td></tr>
+          <tr><td>9/29–10/1</td><td>C1 迷你机：LOAD系 → 栈 → JMP</td></tr>
+          <tr><td>10/2–5</td><td>双指针/窗口精做；穿插模考A</td></tr>
+          <tr><td>10/6–8</td><td>BFS 入门 + 复盘</td></tr>
+          <tr><td>10/9–10</td><td>模考B（2中+1难）</td></tr>
+          <tr><td>10/11–12</td><td>只补弱项 + 模板</td></tr>
+          <tr><td>10/13</td><td>停新题，早睡</td></tr>
+          <tr><td>10/14</td><td>考试：先易后难</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="grid grid-2">
+      <section class="card">
+        <h3>必做清单</h3>
+        <ul>
+          <li>A3 收口</li>
+          <li>B1、B2（或等价窗口）</li>
+          <li>两数之和（字典）</li>
+          <li>C1 样例1、2</li>
+          <li>模考 ≥ 2 场</li>
+        </ul>
+      </section>
+      <section class="card">
+        <h3>明确不做</h3>
+        <ul>
+          <li>刷完题库</li>
+          <li>补完所有 modules</li>
+          <li>报复性熬夜补进度</li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="card">
+      <h3>一场固定流程</h3>
+      <ul>
+        <li>0–2 min：写 3～4 行伪代码分支</li>
+        <li>2–35 min：手敲 + 跑样例</li>
+        <li>35–45 min：修 bug；不通再看答案思路</li>
+        <li>次日微场：合上重写关键函数</li>
+      </ul>
+    </section>
+
+    <footer>
+      陪娃和出去玩不是偷懒。场次达标就行。打开本 HTML 只看「今天」绿色块。
+    </footer>
+  </main>
+</body>
+</html>
