@@ -238,6 +238,29 @@ for x in a[1:]:
     cur = max(x, cur+x)
     best = max(best, cur)</pre>
 
+      <h3>多重背包（题48，只需记口诀）</h3>
+      <p class="note">口诀：<b>容量倒着扫；次数拆成 1、2、4…</b>。字段常是 <code>v w s</code>。小数据可傻拆 s 次；大数据必须二进制拆，否则超时。</p>
+      <ul>
+        <li><code>dp[t]</code> = 时间/容量 ≤ t 时最大收益</li>
+        <li>0-1 一件：<code>for t=T…w: dp[t]=max(dp[t], dp[t-w]+v)</code>（倒序防重复用）</li>
+        <li>次数 s 很大：别循环 s 次；用 <code>k=1,2,4…</code> 打包成几件 0-1（价值/重量都 ×take）</li>
+      </ul>
+<pre># 多重背包 · 二进制拆（v w s）
+N, T = map(int, input().split())
+dp = [0] * (T + 1)
+for _ in range(N):
+    v, w, s = map(int, input().split())
+    k = 1
+    while s &gt; 0:
+        take = min(k, s)
+        vv, ww = v * take, w * take
+        for t in range(T, ww - 1, -1):
+            if dp[t - ww] + vv &gt; dp[t]:
+                dp[t] = dp[t - ww] + vv
+        s -= take
+        k &lt;&lt;= 1
+print(dp[T])</pre>
+
       <h3>类模拟骨架</h3>
 <pre>class X:
     def __init__(self, ...):
