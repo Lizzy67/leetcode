@@ -13,5 +13,6 @@
 | [会话媒体目录](./会话媒体目录/) | 多图融合前置 Skill 图片稳定获取 |
 | [Camera-UEC](./Camera-UEC/) | Camera Tab UEC 预览流 / 深度方案 |
 | [Jev-Meta-Muse](./Jev-Meta-Muse/) | Jev 与 Meta Muse 一页对照 |
+| [AI-Agent-TMG](./AI-Agent-TMG/) | AI Agent TMG 运作章程与首期例会议程 |
 
 各主题目录内自包含说明文档、HTML、PPT、生成脚本及所需 `assets/`。
