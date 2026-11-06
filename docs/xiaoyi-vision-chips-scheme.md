@@ -8,6 +8,8 @@
 
 ## 0. 三层分开看
 
+![三层总览](diagrams/chips_overview.png)
+
 信息乱，是因为三层叠在一张图上。
 
 | 层 | 决定什么 | 两条方案是否相同 |
@@ -21,6 +23,8 @@
 ---
 
 ## 1. 出 chip 的共同流程
+
+![内容怎么变成 chip](diagrams/chips_pipeline.png)
 
 ```text
 稳定的一帧
@@ -104,6 +108,8 @@
 
 HAL 对外三路，另有一路只在 HAL 内部使用，不占对外名额。
 
+![方案 1 录像流](diagrams/chips_scheme1_video.png)
+
 ```text
 视觉端起录像流
     │
@@ -126,6 +132,8 @@ HAL 对外三路，另有一路只在 HAL 内部使用，不占对外名额。
 ## 4. 方案 2：视觉端起拍照流（HAL 未接纳）
 
 按 AREngine 的 ARmode 起拍照流。HAL 对外只有两路：一路预览给 AREngine，一路预览给端侧显示。没有 HAL 内部模型，也没有 HAL 稳定帧事件。
+
+![方案 2 拍照流 + ARmode](diagrams/chips_scheme2_photo_armode.png)
 
 ```text
 视觉端起拍照流（ARmode）
