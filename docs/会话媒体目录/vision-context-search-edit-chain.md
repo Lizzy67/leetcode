@@ -1,7 +1,8 @@
 # visionContext 到底是什么
 
 > 用大白话对齐：结构怎么定、和搜索结果、对话历史、模型上下文各是什么关系。  
-> 上一版字段太多，容易看成「每张图一个大对象 + 再套一层 visionContext」。这篇以这份为准。
+> 上一版字段太多，容易看成「每张图一个大对象 + 再套一层 visionContext」。这篇以这份为准。  
+> 业界对照见 [`vision-context-industry-practice.md`](./vision-context-industry-practice.md)。
 
 ---
 
