@@ -10,7 +10,7 @@
 | [专利](./专利/) | 参数引用相关专利 IDEA / 交底书 / 现有技术 |
 | [Skill工具治理](./Skill工具治理/) | Skill/Tool 版本治理、工具不存在异常处理 |
 | [相册整理](./相册整理/) | 相册全量搜索 / 接续追加方案 |
-| [会话媒体目录](./会话媒体目录/) | 多图融合前置 Skill 图片稳定获取 |
+| [会话媒体目录](./会话媒体目录/) | visionContext / 搜图选图修图链路、多图融合前置取图 |
 | [Camera-UEC](./Camera-UEC/) | Camera Tab UEC 预览流 / 深度方案 |
 | [Jev-Meta-Muse](./Jev-Meta-Muse/) | Jev 与 Meta Muse 一页对照 |
 
