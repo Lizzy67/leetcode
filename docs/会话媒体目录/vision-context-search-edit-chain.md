@@ -4,6 +4,15 @@
 > 上一版字段太多，容易看成「每张图一个大对象 + 再套一层 visionContext」。这篇以这份为准。  
 > 业界对照见 [`vision-context-industry-practice.md`](./vision-context-industry-practice.md)。
 
+## 两个容易看混的词
+
+**`m12` 不是现有字段，也不是你提过的名字。** 它只是举例：Runtime 把一张图写入账本时，可以自己发一个会话内短号，让模型写 `${vision.m12}`，而不去抄图库 id 或一长串 url。不用这个名字也行。序号已经够用时，模型直接写 `${vision.lastSearch[2]}`，账本里可以不出现 `m12`。
+
+**`listPath` 是旧工具的适配，不是新工具的返回规范。**
+
+- 新工具：按约定的字段返回，例如每张图放在 `media[]`，里面有 `ref` 和 `from`。Runtime 认这个固定字段，直接入账。
+- 旧工具：图库搜索已经返回 `items[].galleryId`，不能改成 `media[]`。接入方在工具策略里写 `listPath: items`、`refPath: galleryId`，告诉 Runtime「图片在你原来的这个字段」。Runtime 照这个路径去取，再写入同一本账本。
+
 ---
 
 ## 先回答 7 个问题

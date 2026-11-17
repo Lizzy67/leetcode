@@ -35,7 +35,7 @@ LangChain 的工具可以返回两份：`content` 进模型，`artifact` 不进�
 
 Google ADK 有独立的 Artifact Service，和会话状态分开。工具里 `save_artifact("chart.png", 图片)`，另一个工具 `load_artifact("chart.png")`。还有内置的 `LoadArtifactsTool`：模型需要看某张图时再加载，加载结果只在这一轮临时出现，不写回永久历史。
 
-这就是你们的 workmemory + visionContext。ADK 用文件名当短号；你们用 `m12` 和 `batch + index`。ADK 要工具自己调用 `save_artifact`。你们不改旧工具返回，所以改成「工具策略里写 listPath / refPath，Runtime 代为入账」。
+这就是你们的 workmemory + visionContext。ADK 用文件名当短号；你们用「哪一次搜索的第几张」（文档举例里的 `m12` 只是会话短号，不是既有字段）。ADK 要工具自己调用 `save_artifact`。你们不改旧工具返回，所以改成「工具策略里写 listPath / refPath，Runtime 代为入账」。新工具则直接按约定字段返回，Runtime 认那个固定字段。
 
 来源：
 
