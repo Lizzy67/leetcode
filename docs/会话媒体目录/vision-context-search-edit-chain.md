@@ -153,6 +153,44 @@ user:     第 3 张拿去修图
 
 搜索、文生图、网搜走的是**同一段入账代码**。差别只在各自那三行配置。Runtime 里不要写 `如果是搜索工具就入账`。新工具要入账，给它补一份 `media` 配置即可，不用改 Runtime。
 
+补配置的人是这个工具的接入方，和现在补 mask、`beforeHookPolicy` 是同一份工具策略、同一次发布。不改工具返回 JSON，不改 Runtime 代码，也不写进 Skill 正文。
+
+举例：新工具 `web.imageSearch` 自己返回的是：
+
+```json
+{
+  "summary": "找到 12 张剧照",
+  "photos": [
+    { "src": "https://img.example/1.jpg", "title": "封面" },
+    { "src": "https://img.example/2.jpg", "title": "侧脸" }
+  ]
+}
+```
+
+接入方在该工具已有策略旁加上这三项，字段名对上它自己的 JSON：
+
+```json
+{
+  "web.imageSearch": {
+    "media": {
+      "listPath": "photos",
+      "refPath": "src",
+      "from": "web"
+    }
+  }
+}
+```
+
+| 填什么 | 怎么填 |
+|--------|--------|
+| `listPath` | 图片数组在返回 JSON 的哪一层。上面是 `photos`。搜索若是 `items`，就写 `items` |
+| `refPath` | 数组里每一项，用哪个字段当这张图的 id 或 url。上面是 `src`。图库是 `galleryId` |
+| `from` | 来源枚举里选一个：`gallery` / `upload` / `web` / `gen` / `edit` |
+
+只返回一张、没有数组时，`listPath` 留空，`refPath` 写那个字段名，例如文生图的 `imageUrl`。
+
+发布后，这个工具下一次成功返回，已有的入账代码读到 `media`，就按 `photos[].src` 各写一行。没写这三项的工具，结果仍进 workmemory，但不进 visionContext。
+
 上传不是工具返回。客户端上传完成时发一条「上传完成」事件，事件里带 obs id，走同一条追加逻辑，`from` 固定为 `upload`。
 
 ### 9. 「第 3 张」「有太阳的那张」是谁写入 picked 的？
