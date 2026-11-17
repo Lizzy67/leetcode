@@ -2,7 +2,7 @@
 
 > 状态：设计建议（可直接对齐现有 workmemory / `${resultId}` 管道）  
 > 关联：`../工具参数引用/tool-param-ref-mechanism.md`、`../工作记忆引用/workmemory-ref-scheme.md`、拼图示例 `../工具参数引用/tool-param-ref-example.html`  
-> 落地形态：Runtime `visionContext` 与搜图→选图→修图/剪辑完整链路见同目录 [`vision-context-search-edit-chain.md`](./vision-context-search-edit-chain.md)
+> 结构以同目录 [`vision-context-search-edit-chain.md`](./vision-context-search-edit-chain.md) 为准：`visionContext` 就是会话图片账本，一行一个小记录，不另存一套大对象，也不重复存搜索 query。
 
 ---
 

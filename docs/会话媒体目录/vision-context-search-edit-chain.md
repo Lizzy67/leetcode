@@ -1,382 +1,170 @@
-# visionContext：搜索选图 → 修图/剪辑完整链路
+# visionContext 到底是什么
 
-> 状态：设计建议（承接 `session-media-catalog-for-fusion.md`）  
-> 关联：workmemory 引用、工具参数 `${…}` / beforeHook  
-> 业务主路径：**搜图 → 指代选图 → AI 修图 / 视频剪辑**；返回地址须可被后续任意多模工具访问
-
----
-
-## 1. 对你提案的判断
-
-**加 `visionContext` 作为 Runtime 会话媒体目录：正确，建议定为一等结构。**
-
-`userUploadImg`、`lastToolReturnImg` 作为**快捷视图**有用，但**不够**单独撑起主路径：
-
-| 能力 | 仅 lastToolReturnImg | 需要补的 |
-|------|----------------------|----------|
-| 「第 x 张」 | 能（若 batch 还在） | 跨轮 / 跨工具后 batch 被覆盖会丢 |
-| 「有太阳的那张」 | 不能只靠 URI 列表 | 要 vision 投影或选图 Tool 回写 `selection` |
-| 「刚才上传的 + 搜索第 3 张」 | 两个槽位可拼 | 需要统一 `items[]` 与跨来源引用 |
-| 下游多模可访问 | URI 异构 | 需要 **Resolve / Materialize** 层 |
-
-推荐形态：
-
-```text
-visionContext
-├── items[]              ← 权威有序目录（所有来源入册）
-├── userUploadImg[]      ← 视图：本会话用户上传
-├── lastToolReturnImg[]  ← 视图：最近一次产图 Tool 的 batch
-├── lastSearchBatch      ← 视图：最近一次搜索（支撑「搜索结果里…」）
-├── selection            ← 当前选中（「这张/这些」消歧锚点）
-└── accessCache          ← 已物化的可拉取地址（签名 URL / 沙箱副本）
-```
-
-模型与 Skill 主要操作 **`items` / `selection` / 引用**；两个快捷数组是给 Prompt 与默认指代用的糖，不是唯一真相。
+> 用大白话对齐：结构怎么定、和搜索结果、对话历史、模型上下文各是什么关系。  
+> 上一版字段太多，容易看成「每张图一个大对象 + 再套一层 visionContext」。这篇以这份为准。
 
 ---
 
-## 2. visionContext 数据结构
+## 先回答 7 个问题
 
-### 2.1 单条媒体（统一异构来源）
+### 1. 要不要兼容所有会返回图片的工具？
 
-```json
-{
-  "mediaId": "m7f3a91c",
-  "sessionOrdinal": 12,
-  "batchOrdinal": 2,
-  "source": "upload | gallery | t2i | web | edit | clip",
-  "locator": {
-    "type": "gallery_id | sandbox_uri | http_url | obs_id | obs_uri",
-    "value": "…"
-  },
-  "access": {
-    "status": "raw | signed | materialized",
-    "pullUrl": null,
-    "expiresAt": null,
-    "localPath": null,
-    "reachableBy": ["on_device", "cloud_http", "obs"]
-  },
-  "meta": {
-    "mime": "image/jpeg",
-    "width": 4032,
-    "height": 3024,
-    "capturedAt": "2025-06-01T18:20:00+08:00",
-    "caption": null,
-    "tags": [],
-    "thumbHash": null
-  },
-  "provenance": {
-    "resultId": "a1b2c3d4",
-    "toolName": "gallery.search",
-    "turnIndex": 5
-  }
-}
-```
+**不要改这些工具的返回格式。**
 
-**locator 覆盖你点名的来源：**
+图库搜索继续返回它现在的 id 列表，文生图继续返回它的 url，上传继续是 obs。各写各的。
 
-| locator.type | 含义 | 典型来源 |
-|--------------|------|----------|
-| `gallery_id` | 本地媒体库 ID | 搜图 / 图库 |
-| `sandbox_uri` | App 沙箱文件 URI | 修图中间态、下载缓存 |
-| `http_url` | 公网图 | 网搜、文生图 CDN |
-| `obs_id` / `obs_uri` | 云对象 | 用户上传、云侧落盘 |
+要统一的只有 Runtime 记笔记的方式：工具一返回图，Runtime 从这份返回里**抽出一行小记录**放进本会话的图片账本。工具本身不用改成同一种 JSON。
 
-`access` 与 `locator` 分离：locator 是**身份**；access 是**当前谁能拉到像素**。下游工具要的是可访问形态，不一定是原始 locator。
+### 2. mediaItem 是不是每张图存一个很大的结构？
 
-### 2.2 容器字段
+**不是。** 上一版把宽高、标签、caption、签名、过期时间都写进一条记录，那是「以后可能用到的字段清单」，不是落库形态。
+
+一张图只留定位它所需的几项：
 
 ```json
 {
-  "visionContext": {
-    "schemaVersion": 1,
-    "items": ["/* MediaItem[] 权威列表 */"],
-    "userUploadImg": ["m…", "m…"],
-    "lastToolReturnImg": {
-      "resultId": "a1b2c3d4",
-      "toolName": "gallery.search",
-      "mediaIds": ["m…", "m…"],
-      "summary": "找到 48 张去年拍的照片"
-    },
-    "lastSearchBatch": {
-      "query": "去年拍的照片",
-      "mediaIds": ["m…"],
-      "total": 48,
-      "visionProjected": ["m…前30…"]
-    },
-    "selection": {
-      "mediaIds": ["m7f3a91c"],
-      "reason": "user_ordinal | user_semantic | model_pick | explicit",
-      "utterance": "有太阳的那张"
-    },
-    "accessCache": {}
-  }
+  "id": "m12",
+  "from": "gallery",
+  "ref": "10082",
+  "batch": "a1b2c3d4",
+  "index": 2
 }
 ```
 
-约定：
-
-1. **所有产图通道必须 `ingest → items`**，再更新快捷视图。  
-2. `userUploadImg` / `lastToolReturnImg.mediaIds` 只存 `mediaId`，细节查 `items`。  
-3. 新 Tool 返回覆盖 `lastToolReturnImg`，但**不删除**旧 `items`（否则「再修刚才那张」会断）。  
-4. 与 workmemory 关系：`resultDataList` 仍存工具全量 JSON；`visionContext` 是媒体特化索引，`provenance.resultId` 反查 workmemory。
-
----
-
-## 3. 完整业务链路
-
-### 3.1 总览
-
-```text
-① 搜索「去年拍的照片」
-        │
-        ▼
-  gallery.search → resultDataList + ingest(visionContext.items)
-        │
-        ├─ lastToolReturnImg / lastSearchBatch 更新
-        ├─ 送模：summary + 前 N 张缩略图（vision 投影）
-        └─ 全集 mediaId 可引用（窗口外也可被选）
-        │
-②a 序数选图「第 3 张」     ②b 语义选图「有太阳的那张」
-        │                           │
-        ▼                           ▼
-  解析 batchOrdinal=3         模型看投影 / 或 vision.select
-  → selection = [m…]          → 回写 selection = [m…]
-        │                           │
-        └─────────────┬─────────────┘
-                      ▼
-③ 修图 / 剪辑工具
-   args.images = ${vision.selection}
-        │
-        ▼
-  Pre-call: resolve mediaId → MediaItem
-        │
-        ▼
-  Access Resolver / Materializer
-   （gallery_id → 可拉 URL 或转存 OBS；过期签名刷新）
-        │
-        ▼
-  beforeHook → 工具协议入参 → invoke
-        │
-        ▼
-④ 输出新图再次 ingest（source=edit|clip）
-   → 成为下轮任意多模工具的合法输入
-```
-
-### 3.2 步骤①：搜索入册
-
-Tool 返回示例（业务 JSON）：
-
-```json
-{
-  "summary": "找到 48 张去年拍的照片",
-  "total": 48,
-  "items": [
-    { "galleryId": "10081", "thumbUri": "…", "capturedAt": "…" },
-    { "galleryId": "10082", "thumbUri": "…" }
-  ]
-}
-```
-
-Runtime Ingest：
-
-1. 每条 → `MediaItem`（`locator.type=gallery_id`）。  
-2. 追加进 `items`，分配 `sessionOrdinal`；本批内 `batchOrdinal` 从 0/1 起。  
-3. 更新 `lastToolReturnImg`、`lastSearchBatch`。  
-4. Mask 长 URI / id 列表；模型见 summary + `${a1b2c3d4.mediaIds}` 或投影列表。  
-5. Vision 投影：默认前 30（可配）写入多模态消息；**投影集合记在 `lastSearchBatch.visionProjected`**，便于解释「模型看见了谁」。
-
-### 3.3 步骤②a：序数选图「第 x 张」
-
-解析优先级（Skill / Runtime 约定，勿全丢 Prompt）：
-
-```text
-「第 x 张」默认锚点 = lastSearchBatch ?? lastToolReturnImg
-  → items 中 batchOrdinal == x（或 x-1，产品统一一种）
-  → 写入 selection.mediaIds
-```
-
-模型输出（推荐只出引用）：
-
-```json
-{
-  "tool": "image.edit",
-  "args": {
-    "images": "${vision.selection}",
-    "instruction": "提亮，保留太阳轮廓"
-  }
-}
-```
-
-或显式：
-
-```json
-{ "images": "${vision.lastSearch[2]}" }
-```
-
-**不要**让模型抄 galleryId。窗口外的第 35 张：只要在 `items` 里，序数引用仍可命中。
-
-### 3.4 步骤②b：语义选图「有太阳的那张」
-
-两条实现路径（可并存）：
-
-| 路径 | 做法 | 适用 |
-|------|------|------|
-| **A. 对话模型看图** | 投影内缩略图 + caption；模型选出 `mediaId` 写入 selection | 候选已在前 N 张 |
-| **B. 选图 Tool** | `vision.select(batch=${lastSearch}, query="有太阳")` 端侧/云侧打分，返回 `mediaIds` 并 ingest selection | 候选多、或不在投影窗 |
-
-路径 B 更稳：选图与修图解耦，且不依赖「太阳那张恰好在前 30」。
-
-选图 Tool 返回也必须进 `visionContext`（更新 `selection`，可选写 `meta.caption`）。
-
-### 3.5 步骤③：修图 / 视频剪辑
-
-统一入参约定（工具零改或最小改）：
-
-```text
-模型:  images = ${vision.selection} | ${vision.lastSearch[2]} | ${vision.userUpload[-1]}
-         ↓ Pre-call resolve
-Runtime: MediaItem[]
-         ↓ Access Resolver
-       每条得到 tool-facing handle（见 §4）
-         ↓ beforeHook（按工具 policy）
-       [{ "uri": "https://…" }, …] 或 [{ "file_id": "…" }, …]
-         ↓ invoke edit / video.clip
-```
-
-视频剪辑同构：时间线素材列表仍是 `mediaId[]`；Resolve 层按工具要图片帧还是视频文件做物化。
-
-### 3.6 步骤④：结果回写，供任意后续多模工具
-
-修图/剪辑成功后：
-
-1. 新产物 `ingest`（`source=edit|clip`，locator 多为 `obs_*` 或 `sandbox_uri`）。  
-2. 更新 `lastToolReturnImg`。  
-3. **默认把新图加入 `selection`**（「再淡一点」指代不断）。  
-4. 同步写 workmemory `resultId`，支持 `${resultId.outputUri}` 与 `${vision.selection}` 等价路径。
-
-这样链路可无限续：搜 → 选 → 修 → 再修 → 丢进剪辑时间线。
-
----
-
-## 4. 「返回地址可被后续任意多模工具访问」
-
-### 4.1 问题本质
-
-「可访问」≠「永远甩同一个公网 URL 字符串」。
-
-| 原始形态 | 云侧修图工具 | 端侧剪辑工具 |
-|----------|--------------|--------------|
-| `gallery_id` | 通常不可直达 | 可直达 |
-| `sandbox_uri` | 不可达 | 同 App 可达 |
-| `http_url` | 可达（防盗链/过期风险） | 需下载 |
-| `obs_id` | 需签名 | 需下载或 SDK |
-
-因此 Runtime 必须有 **Access Resolver（解析）+ Materializer（物化）**：
-
-```text
-MediaItem
-   │
-   ├─ 若工具声明 accepts ∋ locator.type 且同侧可达 → 直接传 locator
-   ├─ 若需要 http → 签名 / 临时网关 pullUrl（写入 access + accessCache）
-   ├─ 若需要云侧持有 → 上传/转存 OBS，更新 locator 或旁路 materialization
-   └─ 失败 → fail-closed，提示换端或授权，禁止把不可达 URI 塞给工具
-```
-
-### 4.2 工具侧能力声明（建议挂 Capability / Tool schema）
-
-```json
-{
-  "image.edit": {
-    "inputMedia": {
-      "accepts": ["http_url", "obs_uri", "obs_id"],
-      "maxItems": 6,
-      "prefer": "obs_uri"
-    }
-  },
-  "video.clip": {
-    "inputMedia": {
-      "accepts": ["gallery_id", "sandbox_uri", "obs_uri"],
-      "execSide": "on_device"
-    }
-  }
-}
-```
-
-Resolve 时按 `accepts` × `MediaItem.access.reachableBy` 做适配；**模型无感**。
-
-### 4.3 稳定性约定
-
-1. **对外引用只用 `mediaId` / `${vision…}`**，不用易过期的 signed URL。  
-2. 每次 Pre-call 可刷新 `pullUrl`；`accessCache` 按 `expiresAt` 失效。  
-3. 物化副本（转存 OBS）可记 `materializedFrom`，避免重复上传。  
-4. 文生图 / Markdown 嵌图：展示 URL 只是副本；权威条目在 `items`，后续工具只走 Resolve。
-
-### 4.4 与 `${}` 管道对齐的引用语法（建议）
-
-| 引用 | 含义 |
+| 字段 | 含义 |
 |------|------|
-| `${vision.selection}` | 当前选中 MediaItem[] |
-| `${vision.userUpload}` / `${vision.userUpload[-1]}` | 上传列表 / 最近一张 |
-| `${vision.lastToolReturn}` | 最近产图 batch |
-| `${vision.lastSearch}` / `${vision.lastSearch[2]}` | 最近搜索 / 第 3 张 |
-| `${vision.m7f3a91c}` | 单 mediaId |
-| `${a1b2c3d4.mediaIds}` | 兼容纯 workmemory 路径 |
+| `id` | 本会话里这张图的短号，后面指代用 |
+| `from` | 从哪来：`gallery` 图库 / `upload` 上传 / `web` 网图 / `gen` 文生图 / `edit` 修图结果 |
+| `ref` | **一个**能找到原图的值：图库 id，或沙箱 uri，或公网 url，或 obs id。不把四种都存满 |
+| `batch` | 哪一次工具返回的。值就是现有 workmemory 的 `resultId` |
+| `index` | 这一批里的第几张（从 0 起）。「第 3 张」用它 |
 
-解析失败 fail-closed，与现有参数引用一致。
+像素不存。搜索接口已经返回的缩略图、时间、摘要也不再复制一份。
+
+### 3. 搜索那边是不是已经做了？mediaItem 和对话历史是不是同一层？
+
+搜索结果**已经在** workmemory 的 `resultDataList` 里，这是对的，继续用。
+
+所以 mediaItem **不是**对话历史里的一条消息，也**不是**把搜索 JSON 再抄一遍。
+
+同一场会话里其实有三层，别叠在一起：
+
+```text
+对话历史          用户说的话、模型说的话、工具返回的摘要
+                  「搜索去年拍的照片」这句话就在这里
+
+workmemory        每次工具的完整返回（搜索的 id 列表在这）
+                  已有，不用重做
+
+图片账本          只给「图」建的索引：短号 + 指向 workmemory 或上传文件
+visionContext     默认不写进对话历史
+```
+
+搜索到的图：`batch + index` 指回那次搜索结果即可，`ref` 用图库 id。  
+上传、文生图、只出现在回复 Markdown 里的图：搜索结果里没有，才靠账本自己记下 `ref`。
+
+### 4. 在模型上下文里大概在什么位置？
+
+**整本账本不放进模型上下文。**
+
+模型看到的仍是现在这种对话：
+
+```text
+user:     搜索去年拍的照片
+tool:     找到 48 张。引用 ${a1b2c3d4}
+          （可选）前 30 张缩略图
+assistant: 找到 48 张，要第几张？
+user:     第 3 张拿去修图
+```
+
+48 张的 id 列表留在 workmemory / 账本。模型只拿到摘要、短引用，以及产品决定给它看的那最多 30 张。  
+「第 35 张」模型没看见图也没关系，它只要说出「第 35 张」，Runtime 用 `index` 去账本里取。
+
+### 5. 已经有全量 mediaItem，为什么还要 visionContext？
+
+**它们是同一个东西，不是两层。**
+
+- `mediaItem` = 账本里的一行（一张图）
+- `visionContext` = 这场会话的那本账本（很多行 + 三个指针）
+
+没有「先存完全量 mediaItem，再包一个 visionContext」这步。叫 visionContext，只是给这本账本一个名字，方便和对话历史、workmemory 分开说。
+
+三个指针才是账本比「一堆 mediaItem」多出来的东西：
+
+```json
+{
+  "items": [ /* 上面那种小记录 */ ],
+  "lastSearch": "a1b2c3d4",
+  "lastUpload": ["m3"],
+  "picked": ["m12"]
+}
+```
+
+| 指针 | 干什么 |
+|------|--------|
+| `lastSearch` | 「搜索结果里的第 x 张」指哪一次搜索。后面又文生图了，也不会把这次搜索冲掉 |
+| `lastUpload` | 「我刚传的那张」 |
+| `picked` | 用户已经选中的图。「有太阳的那张」「就这张修」写在这里，下一句修图直接用 |
+
+`lastToolReturnImg` 可以不单做一份数据：最近一次工具如果是搜索，它就是 `lastSearch`；如果是修图，新图已经在 `items` 里，并把 `picked` 改成这张新图。
+
+### 6. visionContext 什么时候生效？
+
+没有单独的开关。两件事：
+
+**写入**（有图进来就记一行）：
+
+- 图库搜索返回
+- 用户上传完成
+- 文生图 / 网搜吐出图
+- 修图、剪辑做出新图
+
+**读出**（下一轮要拿图给工具时）：
+
+用户说「第 3 张拿去修」或「有太阳的那张拿去剪」。模型参数里写引用，例如 `${vision.lastSearch[2]}` 或 `${vision.picked}`。工具真正执行前，Runtime 查账本，换成图库 id / obs / url，再调用修图或剪辑。
+
+不修图的纯聊天轮次不用读它。
+
+### 7. 和对话历史重复吗？里面还有搜索 query
+
+**query 不该出现在账本里。** 上一版写了 `lastSearchBatch.query`，和用户原话重复，删掉。
+
+对话历史负责「用户说过什么」。  
+账本只负责「哪张图、在哪、第几张、当前选中谁」。
 
 ---
 
-## 5. 和「只加两个数组」的差异（落地时注意）
+## 和你说的场景怎么对上
 
-| 做法 | 风险 |
-|------|------|
-| 只有 `userUploadImg` + `lastToolReturnImg` | 搜索 batch 被文生图覆盖后，「搜索里第 x 张」丢失 |
-| 不设 `selection` | 「这张」「有太阳的那张」无法跨一句工具调用稳定指代 |
-| 不设 Access Resolver | gallery_id 丢给云修图 → 运行失败；公网 URL 过期 → 第二次调用挂 |
-| 把 vision 投影当目录 | >N 或「最后两张」必挂 |
-| Markdown URI 当权威 | 异步文生图链路与多模工具脱节 |
+用户：搜索去年拍的照片。
 
-**最小够用集合：** `items` + `lastSearchBatch` + `selection` + Access Resolver；`userUploadImg` / `lastToolReturnImg` 作为视图保留。
+1. 图库搜索照旧返回，完整 id 列表进 workmemory（搜索侧已有的那份）。
+2. Runtime 按张追加小记录，`batch` 都是这次的 `resultId`，`index` 为 0, 1, 2…
+3. `lastSearch` 指到这次。
+4. 模型上下文只看到「找到 48 张」+ 引用 + 最多 30 张缩略图。
 
----
+用户：选第 3 张。
 
-## 6. 验收话术（主路径）
+5. Runtime 取 `lastSearch` 这批里 `index = 2` 的那一行，写入 `picked`。
 
-| # | 话术 | 通过标准 |
-|---|------|----------|
-| 1 | 「搜索去年拍的照片」 | 48 张入 `items`；`lastSearchBatch` 完整；投影 ≤N |
-| 2 | 「选第 3 张去修图」 | `selection` = batch 第 3；云修图收到可访问 URI/OBS，非裸 gallery_id（若工具在云） |
-| 3 | 「有太阳的那张」 | 经模型或 `vision.select` 命中正确 `mediaId`；可在投影外靠选图 Tool |
-| 4 | 「再和刚上传的自拍融合」 | `userUpload` + `selection` 组合 resolve 成功 |
-| 5 | 「把修完的图丢进视频剪辑」 | edit 产物已 ingest；端侧工具拿到可达 locator |
-| 6 | 搜索后穿插文生图再问「刚才搜索的第 2 张」 | `lastSearchBatch` 仍在；不被 `lastToolReturnImg` 覆盖毁掉 |
+用户：搜索结果里有太阳的那张。
 
----
+6. 若这张在给模型看的 30 张里：模型直接选定对应 `id`，写入 `picked`。
+7. 若不在这 30 张里：再调一次选图（把「有太阳」和这批 `batch` 交给选图工具），选图工具返回的 `id` 写入 `picked`。对话模型不必看见全部 48 张。
 
-## 7. 实施切片建议
+用户：拿去修图 / 剪视频。
 
-**P0**
+8. 模型只传 `${vision.picked}`。
+9. 执行前 Runtime 用该行的 `ref` 去拿图。云上的修图如果打不开图库 id，Runtime 在这一步转成它能打开的地址（签名 url 或转存 obs）。这一步是调用时现做的，不必提前写进每一行 mediaItem。
 
-1. Runtime 挂载 `visionContext.items` + ingest 钩子（上传 / Tool 成功 / 异步回调）。  
-2. `lastSearchBatch` + `selection` + `${vision.*}` 解析。  
-3. Access Resolver 最小集：`gallery_id→可拉`、`obs→签名`、`http→校验`。  
-4. 修图工具走引用 + beforeHook。
-
-**P1**
-
-5. `vision.select` 语义选图。  
-6. 物化转存 OBS（云工具 prefer）。  
-7. 剪辑工具同构接入。  
-8. 投影窗与 Catalog 解耦的指标与日志（命中率、resolve 失败原因）。
-
-**P2**
-
-9. 跨端 `referenceBundle` 携带 media 摘要。  
-10. SubAgent 回传 selection / mediaIds。
+修完的图再追加一行（`from: "edit"`），`picked` 改成新图。下一句「再淡一点」或「放进剪辑」还是用 `picked`。
 
 ---
 
-## 8. 一句话
+## 不要做的事
 
-把 `visionContext` 建成 Runtime 的**有序媒体账本**：搜索结果全量入册，用序数/语义写入 `selection`，工具侧只收 `${vision…}`；真正「可被任意多模工具访问」靠 **Resolve/Materialize**，而不是假设所有来源天生是一张永不过期的公网图。
+- 不要求所有返回图片的工具改成同一种大 JSON。
+- 不把每张图的宽高、标签、query、过期时间都存上。
+- 不把账本整本塞进模型上下文。
+- 不把搜索结果在 workmemory 和账本各存一份全文。搜索只在账本留 `batch + index + 图库 id`。
+- 不在账本里再存用户的搜索 query。
