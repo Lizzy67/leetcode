@@ -280,21 +280,29 @@ HAL 不参与之后，后面的流程和方案 1 的规则层相同，只是输�
 
 ### 6.5 业界对照
 
-| 产品 | 端上 | 云上 | 屏上文字的来源 | 对百科 chips 的意义 |
+**各家怎么做。**
+
+| 产品 | 实时预览里主动标注 | 认出「是什么」靠什么 | 屏上的名字和简介从哪来 | 哪里用生成模型 |
 |---|---|---|---|---|
-| [Apple Visual Look Up](https://developer.apple.com/videos/play/wwdc2023/10048/) | 出框和顶层类别（猫 / 书 / 植物），提取特征 | 用户点了查询之后，才把类别和图像特征发到服务器 | [Siri Knowledge 和网页结果](https://support.apple.com/en-us/104962) | 先认实体，再取条目。文字稳定，但要有知识库 |
-| [Google Lens](https://blog.google/products-and-platforms/devices/google-lens/google-lens-one-year/) | 公开资料未提 | 识别出标签，再连到 Knowledge Graph 的实体 | 实体卡片 | 同上 |
-| [Seek（iNaturalist）](https://www.inaturalist.org/blog/23075-real-time-computer-vision-predictions-in-seek-by-inaturalist-version-2-0) | 分类模型在实时预览里直接跑，不联网 | 认名字不需要 | 分类树上的名字 | 最快，只有名字，只覆盖动植物 |
-| [Google Search Live](https://blog.google/products-and-platforms/products/search/search-live-tips/) | 公开资料未提 | 实时视频加语音，大模型对话 | 语音回答加网页链接 | 用户提问才回答，是问答，不是 chips |
-| 灵光（蚂蚁） | 未公开 | 未公开 | 实测不显示来源；chips 的名字是描述性的，卡片给到种并配参考图 | chips 和卡片各认一次，对话的内容另写，见 6.6 |
+| [Apple Visual Look Up](https://developer.apple.com/videos/play/wwdc2023/10048/) | 否。针对照片，用户点了才查 | 端上出框、顶层类别（猫 / 书 / 植物）和图像特征；用户点击后把类别和特征发到服务器匹配 | [Siri Knowledge 和网页结果](https://support.apple.com/en-us/104962) | 公开资料未提 |
+| Google Lens | 是。2018 年起[实时主动给出信息，并锚在物体上](https://blog.google/products-and-platforms/devices/google-lens/google-lens-real-time-answers-questions-about-world-around-you/) | 端上和云上的模型出标签，[再连到 Knowledge Graph 的实体](https://blog.google/products-and-platforms/devices/google-lens/google-lens-one-year/) | 知识图谱里的实体信息 | 公开资料未提 |
+| [Seek（iNaturalist）](https://www.inaturalist.org/blog/23075-real-time-computer-vision-predictions-in-seek-by-inaturalist-version-2-0) | 是 | 端上分类模型，不联网 | 分类树上的名字。认不到种时退到属或科 | 不用 |
+| [Google Search Live](https://blog.google/products-and-platforms/products/search/search-live-tips/) | 否。用户提问才回答 | 大模型看实时视频 | 语音回答加网页链接 | 全部回答 |
+| 灵光（蚂蚁，实测推断，见 6.6） | 是。圆点锚定，带缩略图 | chips：模型看图直接起名。卡片：点开后再认一次，认到种 | chips 的名字和简介是模型写的；卡片按类别固定栏目，不显示来源 | chips 和对话 |
+| 本方案 | 是。方案 1 由 HAL 跟踪锚定 | 端上出粗类和框；云上用搜索或向量检索归一成实体 ID，只认一次 | 自有 / 授权卡片库的标准名和简介 | 只在离线写简介和点开后的对话 |
 
-可以直接借鉴的三点：
+**各家的取舍，和我们取什么。**
 
-- Apple 和 Google Lens 都是「识别 → 实体 → 实体卡片」，没有把检索摘要直接贴到画面上。
-- Seek 最接近实时预览的形态。它认不到种时退到属或科，给出当前能确定的最精确的名字。按第三方对其源码的[解读](https://deepwiki.com/inaturalist/SeekReactNative/4.2-species-recognition-process)，认到种之后结果至少保持约 2.5 秒，避免标签闪烁。
-- Apple 认地标时，重排用了视觉相似度和本地的地理信号（[Enhanced Visual Search](https://machinelearning.apple.com/research/homomorphic-encryption)）。建筑靠检索加位置，不靠分类。
+| 产品 | 好处 | 代价 | 我们取什么 |
+|---|---|---|---|
+| Apple Visual Look Up | 文字稳定；端上先筛，用户不点不上云 | 不是实时标注；要有知识库 | 端上出框和粗类、云上匹配实体的分工。建筑靠检索加位置：Apple 认地标时，重排用了视觉相似度和本地的地理信号（[Enhanced Visual Search](https://machinelearning.apple.com/research/homomorphic-encryption)） |
+| Google Lens | 实时、锚在物体上，文字来自实体 | 要有知识图谱和大规模识别服务 | 主链路：识别 → 实体 → 实体信息 |
+| Seek | 最快，不联网 | 只有名字；只覆盖动植物，面向野生物种 | 认不准时退到上位类。按第三方对其源码的[解读](https://deepwiki.com/inaturalist/SeekReactNative/4.2-species-recognition-process)，认到种之后结果至少保持约 2.5 秒，避免标签闪烁 |
+| Google Search Live | 什么都能问 | 不主动推荐；每次都是一次大模型调用 | 点开之后的对话 |
+| 灵光 | 什么物体都能出 chip；出得快；不需要卡片库 | chips、卡片、对话的名字和事实对不上；chips 上出现了「可食用」这类没有依据的说法 | 形态（圆点锚定、缩略图、主体带简介而次要物体只有名字）；chips 和卡片走轻量路径；卡片按类别固定栏目。不取 chips 上现场生成名字和简介 |
+| 本方案 | 三处名字和事实一致；文字可审核，出处可追溯 | 依赖卡片库的覆盖率；库外的实体不出或只出名字；动植物、建筑之外的物体覆盖不了 | — |
 
-Seek 2.0 发布时模型覆盖 15,798 个物种和 12,524 个上位分类。
+Apple、Google Lens、Seek、Search Live 各行依据表中链接的公开资料。Seek 2.0 发布时模型覆盖 15,798 个物种和 12,524 个上位分类。
 
 ### 6.6 灵光实测和一致性约束
 
@@ -378,3 +386,4 @@ chips 的形态：用一个圆点锚在物体上，不画框；内容是物体�
 6. 植物、动物、建筑三类卡片各自的固定栏目。
 7. 方案 2 下百科 chip 不带框是否接受。
 8. 锚点画框还是只打一个点；chip 上是否带物体的裁剪缩略图。灵光用点，带缩略图。
+9. 是否覆盖动植物、建筑之外的任意物体（灵光会给「金属挂钩」出 chip）。这类物体卡片库覆盖不了，只能靠生成模型起名。建议只显示名字、不带简介，和百科 chips 分开算。
