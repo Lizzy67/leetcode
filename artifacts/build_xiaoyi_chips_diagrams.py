@@ -362,6 +362,95 @@ def frame_fetch():
     save(fig, "chips_frame_fetch.png")
 
 
+# ---------------------------------------------------------------- 7 百科卡片的实现方案
+def card_options():
+    H = 11.4
+    fig, ax = canvas(16, H)
+    title(ax, "百科卡片 · 四种实现方案",
+          "差别在卡片上的名字和文字从哪来；三方搜索结果直接上屏已被否，不在图里", h=H)
+
+    node(ax, 0.3, 5.0, 2.1, 1.5, "稳定帧里的物体", "裁剪图 · 粗类\ntarget id", INK)
+
+    def lane(y, h, label, color, nodes, good, bad, row_y=None):
+        panel(ax, 2.9, y, 12.7, h, label, color)
+        ry = (y + 0.3) if row_y is None else row_y
+        xs = (3.2, 5.6, 8.0)
+        for x, (t, sub) in zip(xs, nodes):
+            node(ax, x, ry, 2.1, 1.05, t, sub, color, fs=11.5)
+        arrow(ax, (5.3, ry + 0.52), (5.6, ry + 0.52), color)
+        arrow(ax, (7.7, ry + 0.52), (8.0, ry + 0.52), color)
+        arrow(ax, (2.4, 5.75), (3.2, ry + 0.52), LINE, rad=0.0)
+        ty = y + h - 0.62
+        ax.text(10.45, ty, "好处", fontsize=9.5, color=XY, weight="bold", va="top")
+        ax.text(11.0, ty, good, fontsize=9.5, color=INK, va="top", linespacing=1.45)
+        n = good.count("\n") + 1
+        ty2 = ty - 0.27 * n - 0.1
+        ax.text(10.45, ty2, "代价", fontsize=9.5, color=RISK, weight="bold", va="top")
+        ax.text(11.0, ty2, bad, fontsize=9.5, color=INK, va="top", linespacing=1.45)
+        return ry
+
+    lane(8.25, 1.9, "方案 A · 搜索 + 在线 VQA 改写（现有思路）", MUTED,
+         [("搜索服务", "返回三方检索结果"), ("VQA 大模型", "在线改写成卡片文字"), ("百科卡片", "每次现场生成")],
+         "三方原文不上屏；不需要卡片库",
+         "点开要等一次大模型调用\n同一物体每次文字可能不同\n名字可能和 chips 对不上")
+    lane(6.1, 1.9, "方案 B · 多模态大模型看图直接生成（灵光的 chips 像这一类）", MUTED,
+         [("多模态大模型", "看图认物体"), ("按类别模板", "现场写卡片文字"), ("百科卡片", "名字由模型定")],
+         "不需要搜索和卡片库；什么物体都能写",
+         "会认错，事实没有出处\n每次都是一次大模型调用\n多处各生成一次，容易打架")
+    lane(3.95, 1.9, "方案 C · 实体卡片库（建议）", ACCENT,
+         [("认实体", "搜索 / 向量检索\n只取实体 ID"), ("实体卡片库", "自有 / 授权\n离线生成并审核"), ("百科卡片", "标准名 + 固定栏目")],
+         "点开立即显示；文字可审核、可追溯\nchips、卡片、对话是同一个名字",
+         "要先有卡片库\n库外的实体只出名字或不出")
+    ry = lane(0.8, 2.9, "方案 D · 卡片库优先，库外在线生成兜底", XY,
+              [("认实体", "只取实体 ID"), ("实体卡片库", "命中直接取"), ("百科卡片", "库内同 C")],
+              "库内和方案 C 一样\n库外的实体也能出卡片",
+              "兜底的文字没审核就上屏\n兜底那一次慢\n两种来源的卡片质量不一", row_y=2.25)
+    node(ax, 5.6, 1.0, 2.1, 0.9, "生成模型兜底", "名字已确认才生成", XY, fill="#ECFDF5", fs=11.5, ls="--")
+    arrow(ax, (6.65, ry), (6.65, 1.9), XY, "未命中", ls="--", lx=0.5, ly=0.0, fs=9)
+    arrow(ax, (7.7, 1.45), (9.05, ry), XY, ls="--", rad=0.2)
+    arrow(ax, (5.6, 1.45), (5.75, ry), MUTED, ls=":", rad=-0.7)
+    ax.text(5.2, 1.85, "审核后入库", fontsize=9, color=MUTED, ha="right", va="center")
+    save(fig, "chips_card_options.png")
+
+
+# ---------------------------------------------------------------- 8 卡片库从哪来
+def card_library_sources():
+    fig, ax = canvas()
+    title(ax, "实体卡片库从哪来 · 没有开域百科时的三条路",
+          "百科 chips 只覆盖动植物和建筑，不需要全品类；三条路可以同时用")
+
+    panel(ax, 0.4, 2.2, 5.2, 5.6, "内容来源", CLOUD)
+    panel(ax, 6.2, 2.2, 4.3, 5.6, "实体卡片库（每个实体一条）", ACCENT)
+    panel(ax, 11.1, 2.2, 4.5, 5.6, "线上怎么用", XY)
+    panel(ax, 0.4, 0.4, 15.2, 1.4, "回流", MUTED)
+
+    node(ax, 0.7, 5.75, 4.6, 1.3, "① 内部已有的垂域库", "植物 / 动物 / 地标\n现成可用，覆盖有限；有没有待确认", CLOUD)
+    node(ax, 0.7, 4.1, 4.6, 1.3, "② 外部授权", "向百科内容方按实体取\n质量稳；要费用，授权范围要含 chips 展示", CLOUD)
+    node(ax, 0.7, 2.45, 4.6, 1.3, "③ 离线生成 + 审核", "VQA / 改写模型按固定栏目批量写\n覆盖可控；要审核人力，事实要核对", CLOUD)
+
+    fields = [("实体 ID · 标准名 · 别名", None), ("上位类", "如「蕨类」「鸟类」"),
+              ("一句简介", "限定字数"), ("固定栏目正文 · 参考图", "按植物 / 动物 / 建筑分栏目"),
+              ("出处", "内部可追溯")]
+    fy = 6.3
+    for t, sub in fields:
+        node(ax, 6.5, fy, 3.7, 0.72, t, sub, ACCENT, fs=11)
+        fy -= 0.85
+
+    node(ax, 11.4, 5.75, 3.9, 1.3, "命中，有简介", "标准名 + 简介\n点开是固定栏目的卡片", XY)
+    node(ax, 11.4, 4.1, 3.9, 1.3, "命中，还没有简介", "只显示标准名", XY)
+    node(ax, 11.4, 2.45, 3.9, 1.3, "库里没有这个实体", "建议不出，待法务确认", RISK, fill="#FFF1F2")
+
+    for y in (6.4, 4.75, 3.1):
+        arrow(ax, (5.3, y), (6.2, y), CLOUD)
+        arrow(ax, (10.5, y), (11.4, y), ACCENT)
+
+    ax.text(8.0, 1.1, "线上没命中、或缺简介的实体记下来，按出现次数排进 ③ 的生成队列；审核后入库，下次直接命中",
+            ha="center", va="center", fontsize=10.5, color=INK)
+    arrow(ax, (13.35, 2.45), (13.35, 1.5), MUTED, ls="--")
+    arrow(ax, (3.0, 1.5), (3.0, 2.45), MUTED, ls="--")
+    save(fig, "chips_card_library_sources.png")
+
+
 if __name__ == "__main__":
     overview()
     scheme1()
@@ -369,4 +458,6 @@ if __name__ == "__main__":
     pipeline()
     encyclopedia()
     frame_fetch()
+    card_options()
+    card_library_sources()
     print("done", REPO_OUT)
